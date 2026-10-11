@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchProduct } from "../api/products";
 import type { Product } from "../types/product";
 
+function formatPrice(price: string): string {
+  const parsed = parseFloat(price);
+  return `$${parsed.toFixed(2)}`;
+}
+
 interface ProductDetailProps {
   productId: string;
   onBack: () => void;
@@ -74,7 +79,7 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
         <div className="product-detail__info">
           <span className="product-detail__category">{product.category}</span>
           <h1>{product.name}</h1>
-          <p className="product-detail__price">${product.price.toFixed(2)}</p>
+          <p className="product-detail__price">{formatPrice(product.price)}</p>
           <p className="product-detail__stock">
             {product.stock_quantity > 0
               ? `${product.stock_quantity} units in stock`
@@ -98,3 +103,4 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 }
 
 export default ProductDetail;
+
