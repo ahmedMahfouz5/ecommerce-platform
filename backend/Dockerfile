@@ -1,21 +1,3 @@
-FROM python:3.12-slim
-
-WORKDIR /app
-
-# Install system dependencies for building asyncpg
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Run the application with hot-reload for development
 # =============================================================================
 # Stage 1: build — compile dependencies into a virtualenv
 # =============================================================================
@@ -38,7 +20,7 @@ FROM python:3.12-slim-bookworm AS dev
 WORKDIR /app
 
 COPY --from=build /opt/venv /opt/venv
-COPY requirements-dev.txt .
+COPY requirements.txt requirements-dev.txt .
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
