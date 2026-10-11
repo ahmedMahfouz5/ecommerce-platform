@@ -1,8 +1,35 @@
+import json
+from decimal import Decimal
+from uuid import UUID
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.modules.products.router import router as products_router
 from app.routers import health
+
+
+class _CustomEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles Decimal and UUID."""
+
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, UUID):
+            return str(obj)
+        return super().default(obj)
+
+
+class _CustomJSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            cls=_CustomEncoder,
+        ).encode("utf-8")
 
 
 def create_app() -> FastAPI:
@@ -11,6 +38,7 @@ def create_app() -> FastAPI:
         title="E-Commerce Platform",
         description="A modular e-commerce platform API",
         version="0.1.0",
+        default_response_class=_CustomJSONResponse,
     )
 
     # CORS middleware
@@ -25,6 +53,7 @@ def create_app() -> FastAPI:
 
     # Register routers
     app.include_router(health.router)
+    app.include_router(products_router)
 
     return app
 

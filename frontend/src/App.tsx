@@ -1,19 +1,33 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import ProductList from "./components/ProductList";
+import ProductDetail from "./components/ProductDetail";
+
+type View = { page: "list" } | { page: "detail"; productId: string };
 
 function App() {
-  const [apiStatus, setApiStatus] = useState<string>("checking...");
-
-  useEffect(() => {
-    fetch("/api/v1/health")
-      .then((res) => res.json())
-      .then((data) => setApiStatus(JSON.stringify(data)))
-      .catch(() => setApiStatus("API unreachable"));
-  }, []);
+  const [view, setView] = useState<View>({ page: "list" });
 
   return (
-    <div className="container">
-      <h1>E-Commerce Platform</h1>
-      <p>Backend API status: <code>{apiStatus}</code></p>
+    <div className="app">
+      <header className="app__header">
+        <h1 className="app__title" onClick={() => setView({ page: "list" })}>
+          E-Commerce Platform
+        </h1>
+      </header>
+
+      <main className="app__main">
+        {view.page === "list" && (
+          <ProductList
+            onSelectProduct={(id) => setView({ page: "detail", productId: id })}
+          />
+        )}
+        {view.page === "detail" && (
+          <ProductDetail
+            productId={view.productId}
+            onBack={() => setView({ page: "list" })}
+          />
+        )}
+      </main>
     </div>
   );
 }

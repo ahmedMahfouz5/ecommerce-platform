@@ -5,6 +5,8 @@ from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.config import settings
+from app.models import Base
+from app.modules.products import models  # noqa: F401 - register Product model
 
 # Alembic Config object
 config = context.config
@@ -13,11 +15,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Target metadata - will be populated when models are added
-# from app.core.database import Base
-# from app.modules.products import models  # noqa: F401 - register models
-# target_metadata = Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
