@@ -39,5 +39,10 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 # nginx-unprivileged listens on 8080 (default in its base config)
 EXPOSE 8080
 
+# Only substitute BACKEND_URL, not NGINX's own $variables
+ENV NGINX_ENVSUBST_VARS='$BACKEND_URL'
+ENV BACKEND_URL=http://backend:8000
+
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD wget -q --spider http://127.0.0.1:8080/
+
