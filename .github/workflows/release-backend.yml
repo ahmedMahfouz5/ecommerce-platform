@@ -107,13 +107,16 @@ jobs:
       - name: Smoke test
         if: ${{ steps.check.outputs.skip == 'false' }}
         env:
-          IMAGE: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          TAGS: ${{ steps.meta.outputs.tags }}
           COMPONENT: backend
           PORT: 8000
           HEALTH_ENDPOINT: /api/v1/health
           RETRIES: 30
           RETRY_DELAY: 2
-        run: ./scripts/smoke-test.sh
+        run: |
+          IMAGE=$(echo "$TAGS" | cut -d',' -f1)
+          export IMAGE
+          ./scripts/smoke-test.sh
 
       - name: Push image
         if: ${{ steps.check.outputs.skip == 'false' }}
@@ -125,3 +128,4 @@ jobs:
           cache-from: type=gha,scope=backend
           provenance: mode=max
           sbom: true
+

@@ -107,7 +107,19 @@ jobs:
       - name: Smoke test
         if: ${{ steps.check.outputs.skip == 'false' }}
         env:
-          IMAGE: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+      - name: Smoke test
+        if: ${{ steps.check.outputs.skip == 'false' }}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          COMPONENT: frontend
+          PORT: 8080
+          HEALTH_ENDPOINT: /
+          RETRIES: 30
+          RETRY_DELAY: 2
+        run: |
+          IMAGE=$(echo "$TAGS" | cut -d',' -f1)
+          export IMAGE
+          ./scripts/smoke-test.sh
           COMPONENT: frontend
           PORT: 8080
           HEALTH_ENDPOINT: /
