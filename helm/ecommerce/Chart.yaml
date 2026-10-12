@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ecommerce
+description: E-Commerce Platform — backend, frontend, and Postgres (local dev only)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

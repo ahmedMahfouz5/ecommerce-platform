@@ -1,0 +1,49 @@
+# =============================================================================
+# E-Commerce Platform — default values
+# =============================================================================
+
+# -- Backend (FastAPI) configuration
+backend:
+  image:
+    repository: ahmedmahfouz0/backend
+    # tag is REQUIRED — set it at install/upgrade time.
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# -- Frontend (nginx + React SPA) configuration
+frontend:
+  image:
+    repository: ahmedmahfouz0/frontend
+    # tag is REQUIRED — set it at install/upgrade time.
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# -- Postgres (StatefulSet, local dev only — no HA)
+postgres:
+  image: postgres:16-alpine
+  storage: 1Gi
+
+# -- External Secret (created manually with kubectl)
+secret:
+  # name of a Kubernetes Secret that contains database-url and secret-key
+  name: ecommerce-secret
+
+# -- Alembic migration Job
+migrations:
+  enabled: true

@@ -1,0 +1,15 @@
+E-Commerce Platform deployed!
+
+Access the services via port-forward (no Ingress configured):
+
+  kubectl port-forward svc/{{ include "ecommerce.backend.fullname" . }} 8000:8000
+  kubectl port-forward svc/{{ include "ecommerce.frontend.fullname" . }} 8080:8080
+
+Then:
+
+  curl http://localhost:8000/api/v1/health/live
+  curl http://localhost:8000/api/v1/health/ready
+  curl http://localhost:8000/api/v1/products
+
+  # Or through the frontend nginx proxy:
+  curl http://localhost:8080/api/v1/products
