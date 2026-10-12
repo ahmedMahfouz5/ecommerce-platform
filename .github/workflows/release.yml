@@ -24,7 +24,7 @@ jobs:
       patch: ${{ steps.release.outputs.patch }}
       sha: ${{ steps.release.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: googleapis/release-please-action@v4
         id: release
         with:
@@ -50,18 +50,18 @@ jobs:
             port: 8080
             health-endpoint: /
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker metadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         id: meta
         with:
           images: ahmedmahfouz0/${{ matrix.component.name }}
@@ -72,7 +72,7 @@ jobs:
             type=semver,pattern={{major}}
 
       - name: Build image (no push yet)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         id: build
         with:
           context: ${{ matrix.component.context }}
@@ -107,7 +107,7 @@ jobs:
           }
 
       - name: Push image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.component.context }}
           push: true
