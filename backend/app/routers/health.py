@@ -8,13 +8,19 @@ router = APIRouter(tags=["health"])
 
 @router.get("/api/v1/health")
 async def health_check():
-    """Liveness probe — checks if the application is running."""
+    """Existing health check — kept for backward compatibility. No DB check."""
     return {"status": "ok"}
 
 
-@router.get("/api/v1/ready")
+@router.get("/api/v1/health/live")
+async def liveness_check():
+    """Kubernetes liveness probe — checks only that the process is alive (no DB)."""
+    return {"status": "ok"}
+
+
+@router.get("/api/v1/health/ready")
 async def readiness_check():
-    """Readiness probe — checks if the application is ready to serve traffic (DB connected)."""
+    """Kubernetes readiness probe — checks database connectivity."""
     db_connected = await check_database_connection()
 
     if not db_connected:
