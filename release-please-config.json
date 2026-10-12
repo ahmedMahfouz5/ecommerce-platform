@@ -28,10 +28,9 @@
           "jsonpath": "$.version"
         },
         {
-          "type": "regex",
+          "type": "generic",
           "path": "backend/app/main.py",
-          "pattern": "version=\"[^\"]+\"",
-          "replacement": "version=\"{{version}}\""
+          "pattern": "version=\"\\d+\\.\\d+\\.\\d+(?:-[a-zA-Z0-9.]+)?\""
         }
       ]
     }
