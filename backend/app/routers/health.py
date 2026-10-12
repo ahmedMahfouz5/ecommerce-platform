@@ -8,11 +8,13 @@ router = APIRouter(tags=["health"])
 
 @router.get("/api/v1/health")
 async def health_check():
-    """Health check endpoint that verifies database connectivity.
+    """Liveness probe — checks if the application is running."""
+    return {"status": "ok"}
 
-    Returns 200 if the application and database are healthy.
-    Returns 503 if the database is unreachable.
-    """
+
+@router.get("/api/v1/ready")
+async def readiness_check():
+    """Readiness probe — checks if the application is ready to serve traffic (DB connected)."""
     db_connected = await check_database_connection()
 
     if not db_connected:
