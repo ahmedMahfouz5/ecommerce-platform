@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  # push:
+  #   branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      major: ${{ steps.release.outputs.major }}
+      minor: ${{ steps.release.outputs.minor }}
+      patch: ${{ steps.release.outputs.patch }}
+      sha: ${{ steps.release.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  docker-push:
+    needs: release-please
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Run on every push to master, not on PR
+    # Fork PRs cannot reach this job because release.yml triggers on push only.
+    strategy:
+      matrix:
+        component:
+          - name: backend
+            context: backend
+            port: 8000
+            health-endpoint: /api/v1/health
+          - name: frontend
+            context: frontend
+            port: 8080
+            health-endpoint: /
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker metadata
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ahmedmahfouz0/${{ matrix.component.name }}
+          tags: |
+            type=sha,format=long,prefix=
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Build image (no push yet)
+        uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: ${{ matrix.component.context }}
+          load: true
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.component.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component.name }}
+
+      - name: Smoke test
+        run: |
+          docker run -d --name smoke \
+            -p ${{ matrix.component.port }}:${{ matrix.component.port }} \
+            ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+
+          healthy=false
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:${{ matrix.component.port }}${{ matrix.component.health-endpoint }}; then
+              echo "${{ matrix.component.name }} healthy"
+              healthy=true
+              break
+            fi
+            sleep 2
+          done
+
+          docker stop smoke
+          docker rm smoke
+
+          [ "$healthy" = true ] || {
+            echo "${{ matrix.component.name }} smoke test failed"
+            exit 1
+          }
+
+      - name: Push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.component.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.component.name }}
+          provenance: mode=max
+          sbom: true
+

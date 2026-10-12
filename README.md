@@ -83,6 +83,39 @@ To also remove the database volume:
 docker compose down -v
 ```
 
+## Commit Convention
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) and
+[semantic versioning](https://semver.org/) driven by
+[Release Please](https://github.com/googleapis/release-please).
+
+Every pull request title must follow this format:
+
+```
+type: short description
+```
+
+Allowed **types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`,
+`test`, `build`, `ci`, `chore`, `revert`.
+
+Examples:
+
+```
+feat: add product search endpoint
+fix: handle empty product list returning 500
+docs: explain commit convention in README
+chore: upgrade postgres image to 16.4
+```
+
+Breaking changes use `!` after the type or a `BREAKING CHANGE:` footer:
+
+```
+feat!: drop support for Python 3.11
+```
+
+PRs are squash-merged, so the PR title becomes the commit message on
+`master`. A PR-title check workflow enforces this format on every PR.
+
 ## Milestones
 
 | Milestone | Status |
