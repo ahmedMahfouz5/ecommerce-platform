@@ -83,28 +83,14 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.component.name }}
 
       - name: Smoke test
-        run: |
-          docker run -d --name smoke \
-            -p ${{ matrix.component.port }}:${{ matrix.component.port }} \
-            ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
-
-          healthy=false
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:${{ matrix.component.port }}${{ matrix.component.health-endpoint }}; then
-              echo "${{ matrix.component.name }} healthy"
-              healthy=true
-              break
-            fi
-            sleep 2
-          done
-
-          docker stop smoke
-          docker rm smoke
-
-          [ "$healthy" = true ] || {
-            echo "${{ matrix.component.name }} smoke test failed"
-            exit 1
-          }
+        env:
+          IMAGE: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          COMPONENT: ${{ matrix.component.name }}
+          PORT: ${{ matrix.component.port }}
+          HEALTH_ENDPOINT: ${{ matrix.component['health-endpoint'] }}
+          RETRIES: 30
+          RETRY_DELAY: 2
+        run: ./scripts/smoke-test.sh
 
       - name: Push image
         uses: docker/build-push-action@v7
@@ -115,4 +101,3 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.component.name }}
           provenance: mode=max
           sbom: true
-
