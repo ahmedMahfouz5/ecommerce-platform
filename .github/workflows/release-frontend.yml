@@ -107,9 +107,6 @@ jobs:
       - name: Smoke test
         if: ${{ steps.check.outputs.skip == 'false' }}
         env:
-      - name: Smoke test
-        if: ${{ steps.check.outputs.skip == 'false' }}
-        env:
           TAGS: ${{ steps.meta.outputs.tags }}
           COMPONENT: frontend
           PORT: 8080
@@ -120,12 +117,6 @@ jobs:
           IMAGE=$(echo "$TAGS" | cut -d',' -f1)
           export IMAGE
           ./scripts/smoke-test.sh
-          COMPONENT: frontend
-          PORT: 8080
-          HEALTH_ENDPOINT: /
-          RETRIES: 30
-          RETRY_DELAY: 2
-        run: ./scripts/smoke-test.sh
 
       - name: Push image
         if: ${{ steps.check.outputs.skip == 'false' }}
