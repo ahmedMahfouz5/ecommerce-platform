@@ -9,7 +9,7 @@ fullnameOverride: backend
 image:
   repository: ahmedmahfouz0/backend
   # tag is REQUIRED — set it at install/upgrade time
-  tag: ""
+  tag: "22e03ffec9db4092ac82c39430ace6c3bf4ebc0b"
   pullPolicy: IfNotPresent
 
 replicas: 1
@@ -45,3 +45,4 @@ migrations:
     limits:
       cpu: 200m
       memory: 256Mi
+
