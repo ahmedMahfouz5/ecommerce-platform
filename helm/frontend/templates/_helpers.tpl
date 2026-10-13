@@ -38,26 +38,41 @@ helm.sh/chart: {{ include "frontend.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.podLabels }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
 {{- end }}
 
 {{/*
-Selector labels
+Selector labels (immutable – changing these orphans existing pods)
 */}}
 {{- define "frontend.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "frontend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: frontend
 {{- end }}
 
 {{/*
-Validate that image tag is set (fail early if empty).
+ServiceAccount name
 */}}
-{{- define "frontend.tag" -}}
-{{- required "image.tag is required — set it via --set image.tag=<sha>" .Values.image.tag }}
+{{- define "frontend.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- include "frontend.fullname" . }}
+{{- else }}
+{{- .Values.serviceAccount.name | default "default" }}
+{{- end }}
 {{- end }}
 
 {{/*
-Full image reference (forces tag validation).
+Full image reference – tag is mandatory, digest is optional.
 */}}
-{{- define "frontend.image" -}}
-{{- printf "%s:%s" .Values.image.repository (include "frontend.tag" .) }}
-{{- end }}
+{{- define "frontend.imageRef" -}}
+{{- $repo := required "image.repository is required" .Values.image.repository -}}
+{{- $tag  := required "image.tag is required — set it via --set image.tag=<git-sha>" .Values.image.tag -}}
+{{- if .Values.image.digest -}}
+{{- printf "%s@%s" $repo .Values.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" $repo $tag -}}
+{{- end -}}
+{{- end -}}
+
