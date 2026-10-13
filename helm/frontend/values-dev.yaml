@@ -1,0 +1,29 @@
+# =============================================================================
+# Frontend — development overrides
+#
+#   helm install frontend-dev ./helm/frontend -f helm/frontend/values-dev.yaml
+# =============================================================================
+
+replicaCount: 1
+
+backendUrl: "http://backend-dev:8000"
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: frontend.dev.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+podAnnotations:
+  environment: dev
