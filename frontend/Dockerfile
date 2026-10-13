@@ -21,13 +21,7 @@ FROM nginxinc/nginx-unprivileged:1.27.4-alpine AS runtime
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Goes in templates/ so the entrypoint runs envsubst on it at startup
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Goes in templates/ so the entrypoint runs envsubst on it at startup
 COPY nginx.conf /etc/nginx/templates/default.conf.template
-
-# Auto-detect the DNS resolver (Docker, k8s, etc.) -> $NGINX_LOCAL_RESOLVERS
-ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
 
 # Auto-detect the DNS resolver (Docker, k8s, etc.) -> $NGINX_LOCAL_RESOLVERS
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
