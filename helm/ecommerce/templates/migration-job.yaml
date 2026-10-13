@@ -7,7 +7,7 @@ metadata:
     {{- include "ecommerce.labels" . | nindent 4 }}
     app.kubernetes.io/component: migration
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation
     "helm.sh/hook-weight": "1"
 spec:
@@ -32,12 +32,10 @@ spec:
               done
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1000
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
-            readOnlyRootFilesystem: true
       containers:
         - name: migrate
           image: {{ include "ecommerce.backendImage" . }}
