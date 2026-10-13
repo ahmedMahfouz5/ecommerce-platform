@@ -101,6 +101,9 @@ jobs:
           load: true
           push: false
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            BACKEND_URL=http://backend:8000
+            NGINX_LOCAL_RESOLVERS=10.96.0.10
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -118,13 +121,16 @@ jobs:
           export IMAGE
           ./scripts/smoke-test.sh
 
-      - name: Push image
+      - name: Build image
         if: ${{ steps.check.outputs.skip == 'false' }}
         uses: docker/build-push-action@v7
         with:
           context: frontend
+          load: true
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            BACKEND_URL=http://backend:8000
+            NGINX_LOCAL_RESOLVERS=10.96.0.10
           cache-from: type=gha,scope=frontend
-          provenance: mode=max
-          sbom: true
+          cache-to: type=gha,mode=max,scope=frontend
