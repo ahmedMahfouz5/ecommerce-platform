@@ -52,6 +52,7 @@ docker run -d \
     -e BACKEND_URL="$BACKEND_URL" \
     -e PROXY_READ_TIMEOUT="60s" \
     -e CLIENT_MAX_BODY_SIZE="1m" \
+    -e NGINX_LOCAL_RESOLVERS="127.0.0.1" \
     -p "${PORT}:${PORT}" \
     "$IMAGE" >/dev/null
 
