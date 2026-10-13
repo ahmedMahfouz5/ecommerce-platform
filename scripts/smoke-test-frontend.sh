@@ -37,6 +37,10 @@ echo "========================================"
 
 # Start container with read-only root filesystem and all required tmpfs mounts.
 # This mirrors exactly what Kubernetes does with the pod spec.
+# The nginx.conf template must be mounted so the entrypoint can render it.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
 docker run -d \
     --name "$CONTAINER_NAME" \
     --read-only \
@@ -44,7 +48,10 @@ docker run -d \
     --tmpfs /var/cache/nginx:noexec \
     --tmpfs /var/run:exec \
     --tmpfs /etc/nginx/conf.d:noexec \
+    -v "${REPO_ROOT}/frontend/nginx.conf:/etc/nginx/templates/default.conf.template:ro" \
     -e BACKEND_URL="$BACKEND_URL" \
+    -e PROXY_READ_TIMEOUT="60s" \
+    -e CLIENT_MAX_BODY_SIZE="1m" \
     -p "${PORT}:${PORT}" \
     "$IMAGE" >/dev/null
 
