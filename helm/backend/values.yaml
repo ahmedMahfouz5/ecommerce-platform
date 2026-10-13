@@ -1,0 +1,47 @@
+# =============================================================================
+# Backend chart — FastAPI application + Alembic migration Job
+# =============================================================================
+
+# -- Override the full resource name (defaults to chart name)
+fullnameOverride: backend
+
+# -- Container image
+image:
+  repository: ahmedmahfouz0/backend
+  # tag is REQUIRED — set it at install/upgrade time
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 384Mi
+
+# -- External Secret (created manually with kubectl)
+secret:
+  name: ecommerce-secret
+
+# -- Postgres connection info (used by migration init container only)
+postgres:
+  host: postgres
+  port: 5432
+  user: postgres
+  db: ecommerce
+
+# -- Alembic migration Job
+migrations:
+  enabled: true
+  backoffLimit: 5
+  activeDeadlineSeconds: 300
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
