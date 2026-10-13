@@ -88,13 +88,13 @@ jobs:
         run: |
           helm upgrade --install postgres helm/postgres --wait --timeout 5m
 
-      - name: Install Backend
-        run: |
-          helm upgrade --install backend helm/backend \
-            --set image.repository=ahmedmahfouz0/backend \
-            --set image.tag=22e03ffec9db4092ac82c39430ace6c3bf4ebc0b \
-            --set image.pullPolicy=IfNotPresent \
-            --wait --timeout 10m
+#      - name: Install Backend
+#        run: |
+#          helm upgrade --install backend helm/backend \
+#            --set image.repository=ahmedmahfouz0/backend \
+#            --set image.tag=22e03ffec9db4092ac82c39430ace6c3bf4ebc0b \
+#            --set image.pullPolicy=IfNotPresent \
+#            --wait --timeout 10m
 
       - name: Install Frontend
         run: |
