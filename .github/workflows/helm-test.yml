@@ -15,30 +15,34 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  CHART: helm/ecommerce
-  RELEASE: ecommerce            # ADJUST: service names below assume <release>-<component>
-
 jobs:
   lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      matrix:
+        chart: [helm/postgres, helm/backend, helm/frontend]
     steps:
-      - uses: actions/checkout@v7.0.1          # use the same major as your other workflows
+      - uses: actions/checkout@v7.0.1
 
       - uses: azure/setup-helm@v5.0.1
 
-      - name: Helm lint
-        run: >
-          helm lint $CHART
-          --set backend.image.tag=ci
-          --set frontend.image.tag=ci
+      - name: Set image tag args
+        id: args
+        run: |
+          case "${{ matrix.chart }}" in
+            helm/backend|helm/frontend)
+              echo "extra=--set image.tag=ci" >> $GITHUB_OUTPUT ;;
+            *)
+              echo "extra=" >> $GITHUB_OUTPUT ;;
+          esac
 
-      - name: Render templates
-        run: >
-          helm template $RELEASE $CHART
-          --set backend.image.tag=ci
-          --set frontend.image.tag=ci > rendered.yaml
+      - name: Helm lint
+        run: helm lint ${{ matrix.chart }} ${{ steps.args.outputs.extra }}
+
+      - name: Helm template
+        run: |
+          helm template test ${{ matrix.chart }} ${{ steps.args.outputs.extra }} > rendered.yaml
 
       - name: Validate with kubeconform
         run: |
@@ -89,29 +93,39 @@ jobs:
           kind load docker-image ecommerce-backend:${{ github.sha }} --name ecommerce-ci
           kind load docker-image ecommerce-frontend:${{ github.sha }} --name ecommerce-ci
 
-      # Throwaway CI-only values. ADJUST the secret name and keys to match your chart.
+      # Throwaway CI-only values. The database-url host is "postgres"
+      # because the Postgres chart uses fullnameOverride: postgres.
       - name: Create Secret
         run: |
           kubectl create secret generic ecommerce-secret \
-            --from-literal=database-url='postgresql+asyncpg://postgres:ci-only-password@ecommerce-postgres:5432/ecommerce' \
+            --from-literal=database-url='postgresql+asyncpg://postgres:ci-only-password@postgres:5432/ecommerce' \
             --from-literal=secret-key=ci-only-secret \
             --from-literal=postgres-password=ci-only-password
 
-      - name: Helm install
-        run: >
-          helm install $RELEASE $CHART
-          --set backend.image.repository=ecommerce-backend
-          --set backend.image.tag=${{ github.sha }}
-          --set backend.image.pullPolicy=IfNotPresent
-          --set frontend.image.repository=ecommerce-frontend
-          --set frontend.image.tag=${{ github.sha }}
-          --set frontend.image.pullPolicy=IfNotPresent
-          --wait --timeout 15m
+      - name: Install Postgres
+        run: |
+          helm upgrade --install postgres helm/postgres --wait --timeout 5m
+
+      - name: Install Backend
+        run: |
+          helm upgrade --install backend helm/backend \
+            --set image.repository=ecommerce-backend \
+            --set image.tag=${{ github.sha }} \
+            --set image.pullPolicy=IfNotPresent \
+            --wait --timeout 10m
+
+      - name: Install Frontend
+        run: |
+          helm upgrade --install frontend helm/frontend \
+            --set image.repository=ecommerce-frontend \
+            --set image.tag=${{ github.sha }} \
+            --set image.pullPolicy=IfNotPresent \
+            --wait --timeout 5m
 
       - name: Smoke test
         run: |
-          kubectl port-forward svc/${RELEASE}-backend 8000:8000 &
-          kubectl port-forward svc/${RELEASE}-frontend 8080:8080 &
+          kubectl port-forward svc/backend 8000:8000 &
+          kubectl port-forward svc/frontend 8080:8080 &
           sleep 5
           curl -fsS --retry 10 --retry-delay 3 --retry-connrefused localhost:8000/api/v1/health/live
           curl -fsS localhost:8000/api/v1/health/ready
@@ -120,12 +134,14 @@ jobs:
       - name: Debug on failure
         if: failure()
         run: |
-          kubectl get pods,svc,jobs
+          kubectl get pods,svc,jobs,statefulsets,deployments
           echo "=========================================================================================="
           kubectl describe pods
           echo "=========================================================================================="
-          kubectl logs --all-containers --prefix -l app.kubernetes.io/instance=$RELEASE --tail=100 || true
+          kubectl logs --all-containers --prefix -l app.kubernetes.io/managed-by=Helm --tail=100 || true
           echo "=========================================================================================="
-          kubectl logs job/ecommerce-migration --tail=50 || true
+          helm list --all-namespaces
           echo "=========================================================================================="
-          kubectl describe job ecommerce-migration
+          kubectl logs job/backend-migration --tail=50 || true
+          echo "=========================================================================================="
+          kubectl describe job backend-migration || true
