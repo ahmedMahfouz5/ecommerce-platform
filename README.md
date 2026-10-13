@@ -83,6 +83,58 @@ To also remove the database volume:
 docker compose down -v
 ```
 
+## Kubernetes Deployment (Helm)
+
+The platform is split into three independent Helm charts:
+
+| Chart | Release | Purpose |
+|-------|---------|---------|
+| `helm/postgres` | `postgres` | PostgreSQL StatefulSet (local/CI only — production uses RDS) |
+| `helm/backend` | `backend` | FastAPI backend + Alembic migration Job |
+| `helm/frontend` | `frontend` | nginx + React SPA |
+
+### Prerequisites
+
+- A Kubernetes cluster (kind, minikube, or cloud)
+- `kubectl` and `helm` (v4+)
+
+### Secret
+
+Create the external Secret before installing any chart:
+
+```bash
+kubectl create secret generic ecommerce-secret \
+  --from-literal=database-url='postgresql+asyncpg://postgres:<password>@postgres:5432/ecommerce' \
+  --from-literal=secret-key='<random-secret-key>' \
+  --from-literal=postgres-password='<password>'
+```
+
+### Install (in order)
+
+```bash
+helm upgrade --install postgres helm/postgres --wait
+helm upgrade --install backend helm/backend \
+  --set image.tag=<sha> --wait
+helm upgrade --install frontend helm/frontend \
+  --set image.tag=<sha> --wait
+```
+
+### Access
+
+```bash
+kubectl port-forward svc/backend 8000:8000
+kubectl port-forward svc/frontend 8080:8080
+```
+
+Then:
+
+```bash
+curl http://localhost:8000/api/v1/health/live
+curl http://localhost:8000/api/v1/health/ready
+curl http://localhost:8000/api/v1/products
+curl http://localhost:8080/api/v1/products
+```
+
 ## Commit Convention
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/) and
