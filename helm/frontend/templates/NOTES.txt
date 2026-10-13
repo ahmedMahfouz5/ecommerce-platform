@@ -1,12 +1,22 @@
+{{- $fullname := include "frontend.fullname" . -}}
 Frontend deployed!
 
-  Release:  {{ .Release.Name }}
-  Service:  {{ include "frontend.fullname" . }}:8080
+  Release:   {{ .Release.Name }}
+  Namespace: {{ .Release.Namespace }}
+  Service:   {{ $fullname }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
 
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  Ingress:   https://{{ .host }}
+{{- end }}
+{{- end }}
 Access via port-forward:
 
-  kubectl port-forward svc/{{ include "frontend.fullname" . }} 8080:8080
-
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ $fullname }} 8080:{{ .Values.service.port }}
 Then:
 
-  curl http://localhost:8080/api/v1/products
+  curl http://localhost:8080/healthz
+  curl http://localhost:8080/api/v1/products  (if backend is reachable)
+
+Backend URL: {{ .Values.backendUrl }}
+
