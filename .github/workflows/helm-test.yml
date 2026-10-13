@@ -93,9 +93,7 @@ jobs:
       - name: Create Secret
         run: |
           kubectl create secret generic ecommerce-secret \
-
-
-            --from-literal=database-url=postgresql+asyncpg://postgres:ci-only-password@ecommerce-postgres:5432/ecommerce \
+            --from-literal=database-url='postgresql+asyncpg://postgres:ci-only-password@ecommerce-postgres:5432/ecommerce' \
             --from-literal=secret-key=ci-only-secret \
             --from-literal=postgres-password=ci-only-password
 
