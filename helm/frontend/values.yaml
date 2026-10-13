@@ -9,7 +9,7 @@ fullnameOverride: frontend
 image:
   repository: ahmedmahfouz0/frontend
   # tag is REQUIRED — set it at install/upgrade time
-  tag: ""
+  tag: "32b98ebab912111e106b2532b39becd6c66eeea9"
   pullPolicy: IfNotPresent
 
 replicas: 1
@@ -26,3 +26,4 @@ resources:
 backend:
   host: backend
   port: 8000
+
