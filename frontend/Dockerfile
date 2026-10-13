@@ -14,7 +14,6 @@
 # =============================================================================
 
 # ========== deps ==========
-
 FROM node:22.14-alpine@sha256:01393fe5a51489b63da0ab51aa8e0a7ff9990132917cf20cfc3d46f5e36c0e48 AS deps
 
 WORKDIR /app
@@ -43,7 +42,7 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 
 # ========== runtime ==========
-FROM nginxinc/nginx-unprivileged:1.27.4-alpine@sha256:TODO-nginx-unprivileged-1-27-4-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.27.4-alpine@sha256:2211200bb46431bb70f044f83cd989901205ce3232e1c431822876f1fd166689 AS runtime
 
 # --- labels (metadata only – never env-specific) ---
 ARG SOURCE="https://github.com/org/ecommerce-platform"
