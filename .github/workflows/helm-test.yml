@@ -127,3 +127,14 @@ jobs:
           kubectl logs job/backend-migration --tail=50 || true
           echo "=========================================================================================="
           kubectl describe job backend-migration || true
+          echo "===== Frontend container logs ====="
+          kubectl logs deployment/frontend --previous --tail=200 || true
+
+          echo "===== Current frontend logs ====="
+          kubectl logs deployment/frontend --tail=200 || true
+
+          echo "===== Frontend pod events ====="
+          kubectl describe pod -l app.kubernetes.io/name=frontend
+
+          echo "===== Frontend deployment ====="
+          kubectl describe deployment frontend
