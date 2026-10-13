@@ -1,5 +1,15 @@
 node_modules
-dist
-.env*
 .git
+dist
+*.md
+.env*
+Dockerfile
+.dockerignore
 npm-debug.log*
+.gitignore
+.vscode
+.idea
+*.swp
+*.bak
+*.orig
+
