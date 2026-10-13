@@ -13,7 +13,7 @@ backend:
   resources:
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 384Mi
     limits:
       cpu: 500m
       memory: 256Mi
@@ -38,6 +38,13 @@ frontend:
 postgres:
   image: postgres:16-alpine
   storage: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
 
 # -- External Secret (created manually with kubectl)
 secret:
@@ -47,3 +54,10 @@ secret:
 # -- Alembic migration Job
 migrations:
   enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
