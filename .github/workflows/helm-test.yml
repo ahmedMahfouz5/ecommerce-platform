@@ -71,7 +71,7 @@ jobs:
       - name: Load images into kind
         run: |
           docker pull ahmedmahfouz0/backend:22e03ffec9db4092ac82c39430ace6c3bf4ebc0b
-          docker pull ahmedmahfouz0/frontend:32b98ebab912111e106b2532b39becd6c66eeea9
+          docker pull ahmedmahfouz0/frontend:25bed145e3ea907a8036bccb488736705efa638c
           kind load docker-image ahmedmahfouz0/backend:22e03ffec9db4092ac82c39430ace6c3bf4ebc0b --name ecommerce-ci
           kind load docker-image ahmedmahfouz0/frontend:25bed145e3ea907a8036bccb488736705efa638c --name ecommerce-ci
 
