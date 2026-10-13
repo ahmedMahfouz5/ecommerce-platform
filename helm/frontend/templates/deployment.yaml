@@ -4,56 +4,132 @@ metadata:
   name: {{ include "frontend.fullname" . }}
   labels:
     {{- include "frontend.labels" . | nindent 4 }}
-    app.kubernetes.io/component: frontend
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: {{ .Values.replicaCount }}
+  {{- with .Values.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "frontend.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: frontend
   template:
     metadata:
+      annotations:
+        checksum/nginx-config: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/env: {{ .Values.backendUrl | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "frontend.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: frontend
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
+      serviceAccountName: {{ include "frontend.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: {{ .Values.topologySpreadConstraints.maxSkew }}
+          topologyKey: {{ .Values.topologySpreadConstraints.topologyKey }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "frontend.selectorLabels" . | nindent 14 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: frontend
-          image: {{ include "frontend.image" . }}
+          image: {{ include "frontend.imageRef" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 8080
               name: http
+              protocol: TCP
+
+          # ---- envsubst variables for the nginx entrypoint ----
           env:
             - name: BACKEND_URL
-              value: "http://{{ .Values.backend.host }}:{{ .Values.backend.port }}"
+              value: {{ .Values.backendUrl | quote }}
+            - name: PROXY_READ_TIMEOUT
+              value: {{ .Values.nginx.proxyReadTimeout | quote }}
+            - name: CLIENT_MAX_BODY_SIZE
+              value: {{ .Values.nginx.clientMaxBodySize | quote }}
+            {{- if .Values.nginx.localResolvers }}
+            - name: NGINX_LOCAL_RESOLVERS
+              value: {{ .Values.nginx.localResolvers | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+          # ---- startup probe (generous failureThreshold for slow DNS) ----
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: {{ .Values.probes.startup.port }}
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+
+          # ---- liveness: local healthz (does NOT depend on backend) ----
           livenessProbe:
             httpGet:
-              path: /healthz
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
+              path: {{ .Values.probes.liveness.path }}
+              port: {{ .Values.probes.liveness.port }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+
+          # ---- readiness: local healthz (green once nginx is up) ----
           readinessProbe:
             httpGet:
-              path: /healthz
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
+              path: {{ .Values.probes.readiness.path }}
+              port: {{ .Values.probes.readiness.port }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+
+          # ---- lifecycle: drain connections before SIGTERM ----
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep {{ .Values.preStopSleepSeconds }}
+
+          # ---- resources ----
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
+          # ---- container security context ----
           securityContext:
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsUser: 101
-            runAsGroup: 101
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+
+          # ---- volume mounts for readOnlyRootFilesystem ----
           volumeMounts:
             - name: nginx-cache
               mountPath: /var/cache/nginx
@@ -61,11 +137,32 @@ spec:
               mountPath: /var/run
             - name: tmp
               mountPath: /tmp
+            - name: nginx-conf-d
+              mountPath: /etc/nginx/conf.d
+            # Template source
+            - name: nginx-template
+              mountPath: /etc/nginx/templates
+              readOnly: true
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
       volumes:
+        # emptyDir volumes required for readOnlyRootFilesystem
         - name: nginx-cache
           emptyDir: {}
         - name: nginx-run
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        # Destination for the envsubst-rendered config (must be writable)
+        - name: nginx-conf-d
+          emptyDir: {}
+        # Source template from ConfigMap (read-only)
+        - name: nginx-template
+          configMap:
+            name: {{ include "frontend.fullname" . }}-nginx
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
 
