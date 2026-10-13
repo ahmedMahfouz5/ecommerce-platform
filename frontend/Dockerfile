@@ -18,14 +18,16 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 # ---------- runtime ----------
 FROM nginxinc/nginx-unprivileged:1.27.4-alpine AS runtime
 
+ARG BACKEND_URL=http://backend:8000
+ARG NGINX_LOCAL_RESOLVERS=10.96.0.10
+
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /tmp/nginx.conf.template
 
-# Goes in templates/ so the entrypoint runs envsubst on it at startup
-COPY nginx.conf /etc/nginx/templates/default.conf.template
-
-# Auto-detect the DNS resolver (Docker, k8s, etc.) -> $NGINX_LOCAL_RESOLVERS
-ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
-    BACKEND_URL=http://backend:8000
+RUN envsubst '${BACKEND_URL} ${NGINX_LOCAL_RESOLVERS}' \
+    < /tmp/nginx.conf.template \
+    > /etc/nginx/conf.d/default.conf \
+    && rm /tmp/nginx.conf.template
 
 EXPOSE 8080
 
