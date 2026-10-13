@@ -1,48 +1,33 @@
-# ============================================================
-# Stage 1: build — compile TypeScript, bundle with Vite
-# ============================================================
-FROM node:22.14-alpine AS build
-
+# ---------- deps (shared, cached) ----------
+FROM node:22.14-alpine AS deps
 WORKDIR /app
-
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 
+# ---------- build ----------
+FROM deps AS build
 COPY . .
 RUN npm run build
 
-# ============================================================
-# Stage 2: dev — Vite dev server with HMR (for compose)
-# ============================================================
-FROM node:22.14-alpine AS dev
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
+# ---------- dev (compose, HMR) ----------
+FROM deps AS dev
 COPY . .
-
 EXPOSE 5173
-
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-# ============================================================
-# Stage 3: runtime — production nginx serving dist/
-#           (LAST stage = default target of docker build)
-# ============================================================
+# ---------- runtime ----------
 FROM nginxinc/nginx-unprivileged:1.27.4-alpine AS runtime
 
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# nginx-unprivileged listens on 8080 (default in its base config)
+# Goes in templates/ so the entrypoint runs envsubst on it at startup
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+
+# Auto-detect the DNS resolver (Docker, k8s, etc.) -> $NGINX_LOCAL_RESOLVERS
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
+    BACKEND_URL=http://backend:8000
+
 EXPOSE 8080
 
-# Only substitute BACKEND_URL, not NGINX's own $variables
-ENV NGINX_ENVSUBST_VARS='$BACKEND_URL'
-ENV BACKEND_URL=http://backend:8000
-
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -q --spider http://127.0.0.1:8080/
-
+  CMD wget -q --spider http://127.0.0.1:8080/ || exit 1
