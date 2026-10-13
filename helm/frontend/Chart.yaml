@@ -1,6 +1,10 @@
 apiVersion: v2
 name: frontend
-description: nginx + React SPA frontend
+description: Nginx + React SPA frontend for the e-commerce platform. Ships an immutable container image with all environment-specific configuration supplied at deploy time via a nginx ConfigMap template.
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.2.0
+appVersion: "0.2.0"
+maintainers:
+  - name: platform-team
+    email: platform@example.com
+
