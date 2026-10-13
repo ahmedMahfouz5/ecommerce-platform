@@ -58,28 +58,6 @@ jobs:
 
       - uses: azure/setup-helm@v5.0.1
 
-      - uses: docker/setup-buildx-action@v4.4.1
-
-      # Build from this commit and load into kind, because the SHA image
-      # may not exist on Docker Hub (pull requests never push).
-      - name: Build backend image
-        uses: docker/build-push-action@v7.4.0
-        with:
-          context: backend
-          tags: ecommerce-backend:${{ github.sha }}
-          load: true
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
-
-      - name: Build frontend image
-        uses: docker/build-push-action@v7.4.0
-        with:
-          context: frontend
-          tags: ecommerce-frontend:${{ github.sha }}
-          load: true
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
-
       - name: get clusters
         run: kind get clusters
 
@@ -88,10 +66,14 @@ jobs:
         with:
           cluster_name: ecommerce-ci
 
+      # Pull images from Docker Hub and load into kind so they are available
+      # without relying on the cluster pulling them (air-gap style).
       - name: Load images into kind
         run: |
-          kind load docker-image ecommerce-backend:${{ github.sha }} --name ecommerce-ci
-          kind load docker-image ecommerce-frontend:${{ github.sha }} --name ecommerce-ci
+          docker pull ahmedmahfouz0/backend:22e03ffec9db4092ac82c39430ace6c3bf4ebc0b
+          docker pull ahmedmahfouz0/frontend:32b98ebab912111e106b2532b39becd6c66eeea9
+          kind load docker-image ahmedmahfouz0/backend:22e03ffec9db4092ac82c39430ace6c3bf4ebc0b --name ecommerce-ci
+          kind load docker-image ahmedmahfouz0/frontend:32b98ebab912111e106b2532b39becd6c66eeea9 --name ecommerce-ci
 
       # Throwaway CI-only values. The database-url host is "postgres"
       # because the Postgres chart uses fullnameOverride: postgres.
@@ -109,16 +91,16 @@ jobs:
       - name: Install Backend
         run: |
           helm upgrade --install backend helm/backend \
-            --set image.repository=ecommerce-backend \
-            --set image.tag=${{ github.sha }} \
+            --set image.repository=ahmedmahfouz0/backend \
+            --set image.tag=22e03ffec9db4092ac82c39430ace6c3bf4ebc0b \
             --set image.pullPolicy=IfNotPresent \
             --wait --timeout 10m
 
       - name: Install Frontend
         run: |
           helm upgrade --install frontend helm/frontend \
-            --set image.repository=ecommerce-frontend \
-            --set image.tag=${{ github.sha }} \
+            --set image.repository=ahmedmahfouz0/frontend \
+            --set image.tag=32b98ebab912111e106b2532b39becd6c66eeea9 \
             --set image.pullPolicy=IfNotPresent \
             --wait --timeout 5m
 
