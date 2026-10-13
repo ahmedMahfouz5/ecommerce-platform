@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4          # use the same major as your other workflows
+      - uses: actions/checkout@v7.0.1          # use the same major as your other workflows
 
       - uses: azure/setup-helm@v5.0.1
 
@@ -50,16 +50,16 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5.0.1
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4.4.1
 
       # Build from this commit and load into kind, because the SHA image
       # may not exist on Docker Hub (pull requests never push).
       - name: Build backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.4.0
         with:
           context: backend
           tags: ecommerce-backend:${{ github.sha }}
@@ -68,7 +68,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=backend
 
       - name: Build frontend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.4.0
         with:
           context: frontend
           tags: ecommerce-frontend:${{ github.sha }}
@@ -80,7 +80,7 @@ jobs:
         run: kind get clusters
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@v1.15.1
         with:
           cluster_name: ecommerce-ci
 
