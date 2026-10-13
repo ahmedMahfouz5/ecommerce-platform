@@ -11,7 +11,7 @@ function App() {
     <div className="app">
       <header className="app__header">
         <h1 className="app__title" onClick={() => setView({ page: "list" })}>
-          E-Commerce Platform ahmed 06:38
+          E-Commerce Platform ahmed 06:59
         </h1>
       </header>
 
