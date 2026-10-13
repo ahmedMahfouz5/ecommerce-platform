@@ -35,7 +35,7 @@ postgres:
 
 # -- Alembic migration Job
 migrations:
-  enabled: true
+  enabled: false
   backoffLimit: 5
   activeDeadlineSeconds: 300
   resources:
