@@ -7,7 +7,7 @@ on:
   #   branches: [main]
   #   paths: ["helm/**", ".github/workflows/helm-test.yml"]
   workflow_dispatch:
-  
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4          # use the same major as your other workflows
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5.0.1
 
       - name: Helm lint
         run: >
@@ -76,14 +76,19 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
+      - name: get clusters
+        run: kind get clusters
+
       - name: Create kind cluster
         uses: helm/kind-action@v1
+        with:
+          cluster_name: ecommerce-ci
 
       - name: Load images into kind
         run: |
-          kind load docker-image ecommerce-backend:${{ github.sha }}
-          kind load docker-image ecommerce-frontend:${{ github.sha }}
-
+          kind load docker-image ecommerce-backend:${{ github.sha }} --name ecommerce-ci
+          kind load docker-image ecommerce-frontend:${{ github.sha }} --name ecommerce-ci
+          
       # Throwaway CI-only values. ADJUST the secret name and keys to match your chart.
       - name: Create Secret
         run: |
