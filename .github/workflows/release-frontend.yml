@@ -18,9 +18,6 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
-      major: ${{ steps.release.outputs.major }}
-      minor: ${{ steps.release.outputs.minor }}
-      patch: ${{ steps.release.outputs.patch }}
       sha: ${{ steps.release.outputs.sha }}
     steps:
       - uses: actions/checkout@v7
@@ -42,7 +39,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v4.0.3
+      - uses: dorny/paths-filter@v3.0.2
         id: filter
         with:
           filters: |
@@ -51,7 +48,6 @@ jobs:
 
   docker-push:
     needs: [release-please, detect-changes]
-    #if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -92,7 +88,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      - name: Build image (no push yet)
+      - name: Build image (no push yet — for smoke test)
         if: ${{ steps.check.outputs.skip == 'false' }}
         uses: docker/build-push-action@v7
         id: build
@@ -102,8 +98,8 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
-            BACKEND_URL=http://backend:8000
-            NGINX_LOCAL_RESOLVERS=10.96.0.10
+            REVISION=${{ needs.release-please.outputs.sha }}
+            CREATED=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -111,26 +107,21 @@ jobs:
         if: ${{ steps.check.outputs.skip == 'false' }}
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
-          COMPONENT: frontend
-          PORT: 8080
-          HEALTH_ENDPOINT: /
-          RETRIES: 30
-          RETRY_DELAY: 2
+          BACKEND_URL: http://backend:8000
         run: |
           IMAGE=$(echo "$TAGS" | cut -d',' -f1)
           export IMAGE
-          ./scripts/smoke-test.sh
+          ./scripts/smoke-test-frontend.sh
 
-      - name: Build image
+      - name: Push image
         if: ${{ steps.check.outputs.skip == 'false' }}
         uses: docker/build-push-action@v7
         with:
           context: frontend
-          load: true
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
-            BACKEND_URL=http://backend:8000
-            NGINX_LOCAL_RESOLVERS=10.96.0.10
+            REVISION=${{ needs.release-please.outputs.sha }}
+            CREATED=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
