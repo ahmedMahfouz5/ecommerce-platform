@@ -122,3 +122,5 @@ jobs:
           kubectl get pods,svc,jobs
           kubectl describe pods
           kubectl logs --all-containers --prefix -l app.kubernetes.io/instance=$RELEASE --tail=100 || true
+          kubectl logs job/ecommerce-migration --tail=50 || true
+          kubectl describe job ecommerce-migration
