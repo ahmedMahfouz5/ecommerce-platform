@@ -14,7 +14,8 @@
 # =============================================================================
 
 # ========== deps ==========
-FROM node:22.14-alpine@sha256:TODO-node-22-14-alpine AS deps
+
+FROM node:22.14-alpine@sha256:01393fe5a51489b63da0ab51aa8e0a7ff9990132917cf20cfc3d46f5e36c0e48 AS deps
 
 WORKDIR /app
 
