@@ -18,6 +18,11 @@ spec:
         {{- include "ecommerce.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: postgres
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}
