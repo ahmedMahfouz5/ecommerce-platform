@@ -1,0 +1,28 @@
+# =============================================================================
+# Frontend chart — nginx + React SPA
+# =============================================================================
+
+# -- Override the full resource name (defaults to chart name)
+fullnameOverride: frontend
+
+# -- Container image
+image:
+  repository: ahmedmahfouz0/frontend
+  # tag is REQUIRED — set it at install/upgrade time
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# -- Backend service discovery
+backend:
+  host: backend
+  port: 8000
