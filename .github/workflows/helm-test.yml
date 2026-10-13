@@ -88,14 +88,13 @@ jobs:
         run: |
           kind load docker-image ecommerce-backend:${{ github.sha }} --name ecommerce-ci
           kind load docker-image ecommerce-frontend:${{ github.sha }} --name ecommerce-ci
-          
+
       # Throwaway CI-only values. ADJUST the secret name and keys to match your chart.
       - name: Create Secret
         run: |
-          kubectl create secret generic ecommerce-secrets \
-            --from-literal=POSTGRES_PASSWORD=ci-only-password \
-            --from-literal=SECRET_KEY=ci-only-secret \
-            --from-literal=DATABASE_URL=postgresql+asyncpg://postgres:ci-only-password@${RELEASE}-postgres:5432/ecommerce
+          kubectl create secret generic ecommerce-secret \
+            --from-literal=database-url=postgresql+asyncpg://postgres:ci-only-password@${RELEASE}-postgres:5432/ecommerce \
+            --from-literal=secret-key=ci-only-secret
 
       - name: Helm install
         run: >
