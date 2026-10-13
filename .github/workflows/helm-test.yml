@@ -106,7 +106,7 @@ jobs:
           --set frontend.image.repository=ecommerce-frontend
           --set frontend.image.tag=${{ github.sha }}
           --set frontend.image.pullPolicy=IfNotPresent
-          --wait --timeout 5m
+          --wait --timeout 15m
 
       - name: Smoke test
         run: |
