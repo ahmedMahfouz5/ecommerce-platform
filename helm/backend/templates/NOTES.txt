@@ -1,0 +1,14 @@
+Backend deployed!
+
+  Release:  {{ .Release.Name }}
+  Service:  {{ include "backend.fullname" . }}:8000
+
+Access via port-forward:
+
+  kubectl port-forward svc/{{ include "backend.fullname" . }} 8000:8000
+
+Then:
+
+  curl http://localhost:8000/api/v1/health/live
+  curl http://localhost:8000/api/v1/health/ready
+  curl http://localhost:8000/api/v1/products
