@@ -47,7 +47,7 @@ docker run -d \
     --tmpfs /tmp:exec \
     --tmpfs /var/cache/nginx:noexec \
     --tmpfs /var/run:exec \
-    --tmpfs /etc/nginx/conf.d:noexec \
+    --tmpfs /etc/nginx/conf.d:uid=101,gid=101,mode=755,noexec \
     -v "${REPO_ROOT}/frontend/nginx.conf:/etc/nginx/templates/default.conf.template:ro" \
     -e BACKEND_URL="$BACKEND_URL" \
     -e PROXY_READ_TIMEOUT="60s" \
