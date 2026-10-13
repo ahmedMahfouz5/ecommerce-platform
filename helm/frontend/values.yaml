@@ -1,29 +1,192 @@
 # =============================================================================
-# Frontend chart — nginx + React SPA
+# Frontend — default values (safe for development / single-replica)
 # =============================================================================
 
-# -- Override the full resource name (defaults to chart name)
-fullnameOverride: frontend
+# -- Override the full resource name (defaults to release-chart)
+nameOverride: ""
+fullnameOverride: ""
 
-# -- Container image
+# ---------------------------------------------------------------------------
+# Image
+# ---------------------------------------------------------------------------
 image:
   repository: ahmedmahfouz0/frontend
-  # tag is REQUIRED — set it at install/upgrade time
-  tag: "32b98ebab912111e106b2532b39becd6c66eeea9"
+  # tag is REQUIRED — set it at install/upgrade time to the git SHA
+  tag: ""
+  # digest (optional) — when set, overrides tag; e.g. sha256:abc123…
+  digest: ""
   pullPolicy: IfNotPresent
+# imagePullSecrets:
+#   - name: regcred
 
-replicas: 1
+# -- Number of replicas (>= 1)
+replicaCount: 1
 
+# ---------------------------------------------------------------------------
+# Backend service discovery — sets BACKEND_URL envsubst variable in nginx
+# ---------------------------------------------------------------------------
+backendUrl: "http://backend:8000"
+
+# ---------------------------------------------------------------------------
+# Nginx tunables (injected as envsubst variables into the ConfigMap template)
+# ---------------------------------------------------------------------------
+nginx:
+  # -- DNS resolver IP(s) — leave empty to auto-detect from /etc/resolv.conf
+  #
+  # The nginx-unprivileged image ships /docker-entrypoint.d/15-local-resolvers.envsh
+  # which exports NGINX_LOCAL_RESOLVERS from the pod's /etc/resolv.conf.
+  # Set this only if you need to pin specific resolvers.
+  localResolvers: ""
+  # -- proxy_read_timeout for /api/ (seconds)
+  proxyReadTimeout: "60s"
+  # -- client_max_body_size
+  clientMaxBodySize: "1m"
+
+# ---------------------------------------------------------------------------
+# Probes
+# ---------------------------------------------------------------------------
+probes:
+  liveness:
+    path: /healthz
+    port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readiness:
+    path: /healthz
+    port: http
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  startup:
+    path: /healthz
+    port: http
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 12   # up to 60 s for slow DNS / backend availability
+
+# ---------------------------------------------------------------------------
+# Resources — requests and limits are both required
+# ---------------------------------------------------------------------------
 resources:
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 50m      # ~5 % of a core under light load
+    memory: 64Mi  # nginx baseline ~ 10-20 Mi; 64 Mi is safe
   limits:
-    cpu: 200m
-    memory: 128Mi
+    cpu: 200m     # burst headroom
+    memory: 128Mi # prevents OOM from spike traffic
 
-# -- Backend service discovery
-backend:
-  host: backend
-  port: 8000
+# ---------------------------------------------------------------------------
+# Pod-level security context
+# ---------------------------------------------------------------------------
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 101      # nginx-unprivileged default
+  runAsGroup: 101
+  fsGroup: 101
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container-level security context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- ServiceAccount
+serviceAccount:
+  create: true
+  # name: custom-sa-name
+
+# -- Do not mount the default API token (least privilege)
+automountServiceAccountToken: false
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
+service:
+  type: ClusterIP
+  port: 8080
+
+# ---------------------------------------------------------------------------
+# PodDisruptionBudget
+# ---------------------------------------------------------------------------
+pdb:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# ---------------------------------------------------------------------------
+# HorizontalPodAutoscaler
+# ---------------------------------------------------------------------------
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# ---------------------------------------------------------------------------
+# Ingress
+# ---------------------------------------------------------------------------
+ingress:
+  enabled: false
+  className: nginx
+  hosts:
+    - host: frontend.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #   - hosts:
+  #       - frontend.local
+  #     secretName: frontend-tls
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+
+# ---------------------------------------------------------------------------
+# NetworkPolicy
+# ---------------------------------------------------------------------------
+networkPolicy:
+  enabled: false
+  # Namespace of the ingress controller (default: ingress-nginx)
+  ingressControllerNamespace: ingress-nginx
+
+# ---------------------------------------------------------------------------
+# Pod scheduling & lifecycle
+# ---------------------------------------------------------------------------
+terminationGracePeriodSeconds: 30
+
+# preStop sleep allows in-flight connections to drain before SIGTERM
+preStopSleepSeconds: 10
+
+# Topology spread — default is a soft spread across nodes when > 1 replica
+topologySpreadConstraints:
+  enabled: false
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# -- Extra pod annotations
+podAnnotations: {}
+# -- Extra pod labels
+podLabels: {}
+
+# -- Extra environment variables (rarely needed)
+extraEnv: []
+#   - name: MY_VAR
+#     value: "my-value"
+
+# -- Extra volumes & volume mounts
+extraVolumes: []
+extraVolumeMounts: []
 
