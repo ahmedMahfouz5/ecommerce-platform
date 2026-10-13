@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Frontend Helm Chart Values",
+  "type": "object",
+  "required": ["image", "backendUrl"],
+  "properties": {
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag", "pullPolicy"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "digest": { "type": "string" },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" }
+        }
+      }
+    },
+
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+
+    "backendUrl": {
+      "type": "string",
+      "pattern": "^https?://.+"
+    },
+
+    "nginx": {
+      "type": "object",
+      "properties": {
+        "localResolvers": { "type": "string" },
+        "proxyReadTimeout": { "type": "string" },
+        "clientMaxBodySize": { "type": "string" }
+      }
+    },
+
+    "probes": {
+      "type": "object",
+      "properties": {
+        "liveness":   { "$ref": "#/$defs/probe" },
+        "readiness":  { "$ref": "#/$defs/probe" },
+        "startup":    { "$ref": "#/$defs/probe" }
+      }
+    },
+
+    "resources": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu":    { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu":    { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "podSecurityContext": { "type": "object" },
+    "containerSecurityContext": { "type": "object" },
+
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean" },
+        "name":   { "type": "string" }
+      }
+    },
+
+    "automountServiceAccountToken": { "type": "boolean" },
+
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "port": { "type": "integer" }
+      }
+    },
+
+    "pdb": {
+      "type": "object",
+      "properties": {
+        "enabled":       { "type": "boolean" },
+        "minAvailable":   { "type": "integer", "minimum": 1 },
+        "maxUnavailable": { "type": "integer" }
+      }
+    },
+
+    "hpa": {
+      "type": "object",
+      "properties": {
+        "enabled":                            { "type": "boolean" },
+        "minReplicas":                        { "type": "integer", "minimum": 1 },
+        "maxReplicas":                        { "type": "integer" },
+        "targetCPUUtilizationPercentage":     { "type": "integer" },
+        "targetMemoryUtilizationPercentage":  { "type": "integer" }
+      }
+    },
+
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled":     { "type": "boolean" },
+        "className":   { "type": "string" },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": { "type": "string" },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path":     { "type": "string" },
+                    "pathType": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tls": { "type": "array" },
+        "annotations": { "type": "object" }
+      }
+    },
+
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled":                    { "type": "boolean" },
+        "ingressControllerNamespace": { "type": "string" }
+      }
+    },
+
+    "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+    "preStopSleepSeconds": { "type": "integer", "minimum": 0 },
+
+    "topologySpreadConstraints": {
+      "type": "object",
+      "properties": {
+        "enabled":            { "type": "boolean" },
+        "maxSkew":            { "type": "integer" },
+        "topologyKey":        { "type": "string" },
+        "whenUnsatisfiable":  { "type": "string" }
+      }
+    },
+
+    "nodeSelector": { "type": "object" },
+    "tolerations":  { "type": "array" },
+    "affinity":     { "type": "object" },
+
+    "podAnnotations": { "type": "object" },
+    "podLabels":      { "type": "object" },
+
+    "extraEnv": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name":  { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+
+    "extraVolumes":      { "type": "array" },
+    "extraVolumeMounts":  { "type": "array" }
+  },
+
+  "$defs": {
+    "probe": {
+      "type": "object",
+      "properties": {
+        "path":                { "type": "string" },
+        "port":                { "type": [ "string", "integer" ] },
+        "initialDelaySeconds": { "type": "integer" },
+        "periodSeconds":       { "type": "integer" },
+        "timeoutSeconds":      { "type": "integer" },
+        "failureThreshold":    { "type": "integer" }
+      }
+    }
+  }
+}
