@@ -100,7 +100,7 @@ jobs:
         run: |
           helm upgrade --install frontend helm/frontend \
             --set image.repository=ahmedmahfouz0/frontend \
-            --set image.tag=32b98ebab912111e106b2532b39becd6c66eeea9 \
+            --set image.tag=99fe1b035e908590939e5b74862a2cf1158bf3f8 \
             --set image.pullPolicy=IfNotPresent \
             --wait --timeout 5m
 
