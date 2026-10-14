@@ -125,3 +125,22 @@ jobs:
             CREATED=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+          
+      - name: Update Helm image tag
+        if: ${{ steps.check.outputs.skip == 'false' }}
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITOPS_REPO_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GH_TOKEN}@github.com/YOUR_ORG/myapp-gitops.git gitops
+
+          cd gitops
+
+          sed -i "s/tag: .*/tag: \"${VERSION}\"/" apps/myapp/helm/values.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add apps/myapp/helm/values.yaml
+          git commit -m "Update frontend image to ${VERSION}"
+          git push origin main
