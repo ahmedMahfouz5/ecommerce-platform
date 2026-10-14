@@ -71,9 +71,9 @@ jobs:
       - name: Load images into kind
         run: |
           docker pull ahmedmahfouz0/backend:22e03ffec9db4092ac82c39430ace6c3bf4ebc0b
-          docker pull ahmedmahfouz0/frontend:25bed145e3ea907a8036bccb488736705efa638c
+          docker pull ahmedmahfouz0/frontend:b7ce1cf3a8e514d02078d7bc001de325021dbff9
           kind load docker-image ahmedmahfouz0/backend:22e03ffec9db4092ac82c39430ace6c3bf4ebc0b --name ecommerce-ci
-          kind load docker-image ahmedmahfouz0/frontend:25bed145e3ea907a8036bccb488736705efa638c --name ecommerce-ci
+          kind load docker-image ahmedmahfouz0/frontend:b7ce1cf3a8e514d02078d7bc001de325021dbff9 --name ecommerce-ci
 
       # Throwaway CI-only values. The database-url host is "postgres"
       # because the Postgres chart uses fullnameOverride: postgres.
@@ -100,7 +100,7 @@ jobs:
         run: |
           helm upgrade --install frontend helm/frontend \
             --set image.repository=ahmedmahfouz0/frontend \
-            --set image.tag=25bed145e3ea907a8036bccb488736705efa638c \
+            --set image.tag=b7ce1cf3a8e514d02078d7bc001de325021dbff9 \
             --set image.pullPolicy=IfNotPresent \
             --wait --timeout 5m
 
