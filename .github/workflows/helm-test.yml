@@ -65,6 +65,11 @@ jobs:
         uses: helm/kind-action@v1.15.1
         with:
           cluster_name: ecommerce-ci
+      - name: Get Cluster DNS Resolver
+        run: |
+          DNS_IP=$(kubectl get svc -n kube-system kube-dns -o jsonpath='{.spec.clusterIP}')
+          echo "DNS resolver IP is: $DNS_IP"
+          echo "NGINX_LOCAL_RESOLVERS=$DNS_IP" >> $GITHUB_ENV
 
       # Pull images from Docker Hub and load into kind so they are available
       # without relying on the cluster pulling them (air-gap style).
@@ -102,6 +107,7 @@ jobs:
             --set image.repository=ahmedmahfouz0/frontend \
             --set image.tag=b7ce1cf3a8e514d02078d7bc001de325021dbff9 \
             --set image.pullPolicy=IfNotPresent \
+            --set nginx.localResolvers="$NGINX_LOCAL_RESOLVERS" \
             --wait --timeout 5m
 
       - name: Smoke test
