@@ -153,7 +153,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
-      pull-requests: write
+      # pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -169,13 +169,19 @@ jobs:
           fi
 
           VALUES_FILE="helm/backend/values.yaml"
-          echo "Updating $VALUES_FILE with tag: $IMAGE_TAG"
-
-          # Replace the tag line. The pattern matches `tag: "..."` under the `image:` key.
           sed -i "s/^  tag: \".*\"/  tag: \"$IMAGE_TAG\"/" "$VALUES_FILE"
-
-          echo "Updated values.yaml:"
           grep -n 'tag:' "$VALUES_FILE"
+
+          if git diff --quiet; then
+            echo "No changes to commit (tag already $IMAGE_TAG or sed did not match)."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$VALUES_FILE"
+          git commit -m "chore: update backend image tag to $IMAGE_TAG [skip ci]"
+          git push
 
       # - name: Create Pull Request
       #   uses: peter-evans/create-pull-request@v7
