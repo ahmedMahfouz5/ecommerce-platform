@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Backend Helm Chart Values",
+  "type": "object",
+  "required": ["image", "secrets", "config"],
+  "properties": {
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+
+    "image": {
+      "type": "object",
+      "required": ["repository", "pullPolicy"],
+      "properties": {
+        "repository": { "type": "string" },
+        "tag": { "type": "string" },
+        "digest": { "type": "string" },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" }
+        }
+      }
+    },
+
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+
+    "strategy": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "rollingUpdate": {
+          "type": "object",
+          "properties": {
+            "maxSurge": { "type": ["integer", "string"] },
+            "maxUnavailable": { "type": ["integer", "string"] }
+          }
+        }
+      }
+    },
+
+    "secrets": {
+      "type": "object",
+      "required": ["create", "existingSecret", "secretKeys"],
+      "properties": {
+        "create": { "type": "boolean" },
+        "existingSecret": { "type": "string" },
+        "secretKeys": {
+          "type": "object",
+          "required": ["databaseUrl", "secretKey"],
+          "properties": {
+            "databaseUrl": { "type": "string", "minLength": 1 },
+            "secretKey": { "type": "string", "minLength": 1 }
+          }
+        },
+        "dbUrl": { "type": "string" },
+        "flaskSecretKey": { "type": "string" }
+      }
+    },
+
+    "config": {
+      "type": "object",
+      "required": ["corsOrigins", "logLevel", "port", "forwardedAllowIps"],
+      "properties": {
+        "corsOrigins": { "type": "string" },
+        "logLevel": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "forwardedAllowIps": { "type": "string" },
+        "extraEnv": { "type": "object" }
+      }
+    },
+
+    "env": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" },
+          "valueFrom": { "type": "object" }
+        }
+      }
+    },
+
+    "envFrom": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "oneOf": [
+          { "required": ["secretRef"] },
+          { "required": ["configMapRef"] }
+        ]
+      }
+    },
+
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "annotations": { "type": "object" }
+      }
+    },
+
+    "probes": {
+      "type": "object",
+      "properties": {
+        "liveness":   { "$ref": "#/$defs/probe" },
+        "readiness":  { "$ref": "#/$defs/probe" },
+        "startup":    { "$ref": "#/$defs/probe" }
+      }
+    },
+
+    "resources": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu":    { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu":    { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "podSecurityContext": { "type": "object" },
+    "containerSecurityContext": { "type": "object" },
+
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean" },
+        "name":   { "type": "string" },
+        "annotations": { "type": "object" }
+      }
+    },
+
+    "automountServiceAccountToken": { "type": "boolean" },
+    "priorityClassName": { "type": "string" },
+
+    "pdb": {
+      "type": "object",
+      "properties": {
+        "enabled":        { "type": "boolean" },
+        "minAvailable":   { "type": "integer", "minimum": 1 },
+        "maxUnavailable": { "type": "integer" }
+      }
+    },
+
+    "hpa": {
+      "type": "object",
+      "properties": {
+        "enabled":                            { "type": "boolean" },
+        "minReplicas":                        { "type": "integer", "minimum": 1 },
+        "maxReplicas":                        { "type": "integer" },
+        "targetCPUUtilizationPercentage":     { "type": "integer" },
+        "targetMemoryUtilizationPercentage":  { "type": "integer" }
+      }
+    },
+
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled":     { "type": "boolean" },
+        "className":   { "type": "string" },
+        "annotations": { "type": "object" },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["host"],
+            "properties": {
+              "host": { "type": "string" },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path":     { "type": "string" },
+                    "pathType": { "type": "string", "enum": ["Prefix", "Exact", "ImplementationSpecific"] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tls": { "type": "array" }
+      }
+    },
+
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "ingressControllerNamespaceLabels": {
+          "type": "object"
+        },
+        "egress": {
+          "type": "object",
+          "properties": {
+            "dns": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "port": { "type": "integer" }
+              }
+            },
+            "database": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "host": { "type": "string" },
+                "port": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "serviceMonitor": {
+      "type": "object",
+      "properties": {
+        "enabled":       { "type": "boolean" },
+        "interval":      { "type": "string" },
+        "scrapeTimeout": { "type": "string" },
+        "labels":        { "type": "object" },
+        "annotations":   { "type": "object" }
+      }
+    },
+
+    "migration": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": { "type": "string" },
+            "tag": { "type": "string" },
+            "digest": { "type": "string" },
+            "pullPolicy": { "type": "string" }
+          }
+        },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "backoffLimit": { "type": "integer", "minimum": 0 },
+        "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
+        "dbWait": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "maxRetries": { "type": "integer", "minimum": 1 },
+            "retryInterval": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "resources": { "$ref": "#/$defs/resourceRequirements" },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+    "preStopSleepSeconds": { "type": "integer", "minimum": 0 },
+
+    "nodeSelector": { "type": "object" },
+    "tolerations":  { "type": "array" },
+    "affinity":     { "type": "object" },
+    "topologySpreadConstraints": { "type": "array" },
+
+    "podAnnotations": { "type": "object" },
+    "podLabels": { "type": "object" },
+
+    "extraVolumes": { "type": "array" },
+    "extraVolumeMounts": { "type": "array" },
+
+    "tests": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": { "type": "string" },
+            "tag": { "type": "string" },
+            "pullPolicy": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "probe": {
+      "type": "object",
+      "properties": {
+        "path":                { "type": "string" },
+        "port":                { "type": ["string", "integer"] },
+        "initialDelaySeconds": { "type": "integer" },
+        "periodSeconds":       { "type": "integer" },
+        "timeoutSeconds":      { "type": "integer" },
+        "failureThreshold":    { "type": "integer" }
+      }
+    },
+    "resourceRequirements": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu":    { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu":    { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
