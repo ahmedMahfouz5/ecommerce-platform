@@ -54,6 +54,10 @@ jobs:
     #if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      image_tag: ${{ steps.image-tag.outputs.tag }}
     steps:
       - name: Check if backend changed
         id: check
@@ -128,4 +132,58 @@ jobs:
           cache-from: type=gha,scope=backend
           provenance: mode=max
           sbom: true
+
+      - name: Output image tag
+        id: image-tag
+        if: ${{ steps.check.outputs.skip == 'false' }}
+        run: |
+          TAG="${{ fromJSON(steps.meta.outputs.json).tags[0] }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  update-helm-values:
+    needs: [release-please, docker-push]
+    if: |
+      always() &&
+      needs.docker-push.result == 'success' &&
+      needs.docker-push.outputs.image_tag != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Update image tag in Helm values
+        env:
+          IMAGE_TAG: ${{ needs.docker-push.outputs.image_tag }}
+        run: |
+          VALUES_FILE="helm/backend/values.yaml"
+          echo "Updating $VALUES_FILE with tag: $IMAGE_TAG"
+
+          # Replace the tag line. The pattern matches `tag: "..."` under the `image:` key.
+          sed -i "s/^  tag: \".*\"/  tag: \"$IMAGE_TAG\"/" "$VALUES_FILE"
+
+          echo "Updated values.yaml:"
+          grep -n 'tag:' "$VALUES_FILE"
+
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v7
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     commit-message: "chore(helm): bump backend image tag to ${{ needs.docker-push.outputs.image_tag }}"
+      #     branch: chore/bump-backend-image-${{ needs.docker-push.outputs.image_tag }}
+      #     delete-branch: true
+      #     title: "chore(helm): bump backend image to ${{ needs.docker-push.outputs.image_tag }}"
+      #     body: |
+      #       Automated PR after backend release.
+      #       - **New image tag:** `${{ needs.docker-push.outputs.image_tag }}`
+      #       - **Tag name:** `${{ needs.release-please.outputs.tag_name }}`
+      #       - **Version:** `${{ needs.release-please.outputs.version }}`
+      #       Updated `helm/backend/values.yaml` with the new tag.
+      #     labels: |
+      #       automated
+      #       helm
 
