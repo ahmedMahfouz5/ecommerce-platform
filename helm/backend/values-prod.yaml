@@ -75,7 +75,8 @@ networkPolicy:
       # If PG lives in a different namespace, set matchLabels accordingly.
       namespaceSelector: {}
       podSelector:
-        app.kubernetes.io/component: postgres
+        app.kubernetes.io/name: postgresql
+        app.kubernetes.io/component: primary
       port: 5432
 # ServiceMonitor for Prometheus
 serviceMonitor:

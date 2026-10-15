@@ -1,0 +1,51 @@
+# =============================================================================
+# PostgreSQL (Bitnami) — local/CI overrides
+#
+# Applied on top of helm/postgresql/values.yaml at install time:
+#   helm upgrade --install postgres helm/postgresql \
+#     -f helm/postgresql/values-local.yaml --wait
+#
+# This replaces the old helm/postgres chart. The service name is kept as
+# "postgres" via fullnameOverride so the DATABASE_URL secret does not change.
+# =============================================================================
+
+# -- Keep the same service name as the old chart
+fullnameOverride: postgres
+
+# -- Standalone (no replicas) for local/CI; production uses RDS
+architecture: standalone
+
+# =============================================================================
+# Authentication
+#
+# Pulls credentials from the existing "ecommerce-secret" secret.
+# The secret key "postgres-password" must already exist (created via kubectl).
+# =============================================================================
+auth:
+  enablePostgresUser: true
+  postgresPassword: ""
+  username: "postgres"
+  password: ""
+  database: "ecommerce"
+  existingSecret: "ecommerce-secret"
+  secretKeys:
+    adminPasswordKey: "postgres-password"
+    userPasswordKey: "postgres-password"
+  usePasswordFiles: false
+
+# =============================================================================
+# Primary (standalone) configuration
+# =============================================================================
+primary:
+  # -- Persistence (matches old storage.size: 1Gi)
+  persistence:
+    size: 1Gi
+
+  # -- Resources (matches old chart)
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

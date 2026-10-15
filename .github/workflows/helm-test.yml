@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: postgres,         chart: helm/postgres, values: helm/postgres/values.yaml,         set: "" }
+          - { name: postgresql,       chart: helm/postgresql, values: helm/postgresql/values-local.yaml, set: "" }
           - { name: backend,          chart: helm/backend,  values: helm/backend/values.yaml,          set: "--set image.tag=ci" }
           - { name: backend-dev,      chart: helm/backend,  values: helm/backend/values-dev.yaml,      set: "--set image.tag=ci" }
           - { name: backend-staging,  chart: helm/backend,  values: helm/backend/values-staging.yaml,  set: "--set image.tag=ci" }
@@ -79,7 +79,7 @@ jobs:
           echo "NGINX_LOCAL_RESOLVERS=$DNS_IP" >> $GITHUB_ENV
 
       # Throwaway CI-only values. The database-url host is "postgres"
-      # because the Postgres chart uses fullnameOverride: postgres.
+      # because the Bitnami PostgreSQL chart uses fullnameOverride: postgres.
       - name: Create Secret
         run: |
           kubectl create secret generic ecommerce-secret \
@@ -89,7 +89,9 @@ jobs:
 
       - name: Install Postgres
         run: |
-          helm upgrade --install postgres helm/postgres --wait --timeout 5m
+          helm upgrade --install postgres helm/postgresql \
+            -f helm/postgresql/values-local.yaml \
+            --wait --timeout 10m
 
       - name: Install Backend
         run: |
