@@ -1,14 +1,21 @@
-Backend deployed!
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+{{- range .paths }}
+Backend API: https://{{ .host }}{{ .path }}
+{{- end }}
+{{- end }}
+{{- else }}
+Backend is running as {{ .Values.service.type }}.
+Port-forward: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "backend.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+Then: curl http://localhost:{{ .Values.service.port }}/api/v1/health/live
+{{- end }}
 
-  Release:  {{ .Release.Name }}
-  Service:  {{ include "backend.fullname" . }}:8000
+{{- if .Values.migration.enabled }}
+Migrations run as a Helm hook (pre-install, pre-upgrade).
+Check status: kubectl logs -n {{ .Release.Namespace }} job/{{ include "backend.fullname" . }}-migration
+{{- end }}
 
-Access via port-forward:
-
-  kubectl port-forward svc/{{ include "backend.fullname" . }} 8000:8000
-
-Then:
-
-  curl http://localhost:8000/api/v1/health/live
-  curl http://localhost:8000/api/v1/health/ready
-  curl http://localhost:8000/api/v1/products
+Health endpoints:
+  Liveness:  GET /api/v1/health/live
+  Readiness: GET /api/v1/health/ready
+  Products:  GET /api/v1/products
