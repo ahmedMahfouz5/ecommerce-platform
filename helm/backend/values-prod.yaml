@@ -69,10 +69,14 @@ networkPolicy:
       port: 53
     database:
       enabled: true
-      # Replace with your actual RDS/CloudSQL host
-      host: ""
+      type: internal
+      # In-cluster PostgreSQL (same namespace, so namespaceSelector is optional)
+      # Leave namespaceSelector empty to default to the same namespace.
+      # If PG lives in a different namespace, set matchLabels accordingly.
+      namespaceSelector: {}
+      podSelector:
+        app.kubernetes.io/component: postgres
       port: 5432
-
 # ServiceMonitor for Prometheus
 serviceMonitor:
   enabled: true
@@ -101,3 +105,4 @@ migration:
     limits:
       cpu: 400m
       memory: 512Mi
+
