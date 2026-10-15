@@ -1,66 +1,82 @@
-{{- if .Values.migrations.enabled }}
+{{- if .Values.migration.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "backend.fullname" . }}-migration
   labels:
     {{- include "backend.labels" . | nindent 4 }}
-    app.kubernetes.io/component: migration
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
     "helm.sh/hook-weight": "1"
 spec:
-  backoffLimit: {{ .Values.migrations.backoffLimit }}
-  activeDeadlineSeconds: {{ .Values.migrations.activeDeadlineSeconds }}
+  backoffLimit: {{ .Values.migration.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migration.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.migration.ttlSecondsAfterFinished }}
   template:
     metadata:
       labels:
         {{- include "backend.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: migration
     spec:
       restartPolicy: OnFailure
+      serviceAccountName: {{ include "backend.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.migration.dbWait.enabled }}
       initContainers:
         - name: wait-for-postgres
-          image: postgres:16-alpine
+          image: {{ .Values.migration.dbWait.image.repository }}:{{ .Values.migration.dbWait.image.tag }}
+          imagePullPolicy: {{ .Values.migration.dbWait.image.pullPolicy }}
           command:
             - sh
             - -c
             - |
-              until pg_isready -h {{ .Values.postgres.host }} -U {{ .Values.postgres.user }} -d {{ .Values.postgres.db }}; do
+              until pg_isready -h {{ required "migration.dbWait.pgHost is required when dbWait is enabled" .Values.migration.dbWait.pgHost }} \
+                -p {{ .Values.migration.dbWait.pgPort }} \
+                -U {{ required "migration.dbWait.pgUser is required" .Values.migration.dbWait.pgUser }} \
+                -d {{ required "migration.dbWait.pgDb is required" .Values.migration.dbWait.pgDb }}; do
                 echo "Waiting for Postgres..."
-                sleep 2
+                sleep {{ .Values.migration.dbWait.retryInterval }}
               done
+          {{- with .Values.migration.dbWait.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 70
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+      {{- end }}
       containers:
         - name: migrate
-          image: {{ include "backend.image" . }}
-          command: ["alembic", "upgrade", "head"]
+          image: {{ include "backend.imageRef" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.migration.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.migration.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "backend.secretName" . }}
+          {{- with .Values.migration.extraEnv }}
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: database-url
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.migration.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           securityContext:
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-          resources:
-            {{- toYaml .Values.migrations.resources | nindent 12 }}
       volumes:
         - name: tmp
-          emptyDir: {}
+          emptyDir:
+            {{- toYaml .Values.tmpSizeLimit | nindent 12 }}
 {{- end }}
