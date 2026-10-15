@@ -37,20 +37,27 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload
 FROM python:3.12-slim-bookworm AS runtime
 WORKDIR /app
 
-RUN groupadd -r appgroup && useradd -r -M -g appgroup -u 1000 appuser
-
+# Copy virtualenv from the build stage
 COPY --from=build /opt/venv /opt/venv
-COPY app ./app            # adjust: add alembic/, etc. if needed
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Copy application code and migration assets
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
+
+# Create unprivileged user with numeric UID/GID for runAsNonRoot compliance
+RUN groupadd -r -g 1000 appgroup && useradd -r -M -g appgroup -u 1000 appuser
+USER 1000:1000
+
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)" || exit 1
-
-USER appuser
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+# --proxy-headers: trust X-Forwarded-* headers from reverse proxy
+# --forwarded-allow-ips: trust all forwarders (tighten in production if needed)
+# --timeout-graceful-shutdown: seconds to wait for in-flight requests to finish
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--proxy-headers", "--forwarded-allow-ips", "*", \
+     "--timeout-graceful-shutdown", "20"]
