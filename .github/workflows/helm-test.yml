@@ -127,6 +127,9 @@ jobs:
           kubectl logs job/backend-migration --tail=50 || true
           echo "=========================================================================================="
           kubectl describe job backend-migration || true
+                    echo "===== backend container logs ====="
+          kubectl logs deployment/backend --previous --tail=200 || true
+
           echo "===== Frontend container logs ====="
           kubectl logs deployment/frontend --previous --tail=200 || true
 
