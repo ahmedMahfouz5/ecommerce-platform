@@ -235,7 +235,14 @@ networkPolicy:
       port: 53
     database:
       enabled: false
+      # -- "external" for cloud DBs (requires 'host'), "internal" for in-cluster DBs
+      type: external
+      # -- External DB host (CIDR) — required when type=external
       host: ""
+      # -- In-cluster DB namespace selector — set when type=internal AND DB is in a different namespace
+      namespaceSelector: {}
+      # -- In-cluster DB pod selector — required when type=internal
+      podSelector: {}
       port: 5432
 
 # ===========================================================================
@@ -318,3 +325,4 @@ tests:
     repository: busybox
     tag: "1.36"
     pullPolicy: IfNotPresent
+
