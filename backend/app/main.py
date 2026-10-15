@@ -10,6 +10,8 @@ from app.config import settings
 from app.modules.products.router import router as products_router
 from app.routers import health
 
+# add comment to trigger CI workflow detection
+
 
 class _CustomEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles Decimal and UUID."""
