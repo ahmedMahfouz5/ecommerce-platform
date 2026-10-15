@@ -8,6 +8,7 @@
 # -- Override resource naming (empty = use release name + chart name)
 nameOverride: ""
 fullnameOverride: ""
+
 # ===========================================================================
 # Image
 # ===========================================================================
@@ -20,6 +21,7 @@ image:
   digest: ""
   # -- Image pull policy
   pullPolicy: IfNotPresent
+
 # -- Image pull secrets (e.g. for private registries)
 imagePullSecrets: []
 #   - name: regcred
@@ -30,12 +32,14 @@ imagePullSecrets: []
 # -- Number of replicas. Omit (or set to null) when HPA is enabled.
 #    Default 1 is safe for dev; production should set >= 2.
 replicaCount: 1
+
 # -- Deployment strategy
 strategy:
   type: RollingUpdate
   rollingUpdate:
     maxSurge: 1
     maxUnavailable: 0
+
 # ===========================================================================
 # Secrets
 #
@@ -49,14 +53,17 @@ secrets:
   create: false
   # -- Name of existing Secret to use (required when create is false)
   existingSecret: "ecommerce-secret"
+
   # -- Key names inside the Secret (used in both modes)
   secretKeys:
     databaseUrl: "database-url"
     secretKey: "secret-key"
+
   # -- Secret values (only used when secrets.create is true).
   #    NEVER commit real values here — set them at deploy time.
   dbUrl: ""
   flaskSecretKey: ""
+
 # ===========================================================================
 # Non-secret application configuration
 #
@@ -71,9 +78,11 @@ config:
   port: 8000
   # -- Forwarded-allow-ips for uvicorn ("*" trusts all)
   forwardedAllowIps: "*"
+
   # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
   extraEnv: {}
   #   FEATURE_NEW_CHECKOUT: "false"
+
 # ===========================================================================
 # Extra environment (passthrough lists)
 # ===========================================================================
@@ -93,6 +102,7 @@ service:
   port: 8000
   # -- Additional annotations on the Service
   annotations: {}
+
 # ===========================================================================
 # Probes (liveness, readiness, startup)
 # ===========================================================================
@@ -117,7 +127,8 @@ probes:
     initialDelaySeconds: 0
     periodSeconds: 5
     timeoutSeconds: 3
-    failureThreshold: 12 # up to 60 s
+    failureThreshold: 12   # up to 60 s
+
 # ===========================================================================
 # Resources (requests & limits)
 # ===========================================================================
@@ -128,6 +139,7 @@ resources:
   limits:
     cpu: 500m
     memory: 384Mi
+
 # ===========================================================================
 # Security contexts
 # ===========================================================================
@@ -139,6 +151,7 @@ podSecurityContext:
   fsGroup: 1000
   seccompProfile:
     type: RuntimeDefault
+
 # -- Container-level security context
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -149,9 +162,11 @@ containerSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
   runAsGroup: 1000
+
 # -- emptyDir /tmp volume size limit
 tmpSizeLimit:
   sizeLimit: 64Mi
+
 # ===========================================================================
 # ServiceAccount
 # ===========================================================================
@@ -162,13 +177,16 @@ serviceAccount:
   name: ""
   # -- Annotations for the ServiceAccount
   annotations: {}
+
 # -- Automount API token (set to true only if the app needs K8s API access)
 automountServiceAccountToken: false
+
 # ===========================================================================
 # Priority class
 # ===========================================================================
 # -- PriorityClassName for the pod
 priorityClassName: ""
+
 # ===========================================================================
 # PodDisruptionBudget
 # ===========================================================================
@@ -178,6 +196,7 @@ pdb:
   minAvailable: 1
   # -- Alternative: maximum unavailable pods
   # maxUnavailable: 1
+
 # ===========================================================================
 # HorizontalPodAutoscaler
 # ===========================================================================
@@ -187,6 +206,7 @@ hpa:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
+
 # ===========================================================================
 # Ingress
 # ===========================================================================
@@ -201,6 +221,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
 # ===========================================================================
 # NetworkPolicy
 # ===========================================================================
@@ -216,6 +237,7 @@ networkPolicy:
       enabled: false
       host: ""
       port: 5432
+
 # ===========================================================================
 # ServiceMonitor (Prometheus Operator)
 # ===========================================================================
@@ -227,6 +249,7 @@ serviceMonitor:
   labels: {}
   annotations: {}
   metricRelabelings: []
+
 # ===========================================================================
 # Alembic migration Job
 # ===========================================================================
@@ -261,25 +284,31 @@ migration:
     pgDb: ""
     retryInterval: 2
     resources: {}
+
 # ===========================================================================
 # Pod scheduling
 # ===========================================================================
 terminationGracePeriodSeconds: 30
 preStopSleepSeconds: 10
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
 topologySpreadConstraints: []
+
 # ===========================================================================
 # Extra annotations & labels
 # ===========================================================================
 podAnnotations: {}
 podLabels: {}
+
 # ===========================================================================
 # Extra volumes & volume mounts
 # ===========================================================================
 extraVolumes: []
 extraVolumeMounts: []
+
 # ===========================================================================
 # Helm test
 # ===========================================================================
