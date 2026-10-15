@@ -37,6 +37,7 @@ spec:
     {{- end }}
     # Database (external or in-cluster)
     {{- if .Values.networkPolicy.egress.database.enabled }}
+    {{- if eq (.Values.networkPolicy.egress.database.type | default "external") "external" }}
     {{- $dbHost := required "networkPolicy.egress.database.host is required when database egress is enabled" .Values.networkPolicy.egress.database.host }}
     - to:
         - ipBlock:
@@ -44,5 +45,28 @@ spec:
       ports:
         - port: {{ .Values.networkPolicy.egress.database.port }}
           protocol: TCP
+    {{- else if eq .Values.networkPolicy.egress.database.type "internal" }}
+    {{- $nsSel := .Values.networkPolicy.egress.database.namespaceSelector | default dict }}
+    {{- $podSel := required "networkPolicy.egress.database.podSelector is required when type=internal" .Values.networkPolicy.egress.database.podSelector }}
+    - to:
+        {{- if gt (len (keys $nsSel)) 0 }}
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml $nsSel | nindent 14 }}
+          podSelector:
+            matchLabels:
+              {{- toYaml $podSel | nindent 14 }}
+    {{- else }}
+        - podSelector:
+            matchLabels:
+              {{- toYaml $podSel | nindent 14 }}
+{{- end }}
+      ports:
+        - port: {{ .Values.networkPolicy.egress.database.port }}
+          protocol: TCP
+    {{- else }}
+    {{- fail "networkPolicy.egress.database.type must be 'external' or 'internal'" }}
+{{- end }}
     {{- end }}
 {{- end }}
+
