@@ -2,10 +2,18 @@ name: Release Frontend
 
 on:
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Build and push even if nothing under frontend/ changed"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
-  pull-requests: write
+
+concurrency:
+  group: release-frontend
+  cancel-in-progress: false
 
 jobs:
   release-please:
@@ -18,7 +26,6 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
-      sha: ${{ steps.release.outputs.sha }}
     steps:
       - uses: actions/checkout@v7
       - uses: googleapis/release-please-action@v5.0.0
@@ -45,102 +52,102 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
+              - 'scripts/smoke-test-frontend.sh'
 
   docker-push:
     needs: [release-please, detect-changes]
+    if: ${{ inputs.force_build || needs.detect-changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - name: Check if frontend changed
-        id: check
-        env:
-          CHANGED: ${{ needs.detect-changes.outputs.frontend }}
-        run: |
-          if [[ "$CHANGED" == "true" ]]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "No changes in frontend. Skipping."
-          fi
-
       - uses: actions/checkout@v7
-        if: ${{ steps.check.outputs.skip == 'false' }}
 
       - uses: docker/setup-buildx-action@v4
-        if: ${{ steps.check.outputs.skip == 'false' }}
 
       - name: Login to Docker Hub
-        if: ${{ steps.check.outputs.skip == 'false' }}
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker metadata
-        if: ${{ steps.check.outputs.skip == 'false' }}
         uses: docker/metadata-action@v6
         id: meta
         with:
           images: ahmedmahfouz0/frontend
           tags: |
             type=sha,format=long,prefix=
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.version }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.version }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
+            type=semver,pattern={{major}},value=${{ needs.release-please.outputs.version }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
 
-      - name: Build image (no push yet — for smoke test)
-        if: ${{ steps.check.outputs.skip == 'false' }}
+      - name: Build image (no push yet, for smoke test)
         uses: docker/build-push-action@v7
-        id: build
         with:
           context: frontend
           load: true
           push: false
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            REVISION=${{ needs.release-please.outputs.sha }}
-            CREATED=${{ github.event.head_commit.timestamp }}
+            REVISION=${{ github.sha }}
+            VERSION=${{ needs.release-please.outputs.version || 'dev' }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
       - name: Smoke test
-        if: ${{ steps.check.outputs.skip == 'false' }}
         env:
-          TAGS: ${{ steps.meta.outputs.tags }}
+          IMAGE: ahmedmahfouz0/frontend:${{ github.sha }}
           BACKEND_URL: http://backend:8000
-        run: |
-          IMAGE=$(echo "$TAGS" | cut -d',' -f1)
-          export IMAGE
-          ./scripts/smoke-test-frontend.sh
+        run: ./scripts/smoke-test-frontend.sh
 
       - name: Push image
-        if: ${{ steps.check.outputs.skip == 'false' }}
         uses: docker/build-push-action@v7
         with:
           context: frontend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            REVISION=${{ needs.release-please.outputs.sha }}
-            CREATED=${{ github.event.head_commit.timestamp }}
+            REVISION=${{ github.sha }}
+            VERSION=${{ needs.release-please.outputs.version || 'dev' }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
-          
-      - name: Update Helm image tag
-        if: ${{ steps.check.outputs.skip == 'false' }}
+
+  update-helm-values:
+    needs: docker-push
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    # Serialise with release-backend.yml so the two never push at the same time
+    concurrency:
+      group: helm-values-update
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Update image tag in Helm values
         env:
-          VERSION: ${{ needs.release-please.outputs.version }}
-          GH_TOKEN: ${{ secrets.GITOPS_REPO_TOKEN }}
+          IMAGE_TAG: ${{ github.sha }}
+          VALUES_FILE: helm/frontend/values.yaml
+          BRANCH: ${{ github.ref_name }}
         run: |
-          git clone https://x-access-token:${GH_TOKEN}@github.com/YOUR_ORG/myapp-gitops.git gitops
+          yq -i '.image.tag = strenv(IMAGE_TAG) | .image.tag style="double"' "$VALUES_FILE"
+          grep -n '^  tag:' "$VALUES_FILE"
 
-          cd gitops
+          if git diff --quiet -- "$VALUES_FILE"; then
+            echo "Tag already ${IMAGE_TAG}; nothing to commit."
+            exit 0
+          fi
 
-          sed -i "s/tag: .*/tag: \"${VERSION}\"/" apps/myapp/helm/values.yaml
-
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add apps/myapp/helm/values.yaml
-          git commit -m "Update frontend image to ${VERSION}"
-          git push origin main
+          git add "$VALUES_FILE"
+          git commit -m "chore: update frontend image tag to ${IMAGE_TAG} [skip ci]"
+          git pull --rebase origin "$BRANCH"
+          git push origin "HEAD:${BRANCH}"
