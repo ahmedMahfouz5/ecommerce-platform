@@ -1,8 +1,0 @@
-PostgreSQL deployed!
-
-  Release:  {{ .Release.Name }}
-  Service:  {{ include "postgres.fullname" . }}:5432
-
-Connect from within the cluster:
-
-  psql -h {{ include "postgres.fullname" . }} -U postgres -d ecommerce
