@@ -1,0 +1,48 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # ---- Ingress: allow from the ingress controller namespace ----
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.ingressControllerNamespaceLabels | nindent 14 }}
+      ports:
+        - port: {{ .Values.service.port }}
+          protocol: TCP
+
+  # ---- Egress ----
+  egress:
+    # DNS is almost always required
+    {{- if .Values.networkPolicy.egress.dns.enabled }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              "kubernetes.io/metadata.name": kube-system
+      ports:
+        - port: {{ .Values.networkPolicy.egress.dns.port }}
+          protocol: UDP
+    {{- end }}
+    # Database (external or in-cluster)
+    {{- if .Values.networkPolicy.egress.database.enabled }}
+    {{- $dbHost := required "networkPolicy.egress.database.host is required when database egress is enabled" .Values.networkPolicy.egress.database.host }}
+    - to:
+        - ipBlock:
+            cidr: {{ $dbHost }}/32
+      ports:
+        - port: {{ .Values.networkPolicy.egress.database.port }}
+          protocol: TCP
+    {{- end }}
+{{- end }}
