@@ -17,38 +17,41 @@ permissions:
 
 jobs:
   lint:
+    name: lint (${{ matrix.name }})
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
-        chart: [helm/postgres, helm/backend, helm/frontend]
+        include:
+          - { name: postgres,         chart: helm/postgres, values: helm/postgres/values.yaml,         set: "" }
+          - { name: backend,          chart: helm/backend,  values: helm/backend/values.yaml,          set: "--set image.tag=ci" }
+          - { name: backend-dev,      chart: helm/backend,  values: helm/backend/values-dev.yaml,      set: "--set image.tag=ci" }
+          - { name: backend-staging,  chart: helm/backend,  values: helm/backend/values-staging.yaml,  set: "--set image.tag=ci" }
+          - { name: backend-prod,     chart: helm/backend,  values: helm/backend/values-prod.yaml,     set: "--set image.tag=ci" }
+          - { name: frontend,         chart: helm/frontend, values: helm/frontend/values.yaml,         set: "--set image.tag=ci" }
+          - { name: frontend-dev,     chart: helm/frontend, values: helm/frontend/values-dev.yaml,     set: "--set image.tag=ci" }
+          - { name: frontend-prod,    chart: helm/frontend, values: helm/frontend/values-prod.yaml,    set: "--set image.tag=ci" }
     steps:
       - uses: actions/checkout@v7.0.1
 
       - uses: azure/setup-helm@v5.0.1
 
-      - name: Set image tag args
-        id: args
-        run: |
-          case "${{ matrix.chart }}" in
-            helm/backend|helm/frontend)
-              echo "extra=--set image.tag=ci" >> $GITHUB_OUTPUT ;;
-            *)
-              echo "extra=" >> $GITHUB_OUTPUT ;;
-          esac
-
       - name: Helm lint
-        run: helm lint ${{ matrix.chart }} ${{ steps.args.outputs.extra }}
+        run: helm lint ${{ matrix.chart }} -f ${{ matrix.values }} ${{ matrix.set }}
 
       - name: Helm template
-        run: |
-          helm template test ${{ matrix.chart }} ${{ steps.args.outputs.extra }} > rendered.yaml
+        run: helm template test ${{ matrix.chart }} -f ${{ matrix.values }} ${{ matrix.set }} > rendered.yaml
 
       - name: Validate with kubeconform
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
-          ./kubeconform -strict -summary rendered.yaml
-
+          # The CRDs catalog covers ServiceMonitor (enabled in backend values-prod.yaml)
+          ./kubeconform -strict -summary -ignore-missing-schemas \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered.yaml
+            
   kind-install:
     needs: lint
     runs-on: ubuntu-24.04
@@ -88,7 +91,7 @@ jobs:
         run: |
           helm upgrade --install backend helm/backend \
             --set image.pullPolicy=IfNotPresent \
-            --wait --timeout 10m
+            --wait --timeout 5m
 
       - name: Install Frontend
         run: |
