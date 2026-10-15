@@ -10,7 +10,7 @@ from app.config import settings
 from app.modules.products.router import router as products_router
 from app.routers import health
 
-# add comment to trigger CI workflow detection
+# add comment to trigger CI workflow detection 12121
 
 
 class _CustomEncoder(json.JSONEncoder):
