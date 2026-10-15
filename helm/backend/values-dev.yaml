@@ -1,0 +1,49 @@
+# =============================================================================
+# Backend — development overrides
+#
+# Apply on top of values.yaml:
+#   helm upgrade --install backend-dev ./helm/backend -f helm/backend/values-dev.yaml
+# =============================================================================
+
+# Single replica for dev
+replicaCount: 1
+
+# Tolerate spot/preemptible nodes
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi
+
+# Dev CORS origins include local frontend dev server
+config:
+  corsOrigins: "http://localhost:5173,http://localhost:3000,http://localhost:8080"
+  logLevel: "DEBUG"
+
+# Faster probe timing for quick feedback in dev
+probes:
+  liveness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 3
+    periodSeconds: 5
+
+# Dev ingress (optional)
+ingress:
+  enabled: false
+  className: nginx
+  hosts:
+    - host: api-dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Dev migration settings (less retries)
+migration:
+  enabled: true
+  dbWait:
+    maxRetries: 15
+    retryInterval: 2
