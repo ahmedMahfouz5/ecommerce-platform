@@ -133,19 +133,22 @@ jobs:
           provenance: mode=max
           sbom: true
 
-      - name: Output image tag
+      - name: Output image tag (always set, even if skipped)
         id: image-tag
-        if: ${{ steps.check.outputs.skip == 'false' }}
+        if: always()
         run: |
-          TAG="${{ fromJSON(steps.meta.outputs.json).tags[0] }}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "${{ steps.check.outputs.skip }}" == "false" ]]; then
+            TAG="${{ fromJSON(steps.meta.outputs.json).tags[0] }}"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
 
   update-helm-values:
-    needs: [release-please, docker-push]
+    needs: [docker-push]
     if: |
       always() &&
-      needs.docker-push.result == 'success' &&
-      needs.docker-push.outputs.image_tag != ''
+      needs.docker-push.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -160,6 +163,11 @@ jobs:
         env:
           IMAGE_TAG: ${{ needs.docker-push.outputs.image_tag }}
         run: |
+          if [[ -z "$IMAGE_TAG" ]]; then
+            echo "No image tag to update. Skipping."
+            exit 0
+          fi
+
           VALUES_FILE="helm/backend/values.yaml"
           echo "Updating $VALUES_FILE with tag: $IMAGE_TAG"
 
