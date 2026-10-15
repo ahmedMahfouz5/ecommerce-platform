@@ -7,7 +7,11 @@ on:
   #   branches: [main]
   #   paths: ["helm/**", ".github/workflows/helm-test.yml"]
   workflow_dispatch:
-
+    inputs:
+      debug_ssh:
+        description: "Open a tmate SSH session if the job fails"
+        type: boolean
+        default: false
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -51,7 +55,7 @@ jobs:
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             rendered.yaml
-            
+
   kind-install:
     needs: lint
     runs-on: ubuntu-24.04
