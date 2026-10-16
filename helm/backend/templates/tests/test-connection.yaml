@@ -1,5 +1,5 @@
-apiVersion: v1
-kind: Pod
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: "{{ include "backend.fullname" . }}-test-connection"
   labels:
@@ -9,35 +9,38 @@ metadata:
     "helm.sh/hook-weight": "5"  # <--- Ensures this runs after deployment & migration
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
-  restartPolicy: Never
-  containers:
-    - name: wget
-      image: busybox:1.36
-      command:
-        - /bin/sh
-        - -c
-        - |
-          TARGET="http://{{ include "backend.fullname" . }}:{{ .Values.service.port }}/api/v1/health/live"
-          HOST="{{ include "backend.fullname" . }}"
-          
-          echo "=== DEBUG: Testing connection to $TARGET ==="
-          
-          # Check DNS resolution first
-          echo "Resolving host $HOST..."
-          nslookup "$HOST" || echo "WARNING: nslookup failed"
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: wget
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              TARGET="http://{{ include "backend.fullname" . }}:{{ .Values.service.port }}/api/v1/health/live"
+              HOST="{{ include "backend.fullname" . }}"
+              
+              echo "=== DEBUG: Testing connection to $TARGET ==="
+              
+              # Check DNS resolution first
+              echo "Resolving host $HOST..."
+              nslookup "$HOST" || echo "WARNING: nslookup failed"
 
-          for i in $(seq 1 10); do
-            echo "--- Attempt $i ---"
-            # Use wget with verbose output (-v) to see actual error codes or connection refused
-            if wget -O- -S "$TARGET" 2>&1; then
-              echo "SUCCESS on attempt $i"
-              exit 0
-            fi
-            echo "Attempt $i failed, retrying in 2s..."
-            sleep 2
-          done
-          
-          echo "=== FAILED: Diagnostic Summary ==="
-          echo "Listing all endpoints/services for debugging:"
-          nslookup kubernetes.default.svc.cluster.local || true
-          exit 1
+              for i in $(seq 1 10); do
+                echo "--- Attempt $i ---"
+                # Use wget with verbose output (-v) to see actual error codes or connection refused
+                if wget -O- -S "$TARGET" 2>&1; then
+                  echo "SUCCESS on attempt $i"
+                  exit 0
+                fi
+                echo "Attempt $i failed, retrying in 2s..."
+                sleep 2
+              done
+              
+              echo "=== FAILED: Diagnostic Summary ==="
+              echo "Listing all endpoints/services for debugging:"
+              nslookup kubernetes.default.svc.cluster.local || true
+              exit 1
+  backoffLimit: 0
