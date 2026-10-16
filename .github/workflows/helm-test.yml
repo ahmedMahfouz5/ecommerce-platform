@@ -91,20 +91,20 @@ jobs:
         run: |
           helm upgrade --install postgres helm/postgresql \
             -f helm/postgresql/values-local.yaml \
-            --wait --timeout 10m
+            --debug --wait --timeout 10m
 
       - name: Install Backend
         run: |
           helm upgrade --install backend helm/backend \
             --set image.pullPolicy=IfNotPresent \
-            --wait --timeout 5m
+            --debug --wait --timeout 5m
 
       - name: Install Frontend
         run: |
           helm upgrade --install frontend helm/frontend \
             --set image.pullPolicy=IfNotPresent \
             --set nginx.localResolvers="$NGINX_LOCAL_RESOLVERS" \
-            --wait --timeout 5m
+            --debug --wait --timeout 5m
 
       - name: Smoke test
         run: |
