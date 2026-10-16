@@ -13,6 +13,18 @@ spec:
     - name: wget
       image: busybox:1.36
       command:
-        - wget
-        - -qO-
-        - "http://{{ include "backend.fullname" . }}:{{ .Values.service.port }}/api/v1/health/live"
+        - /bin/sh
+        - -c
+        - |
+          # Retry loop — Cilium/CNI can take a few seconds to program network
+          # policies for new pods, especially right after a fresh install.
+          for i in $(seq 1 10); do
+            if wget -qO- "http://{{ include "backend.fullname" . }}:{{ .Values.service.port }}/api/v1/health/live"; then
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 2s..."
+            sleep 2
+          done
+          echo "FAILED: could not reach backend after 10 attempts"
+          exit 1
+
