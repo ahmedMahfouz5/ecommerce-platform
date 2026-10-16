@@ -104,8 +104,8 @@ Create the external Secret before installing any chart:
 
 ```bash
 kubectl create secret generic ecommerce-secret \
-  --from-literal=database-url='postgresql+asyncpg://postgres:<password>@postgres:5432/ecommerce' \
-  --from-literal=secret-key='<random-secret-key>' \
+  --from-literal=DATABASE_URL='postgresql+asyncpg://postgres:<password>@postgres:5432/ecommerce' \
+  --from-literal=SECRET_KEY='<random-secret-key>' \
   --from-literal=postgres-password='<password>'
 ```
 
