@@ -47,6 +47,10 @@ strategy:
 #   1) existingSecret (default): reference a pre-created Secret
 #   2) secrets.create: true — chart creates the Secret (supply values at deploy
 #      time via --set, never commit real values)
+#
+# When secrets.create is true, DATABASE_URL is assembled from the individual
+# db* fields below.  When secrets.create is false, DATABASE_URL must exist in
+# the existing Secret (see secretKeys.databaseUrl).
 # ===========================================================================
 secrets:
   # -- Create a Secret from chart values. If false, existingSecret must be provided.
@@ -56,14 +60,18 @@ secrets:
 
   # -- Key names inside the Secret (used in both modes)
   secretKeys:
-    databaseUrl: "database-url"
-    secretKey: "secret-key"
+    databaseUrl: "DATABASE_URL"
+    secretKey: "SECRET_KEY"
 
   # -- Secret values (only used when secrets.create is true).
   #    NEVER commit real values here — set them at deploy time.
-  dbUrl: ""
+  db:
+    host: ""
+    port: "5432"
+    user: "postgres"
+    name: "ecommerce"
+    password: ""
   flaskSecretKey: ""
-
 # ===========================================================================
 # Non-secret application configuration
 #
@@ -82,7 +90,6 @@ config:
   # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
   extraEnv: {}
   #   FEATURE_NEW_CHECKOUT: "false"
-
 # ===========================================================================
 # Extra environment (passthrough lists)
 # ===========================================================================
@@ -93,7 +100,6 @@ env: []
 envFrom: []
 #   - secretRef:
 #       name: extra-secret
-
 # ===========================================================================
 # Service
 # ===========================================================================
@@ -102,7 +108,6 @@ service:
   port: 8000
   # -- Additional annotations on the Service
   annotations: {}
-
 # ===========================================================================
 # Probes (liveness, readiness, startup)
 # ===========================================================================
@@ -166,7 +171,6 @@ containerSecurityContext:
 # -- emptyDir /tmp volume size limit
 tmpSizeLimit:
   sizeLimit: 64Mi
-
 # ===========================================================================
 # ServiceAccount
 # ===========================================================================
@@ -180,13 +184,11 @@ serviceAccount:
 
 # -- Automount API token (set to true only if the app needs K8s API access)
 automountServiceAccountToken: false
-
 # ===========================================================================
 # Priority class
 # ===========================================================================
 # -- PriorityClassName for the pod
 priorityClassName: ""
-
 # ===========================================================================
 # PodDisruptionBudget
 # ===========================================================================
