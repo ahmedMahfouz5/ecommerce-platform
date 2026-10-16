@@ -82,10 +82,10 @@ jobs:
       # because the Bitnami PostgreSQL chart uses fullnameOverride: postgres.
       - name: Create Secret
         run: |
-          kubectl create secret generic ecommerce-secret \
-            --from-literal=database-url='postgresql+asyncpg://postgres:ci-only-password@postgres:5432/ecommerce' \
-            --from-literal=secret-key=ci-only-secret \
-            --from-literal=postgres-password=ci-only-password
+            kubectl create secret generic ecommerce-secret \
+              --from-literal=DATABASE_URL='postgresql+asyncpg://postgres:ci-only-password@postgres:5432/ecommerce' \
+              --from-literal=SECRET_KEY=ci-only-secret \
+              --from-literal=postgres-password=ci-only-password
 
       - name: Install Postgres
         run: |
