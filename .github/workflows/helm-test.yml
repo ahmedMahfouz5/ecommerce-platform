@@ -96,8 +96,10 @@ jobs:
       - name: Run database migration
         run: |
               kubectl apply -f ./migration/job.yaml
-        env:
-          IMAGE_TAG: ${{ github.sha }}
+              kubectl wait \
+              --for=condition=complete \
+              --timeout=300s \
+              job/backend-migration
 
       - name: Debug migration failure
         if: failure()
