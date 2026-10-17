@@ -253,48 +253,6 @@
       }
     },
 
-    "migration": {
-      "type": "object",
-      "properties": {
-        "enabled": { "type": "boolean" },
-        "image": {
-          "type": "object",
-          "properties": {
-            "repository": { "type": "string" },
-            "tag": { "type": "string" },
-            "digest": { "type": "string" },
-            "pullPolicy": { "type": "string" }
-          }
-        },
-        "command": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "backoffLimit": { "type": "integer", "minimum": 0 },
-        "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
-        "dbWait": {
-          "type": "object",
-          "properties": {
-            "enabled": { "type": "boolean" },
-            "maxRetries": { "type": "integer", "minimum": 1 },
-            "retryInterval": { "type": "integer", "minimum": 1 }
-          }
-        },
-        "resources": { "$ref": "#/$defs/resourceRequirements" },
-        "env": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["name"],
-            "properties": {
-              "name": { "type": "string" },
-              "value": { "type": "string" }
-            }
-          }
-        }
-      }
-    },
-
     "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
     "preStopSleepSeconds": { "type": "integer", "minimum": 0 },
 
