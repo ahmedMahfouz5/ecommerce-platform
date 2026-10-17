@@ -93,17 +93,4 @@ priorityClassName: "high-priority"
 terminationGracePeriodSeconds: 60
 preStopSleepSeconds: 15
 
-# Migration job
-migration:
-  enabled: true
-  dbWait:
-    maxRetries: 60
-    retryInterval: 2
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-    limits:
-      cpu: 400m
-      memory: 512Mi
 
