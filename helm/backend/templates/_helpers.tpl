@@ -48,10 +48,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels — IMMUTABLE after a Deployment is created.
 These identify the application instance and serve as the Deployment's
-matchLabels. Changing these causes an orphaned ReplicaSet.
-
-We intentionally put app.kubernetes.io/component in the selector so that
-different components (backend vs migration) don't share selectors.
+matchLabels.
 */}}
 {{- define "backend.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "backend.name" . }}
@@ -82,33 +79,6 @@ Supports digest-pinned images (digest wins over tag).
 {{- else }}
 {{- $tag := required "image.tag is required — set via --set image.tag=<sha> or in values-prod.yaml" .Values.image.tag }}
 {{- printf "%s:%s" $repo $tag }}
-{{- end }}
-{{- end }}
-
-{{/*
-Migration image reference — defaults to the same image as the app.
-*/}}
-{{- define "backend.migrationImageRef" -}}
-{{- $mig := .Values.migration -}}
-{{- if and $mig.image.repository (or $mig.image.tag $mig.image.digest) }}
-{{- if $mig.image.digest }}
-{{- printf "%s@%s" $mig.image.repository $mig.image.digest }}
-{{- else }}
-{{- printf "%s:%s" $mig.image.repository $mig.image.tag }}
-{{- end }}
-{{- else }}
-{{- include "backend.imageRef" . }}
-{{- end }}
-{{- end }}
-
-{{/*
-Migration image pull policy — defaults to the app's pullPolicy.
-*/}}
-{{- define "backend.migrationImagePullPolicy" -}}
-{{- if .Values.migration.image.pullPolicy }}
-{{- .Values.migration.image.pullPolicy }}
-{{- else }}
-{{- .Values.image.pullPolicy }}
 {{- end }}
 {{- end }}
 
