@@ -1,0 +1,111 @@
+# =============================================================================
+# Standalone Kubernetes Job — Alembic migration
+#
+# This Job is NOT a Helm hook.  It runs as a standalone resource that you
+# apply manually *before* deploying a new backend version:
+#
+#   kubectl apply -f migration/job.yaml
+#
+# Once the Job succeeds, the migration is complete and you can safely roll
+# out the backend Deployment.
+#
+# Adjust the values (image tag, secret name, resources, env vars) per
+# environment before applying.
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: backend-migration
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/component: migration
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+spec:
+  backoffLimit: 5
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: OnFailure
+
+      # -------------------------------------------------------------------
+      # Init container — wait for Postgres to be ready (optional).
+      # Comment out the entire initContainers block if you don't need it.
+      # -------------------------------------------------------------------
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h <DB_HOST> \
+                -p <DB_PORT> \
+                -U <DB_USER> \
+                -d <DB_NAME>; do
+                echo "Waiting for Postgres..."
+                sleep 2
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+
+      # -------------------------------------------------------------------
+      # Migration container
+      # -------------------------------------------------------------------
+      containers:
+        - name: migrate
+          # TODO: set the actual image tag (e.g. git SHA)
+          image: ahmedmahfouz0/backend:e13fbcef4da3a9b949a9aa70c288b095f4d98149
+          imagePullPolicy: IfNotPresent
+          command: ["alembic", "upgrade", "head"]
+
+          envFrom:
+            - secretRef:
+                # TODO: change to the correct Secret name for the environment
+                name: ecommerce-secret
+
+          # -- extra env vars (uncomment and fill in as needed) --
+          # env:
+          #   - name: MY_VAR
+          #     value: "my-value"
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
