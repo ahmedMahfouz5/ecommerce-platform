@@ -1,6 +1,6 @@
 apiVersion: v2
 name: backend
-description: FastAPI backend with Alembic migration Job — production-grade Helm chart
+description: FastAPI backend — production-grade Helm chart
 type: application
 version: 0.2.0
 appVersion: "0.1.0"
@@ -8,7 +8,6 @@ kubeVersion: ">=1.28-0"
 
 keywords:
   - fastapi
-  - alembic
   - python
   - api
 
@@ -20,6 +19,4 @@ annotations:
   artifacthub.io/changes: |
     - "Production-grade refactor: ConfigMap, ServiceAccount, PDB, HPA, Ingress, NetworkPolicy, ServiceMonitor"
     - "Secrets now support existingSecret with configurable key names"
-    - "Migration job no longer hardcodes Postgres host/user/db; uses DATABASE_URL from secret"
     - "Dockerfile: fixed COPY alignment, numeric USER, graceful shutdown, removed HEALTHCHECK"
-
