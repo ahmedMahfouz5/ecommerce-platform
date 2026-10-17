@@ -260,41 +260,6 @@ serviceMonitor:
   metricRelabelings: []
 
 # ===========================================================================
-# Alembic migration Job
-# ===========================================================================
-migration:
-  enabled: true
-  # -- Command for the migration container
-  command: ["alembic", "upgrade", "head"]
-  # -- Args (alternative to command, if you want to override entrypoint)
-  args: []
-  backoffLimit: 5
-  activeDeadlineSeconds: 300
-  ttlSecondsAfterFinished: 3600
-  # -- Extra env vars for the migration container
-  extraEnv: []
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
-  # -- Optional init container to wait for Postgres
-  dbWait:
-    enabled: false
-    image:
-      repository: postgres
-      tag: "16-alpine"
-      pullPolicy: IfNotPresent
-    pgHost: ""
-    pgPort: 5432
-    pgUser: ""
-    pgDb: ""
-    retryInterval: 2
-    resources: {}
-
-# ===========================================================================
 # Pod scheduling
 # ===========================================================================
 terminationGracePeriodSeconds: 30
