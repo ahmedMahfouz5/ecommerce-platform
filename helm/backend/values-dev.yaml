@@ -41,9 +41,3 @@ ingress:
         - path: /
           pathType: Prefix
 
-# Dev migration settings (less retries)
-migration:
-  enabled: true
-  dbWait:
-    maxRetries: 15
-    retryInterval: 2
