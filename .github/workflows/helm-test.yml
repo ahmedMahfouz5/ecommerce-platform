@@ -92,14 +92,13 @@ jobs:
           helm upgrade --install postgres helm/postgresql \
             -f helm/postgresql/values-local.yaml \
             --debug --wait --timeout 10m
-
       - name: Run database migration
         run: |
-              kubectl apply -f ./migration/job.yaml
-              kubectl wait \
-              --for=condition=complete \
-              --timeout=300s \
-              job/backend-migration
+          kubectl apply -f ./migration/job.yaml
+          kubectl wait \
+            --for=condition=complete \
+            --timeout=300s \
+            job/backend-migration
 
       - name: Debug migration failure
         if: failure()
