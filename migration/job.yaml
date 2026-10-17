@@ -33,43 +33,13 @@ spec:
         app.kubernetes.io/component: migration
     spec:
       restartPolicy: OnFailure
-
-      # -------------------------------------------------------------------
-      # Init container — wait for Postgres to be ready (optional).
-      # Comment out the entire initContainers block if you don't need it.
-      # -------------------------------------------------------------------
-      initContainers:
-        - name: wait-for-postgres
-          image: postgres:16-alpine
-          imagePullPolicy: IfNotPresent
-          command:
-            - sh
-            - -c
-            - |
-              until pg_isready -h <DB_HOST> \
-                -p <DB_PORT> \
-                -U <DB_USER> \
-                -d <DB_NAME>; do
-                echo "Waiting for Postgres..."
-                sleep 2
-              done
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-
       # -------------------------------------------------------------------
       # Migration container
       # -------------------------------------------------------------------
       containers:
         - name: migrate
           # TODO: set the actual image tag (e.g. git SHA)
-          image: ahmedmahfouz0/backend:e13fbcef4da3a9b949a9aa70c288b095f4d98149
+          image: ahmedmahfouz0/backend:${IMAGE_TAG:-e13fbcef4da3a9b949a9aa70c288b095f4d98149}
           imagePullPolicy: IfNotPresent
           command: ["alembic", "upgrade", "head"]
 
@@ -109,3 +79,4 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi
+
