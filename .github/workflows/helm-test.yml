@@ -95,10 +95,7 @@ jobs:
 
       - name: Run database migration
         run: |
-          # Substitute IMAGE_TAG into the job manifest and delete any previous job
-          kubectl delete job backend-migration --ignore-not-found
-          IMAGE_TAG="${IMAGE_TAG}" envsubst < migration/job.yaml | kubectl apply -f -
-          kubectl wait --for=condition=complete --timeout=5m job/backend-migration
+              kubectl apply -f ./migration/job.yaml
         env:
           IMAGE_TAG: ${{ github.sha }}
 
@@ -106,11 +103,13 @@ jobs:
         if: failure()
         run: |
           echo "===== Migration Job ====="
-          kubectl describe job backend-migration || true
+          kubectl describe job backend-migration -n default || true
+          echo "===== Migration Pods ====="
+          kubectl get pods -n default -l job-name=backend-migration -o wide || true
           echo "===== Migration Pod Logs ====="
-          kubectl logs -l job-name=backend-migration --all-containers --tail=200 || true
-          echo "===== Migration Pod Events ====="
-          kubectl get events --sort-by='.lastTimestamp' | tail -40 || true
+          kubectl logs -n default -l job-name=backend-migration --all-containers --tail=200 || true
+          echo "===== Events ====="
+          kubectl get events -n default --sort-by='.lastTimestamp' | tail -40 || true
 
       - name: Install Backend
         run: |
@@ -127,32 +126,24 @@ jobs:
 
       - name: Smoke test
         run: |
+          cleanup() { kill $(jobs -p) 2>/dev/null; }
+          trap cleanup EXIT
+
           kubectl port-forward svc/backend 8000:8000 &
           kubectl port-forward svc/frontend 8080:8080 &
           sleep 5
+
+          echo "=== Liveness check ==="
           curl -fsS --retry 10 --retry-delay 3 --retry-connrefused localhost:8000/api/v1/health/live
-          curl -fsS localhost:8000/api/v1/health/ready
-          curl -fsS localhost:8080/api/v1/products
+          echo ""
 
-      - name: Debug backend migration failure
-        if: failure()
-        run: |
-          echo "===== Migration Job ====="
-          kubectl describe job backend-migration -n default || true
+          echo "=== Readiness check ==="
+          curl -fsS --retry 5 --retry-delay 2 --retry-connrefused localhost:8000/api/v1/health/ready
+          echo ""
 
-          echo "===== Migration Pods ====="
-          kubectl get pods -n default \
-            -l job-name=backend-migration -o wide || true
-
-          echo "===== Migration Pod Logs ====="
-          kubectl logs -n default \
-            -l job-name=backend-migration \
-            --all-containers=true \
-            --tail=200 || true
-
-          echo "===== Migration Pod Events ====="
-          kubectl get events -n default \
-            --sort-by='.lastTimestamp' | tail -40 || true
+          echo "=== Products endpoint ==="
+          curl -fsS --retry 5 --retry-delay 2 --retry-connrefused localhost:8080/api/v1/products
+          echo ""
 
       - name: Debug on failure
         if: failure()
