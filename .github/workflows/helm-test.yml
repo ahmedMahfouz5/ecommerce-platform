@@ -93,6 +93,25 @@ jobs:
             -f helm/postgresql/values-local.yaml \
             --debug --wait --timeout 10m
 
+      - name: Run database migration
+        run: |
+          # Substitute IMAGE_TAG into the job manifest and delete any previous job
+          kubectl delete job backend-migration --ignore-not-found
+          IMAGE_TAG="${IMAGE_TAG}" envsubst < migration/job.yaml | kubectl apply -f -
+          kubectl wait --for=condition=complete --timeout=5m job/backend-migration
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+
+      - name: Debug migration failure
+        if: failure()
+        run: |
+          echo "===== Migration Job ====="
+          kubectl describe job backend-migration || true
+          echo "===== Migration Pod Logs ====="
+          kubectl logs -l job-name=backend-migration --all-containers --tail=200 || true
+          echo "===== Migration Pod Events ====="
+          kubectl get events --sort-by='.lastTimestamp' | tail -40 || true
+
       - name: Install Backend
         run: |
           helm upgrade --install backend helm/backend \
