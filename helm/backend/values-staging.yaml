@@ -46,9 +46,3 @@ topologySpreadConstraints:
     topologyKey: topology.kubernetes.io/zone
     whenUnsatisfiable: ScheduleAnyway
 
-# Migration
-migration:
-  enabled: true
-  dbWait:
-    maxRetries: 30
-    retryInterval: 2
