@@ -8,7 +8,6 @@
 # -- Override resource naming (empty = use release name + chart name)
 nameOverride: ""
 fullnameOverride: ""
-
 # ===========================================================================
 # Image
 # ===========================================================================
@@ -16,12 +15,11 @@ image:
   # -- Container image repository (REQUIRED)
   repository: ahmedmahfouz0/backend
   # -- Image tag (REQUIRED — set at install/upgrade time, usually git SHA)
-  tag: "e13fbcef4da3a9b949a9aa70c288b095f4d98149"
+  tag: "a7c5195ff31adfb6c812f3685f4257eca0187741"
   # -- Image digest (optional) — when set, overrides tag; e.g. sha256:abc123…
   digest: ""
   # -- Image pull policy
   pullPolicy: IfNotPresent
-
 # -- Image pull secrets (e.g. for private registries)
 imagePullSecrets: []
 #   - name: regcred
@@ -32,14 +30,12 @@ imagePullSecrets: []
 # -- Number of replicas. Omit (or set to null) when HPA is enabled.
 #    Default 1 is safe for dev; production should set >= 2.
 replicaCount: 1
-
 # -- Deployment strategy
 strategy:
   type: RollingUpdate
   rollingUpdate:
     maxSurge: 1
     maxUnavailable: 0
-
 # ===========================================================================
 # Secrets
 #
@@ -57,12 +53,10 @@ secrets:
   create: false
   # -- Name of existing Secret to use (required when create is false)
   existingSecret: "ecommerce-secret"
-
   # -- Key names inside the Secret (used in both modes)
   secretKeys:
     databaseUrl: "DATABASE_URL"
     secretKey: "SECRET_KEY"
-
   # -- Secret values (only used when secrets.create is true).
   #    NEVER commit real values here — set them at deploy time.
   db:
@@ -86,7 +80,6 @@ config:
   port: 8000
   # -- Forwarded-allow-ips for uvicorn ("*" trusts all)
   forwardedAllowIps: "*"
-
   # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
   extraEnv: {}
   #   FEATURE_NEW_CHECKOUT: "false"
@@ -132,8 +125,7 @@ probes:
     initialDelaySeconds: 10
     periodSeconds: 5
     timeoutSeconds: 3
-    failureThreshold: 12   # up to 60 s
-
+    failureThreshold: 12 # up to 60 s
 # ===========================================================================
 # Resources (requests & limits)
 # ===========================================================================
@@ -144,7 +136,6 @@ resources:
   limits:
     cpu: 500m
     memory: 384Mi
-
 # ===========================================================================
 # Security contexts
 # ===========================================================================
@@ -156,7 +147,6 @@ podSecurityContext:
   fsGroup: 1000
   seccompProfile:
     type: RuntimeDefault
-
 # -- Container-level security context
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -167,7 +157,6 @@ containerSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
   runAsGroup: 1000
-
 # -- emptyDir /tmp volume size limit
 tmpSizeLimit:
   sizeLimit: 64Mi
@@ -181,7 +170,6 @@ serviceAccount:
   name: ""
   # -- Annotations for the ServiceAccount
   annotations: {}
-
 # -- Automount API token (set to true only if the app needs K8s API access)
 automountServiceAccountToken: false
 # ===========================================================================
@@ -198,7 +186,6 @@ pdb:
   minAvailable: 1
   # -- Alternative: maximum unavailable pods
   # maxUnavailable: 1
-
 # ===========================================================================
 # HorizontalPodAutoscaler
 # ===========================================================================
@@ -208,7 +195,6 @@ hpa:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
-
 # ===========================================================================
 # Ingress
 # ===========================================================================
@@ -223,7 +209,6 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
-
 # ===========================================================================
 # NetworkPolicy
 # ===========================================================================
@@ -246,7 +231,6 @@ networkPolicy:
       # -- In-cluster DB pod selector — required when type=internal
       podSelector: {}
       port: 5432
-
 # ===========================================================================
 # ServiceMonitor (Prometheus Operator)
 # ===========================================================================
@@ -258,31 +242,25 @@ serviceMonitor:
   labels: {}
   annotations: {}
   metricRelabelings: []
-
 # ===========================================================================
 # Pod scheduling
 # ===========================================================================
 terminationGracePeriodSeconds: 30
 preStopSleepSeconds: 10
-
 nodeSelector: {}
 tolerations: []
 affinity: {}
-
 topologySpreadConstraints: []
-
 # ===========================================================================
 # Extra annotations & labels
 # ===========================================================================
 podAnnotations: {}
 podLabels: {}
-
 # ===========================================================================
 # Extra volumes & volume mounts
 # ===========================================================================
 extraVolumes: []
 extraVolumeMounts: []
-
 # ===========================================================================
 # Helm test
 # ===========================================================================
@@ -292,4 +270,3 @@ tests:
     repository: busybox
     tag: "1.36"
     pullPolicy: IfNotPresent
-
