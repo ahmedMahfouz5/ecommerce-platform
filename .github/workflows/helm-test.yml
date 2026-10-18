@@ -123,6 +123,7 @@ jobs:
           helm upgrade --install frontend helm/frontend \
             --set image.pullPolicy=IfNotPresent \
             --set nginx.localResolvers="$NGINX_LOCAL_RESOLVERS" \
+            --set backendUrl="http://backend.default.svc.cluster.local:8000" \
             --debug --wait --timeout 5m
 
       - name: Smoke test
@@ -186,6 +187,8 @@ jobs:
 
           echo "===== Frontend deployment ====="
           kubectl describe deployment frontend
+          kubectl exec deployment/frontend -- cat /etc/nginx/conf.d/default.conf
+          
 
       - name: Debug SSH session
         if: ${{ failure() && inputs.debug_ssh }}
