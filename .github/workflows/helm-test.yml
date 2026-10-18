@@ -134,16 +134,28 @@ jobs:
           kubectl port-forward svc/frontend 8080:8080 &
           sleep 5
 
-          echo "=== Liveness check ==="
+          echo "=== Backend: Liveness check ==="
           curl -fsS --retry 10 --retry-delay 3 --retry-connrefused localhost:8000/api/v1/health/live
           echo ""
 
-          echo "=== Readiness check ==="
+          echo "=== Backend: Readiness check ==="
           curl -fsS --retry 5 --retry-delay 2 --retry-connrefused localhost:8000/api/v1/health/ready
           echo ""
 
-          echo "=== Products endpoint ==="
+          echo "=== Backend: Products endpoint ==="
+          curl -fsS --retry 5 --retry-delay 2 --retry-connrefused localhost:8000/api/v1/products
+          echo ""
+
+          echo "=== Frontend: Healthz check ==="
+          curl -fsS --retry 10 --retry-delay 3 --retry-connrefused localhost:8080/healthz
+          echo ""
+
+          echo "=== Frontend: Products endpoint (proxied to backend) ==="
           curl -fsS --retry 5 --retry-delay 2 --retry-connrefused localhost:8080/api/v1/products
+          echo ""
+
+          echo "=== Frontend: Static assets ==="
+          curl -fsS --retry 5 --retry-delay 2 --retry-connrefused -o /dev/null -w "HTTP %{http_code}" localhost:8080/
           echo ""
 
       - name: Debug on failure
