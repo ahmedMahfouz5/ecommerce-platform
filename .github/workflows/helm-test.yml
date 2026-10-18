@@ -100,18 +100,6 @@ jobs:
             --timeout=300s \
             job/backend-migration
 
-      - name: Debug migration failure
-        if: failure()
-        run: |
-          echo "===== Migration Job ====="
-          kubectl describe job backend-migration -n default || true
-          echo "===== Migration Pods ====="
-          kubectl get pods -n default -l job-name=backend-migration -o wide || true
-          echo "===== Migration Pod Logs ====="
-          kubectl logs -n default -l job-name=backend-migration --all-containers --tail=200 || true
-          echo "===== Events ====="
-          kubectl get events -n default --sort-by='.lastTimestamp' | tail -40 || true
-
       - name: Install Backend
         run: |
           helm upgrade --install backend helm/backend \
@@ -162,6 +150,14 @@ jobs:
       - name: Debug on failure
         if: failure()
         run: |
+          echo "===== Migration Job ====="
+          kubectl describe job backend-migration -n default || true
+          echo "===== Migration Pods ====="
+          kubectl get pods -n default -l job-name=backend-migration -o wide || true
+          echo "===== Migration Pod Logs ====="
+          kubectl logs -n default -l job-name=backend-migration --all-containers --tail=200 || true
+          echo "===== Events ====="
+          kubectl get events -n default --sort-by='.lastTimestamp' | tail -40 || true
           kubectl get pods,svc,jobs,statefulsets,deployments
           echo "=========================================================================================="
           kubectl describe pods
