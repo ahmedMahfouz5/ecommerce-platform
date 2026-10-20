@@ -55,8 +55,8 @@ jobs:
         with:
           name: terraform-plan
           path: |
-            terraform/tfplan.txt
-            terraform/graph.dot
+            terraform/environments/prod/tfplan.txt
+            terraform/environments/prod/graph.dot
           retention-days: 7
 
       - name: Export plan to JSON
