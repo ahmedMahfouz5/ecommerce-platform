@@ -50,6 +50,9 @@ jobs:
       - name: Export dependency graph
         run: terraform graph > graph.dot
 
+      - name: Export plan to JSON
+        run: terraform show -json tfplan > tfplan.json
+
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
         with:
@@ -57,7 +60,6 @@ jobs:
           path: |
             terraform/environments/prod/tfplan.txt
             terraform/environments/prod/graph.dot
+            terraform/environments/prod/tfplan.json
           retention-days: 7
 
-      - name: Export plan to JSON
-        run: terraform show -json tfplan > tfplan.json
