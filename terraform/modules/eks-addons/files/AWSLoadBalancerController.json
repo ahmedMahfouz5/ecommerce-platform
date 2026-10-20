@@ -1,0 +1,5 @@
+{
+  "_comment": "Placeholder for AWS Load Balancer Controller IAM policy. Copy your actual iam/AWSLoadBalancerController.json content here",
+  "Version": "2012-10-17",
+  "Statement": []
+}
