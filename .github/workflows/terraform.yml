@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: terraform
+        working-directory: terraform/environments/prod
     steps:
       - name: Checkout
         uses: actions/checkout@v7
