@@ -23,14 +23,7 @@ variable "aws_region" {
   type        = string
 }
 
-variable "efs_filesystem_id" {
-  description = "ID of the EFS file system (for storage class)"
+variable "ebs_csi_role_arn" {
+  description = "ARN of the EBS CSI IAM role"
   type        = string
-  default     = ""
-}
-
-variable "efs_csi_role_arn" {
-  description = "ARN of the EFS CSI IAM role"
-  type        = string
-  default     = ""
 }
