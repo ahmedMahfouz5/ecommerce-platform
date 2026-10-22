@@ -13,12 +13,22 @@ output "aws_lbc_release" {
   value       = helm_release.aws_lbc.name
 }
 
-output "external_nginx_release" {
-  description = "Name of the nginx-ingress Helm release"
-  value       = helm_release.external_nginx.name
+output "kong_release" {
+  description = "Name of the Kong Helm release"
+  value       = helm_release.kong.name
+}
+
+output "external_dns_release" {
+  description = "Name of the external-dns Helm release"
+  value       = helm_release.external_dns.name
 }
 
 output "cert_manager_release" {
   description = "Name of the cert-manager Helm release"
   value       = helm_release.cert_manager.name
+}
+
+output "argocd_release" {
+  description = "Name of the Argo CD Helm release"
+  value       = helm_release.argocd.name
 }
