@@ -17,24 +17,31 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
+# --- NAT Gateway(s) ---
+# When nat_gateway_count = 1: single NAT in public_zone1
+# When nat_gateway_count = 2: one NAT per public AZ (HA)
+
 resource "aws_eip" "nat" {
+  count  = var.nat_gateway_count
   domain = "vpc"
 
   tags = {
-    Name = "${var.env}-nat"
+    Name = "${var.env}-nat-${count.index + 1}"
   }
 }
 
 resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public_zone1.id
-
+  count         = var.nat_gateway_count
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = var.nat_gateway_count == 1 ? aws_subnet.public_zone1.id : [aws_subnet.public_zone1.id, aws_subnet.public_zone2.id][count.index]
   tags = {
-    Name = "${var.env}-nat"
+    Name = "${var.env}-nat-${count.index + 1}"
   }
 
   depends_on = [aws_internet_gateway.igw]
 }
+
+# --- Subnets ---
 
 resource "aws_subnet" "private_zone1" {
   vpc_id            = aws_vpc.main.id
@@ -86,16 +93,51 @@ resource "aws_subnet" "public_zone2" {
   }
 }
 
+# --- Route Tables ---
+
 resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  # If 1 NAT: route to that single NAT
+  # If 2 NATs: we create one RT per AZ below instead
+  dynamic "route" {
+    for_each = var.nat_gateway_count == 1 ? [1] : []
+    content {
+      cidr_block     = "0.0.0.0/0"
+      nat_gateway_id = aws_nat_gateway.nat[0].id
+    }
+  }
+  tags = {
+    Name = "${var.env}-private"
+  }
+}
+
+# Per-AZ private route tables for multi-NAT
+resource "aws_route_table" "private_zone1" {
+  count  = var.nat_gateway_count == 2 ? 1 : 0
   vpc_id = aws_vpc.main.id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat.id
+    nat_gateway_id = aws_nat_gateway.nat[0].id
   }
 
   tags = {
-    Name = "${var.env}-private"
+    Name = "${var.env}-private-${var.availability_zones[0]}"
+  }
+}
+
+resource "aws_route_table" "private_zone2" {
+  count  = var.nat_gateway_count == 2 ? 1 : 0
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat[1].id
+  }
+
+  tags = {
+    Name = "${var.env}-private-${var.availability_zones[1]}"
   }
 }
 
@@ -112,14 +154,16 @@ resource "aws_route_table" "public" {
   }
 }
 
+# --- Route Table Associations ---
+
 resource "aws_route_table_association" "private_zone1" {
   subnet_id      = aws_subnet.private_zone1.id
-  route_table_id = aws_route_table.private.id
+  route_table_id = var.nat_gateway_count == 2 ? aws_route_table.private_zone1[0].id : aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "private_zone2" {
   subnet_id      = aws_subnet.private_zone2.id
-  route_table_id = aws_route_table.private.id
+  route_table_id = var.nat_gateway_count == 2 ? aws_route_table.private_zone2[0].id : aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "public_zone1" {
@@ -131,3 +175,4 @@ resource "aws_route_table_association" "public_zone2" {
   subnet_id      = aws_subnet.public_zone2.id
   route_table_id = aws_route_table.public.id
 }
+
