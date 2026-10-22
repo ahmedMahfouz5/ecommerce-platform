@@ -66,26 +66,15 @@ strategy:
     maxUnavailable: 0
     maxSurge: 1
 
-# -- Ingress with TLS
+# Ingress: disabled — routing is via Kong Gateway internal proxy.
+# Kong handles hostname-based routing: frontend.example.com → frontend Service.
 ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: frontend.prod.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - hosts:
-        - frontend.prod.example.com
-      secretName: frontend-tls
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+  enabled: false
 
-# -- NetworkPolicy: restrict ingress and egress
+# -- NetworkPolicy: restrict ingress to Kong namespace
 networkPolicy:
   enabled: true
-  ingressControllerNamespace: ingress-nginx
+  ingressControllerNamespace: kong
 
 # -- Dedicated ServiceAccount
 serviceAccount:
