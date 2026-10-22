@@ -220,94 +220,35 @@ resource "helm_release" "cert_manager" {
 }
 
 # =============================================================================
-# EBS CSI Driver
+# EBS CSI Driver (EKS Add-on)
 # =============================================================================
-data "aws_iam_policy_document" "ebs_csi_driver" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["pods.eks.amazonaws.com"]
-    }
-
-    actions = [
-      "sts:AssumeRole",
-      "sts:TagSession"
-    ]
-  }
-}
-
-resource "aws_iam_role" "ebs_csi_driver" {
-  name               = "${var.cluster_name}-ebs-csi-driver"
-  assume_role_policy = data.aws_iam_policy_document.ebs_csi_driver.json
-}
-
-resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.ebs_csi_driver.name
-}
-
-resource "aws_iam_policy" "ebs_csi_driver_encryption" {
-  name = "${var.cluster_name}-ebs-csi-driver-encryption"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKeyWithoutPlaintext",
-          "kms:CreateGrant"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ebs_csi_driver_encryption" {
-  policy_arn = aws_iam_policy.ebs_csi_driver_encryption.arn
-  role       = aws_iam_role.ebs_csi_driver.name
-}
-
-resource "aws_eks_pod_identity_association" "ebs_csi_driver" {
-  cluster_name    = var.cluster_name
-  namespace       = "kube-system"
-  service_account = "ebs-csi-controller-sa"
-  role_arn        = aws_iam_role.ebs_csi_driver.arn
-}
-
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name             = var.cluster_name
   addon_name               = "aws-ebs-csi-driver"
   addon_version            = "v1.30.0-eksbuild.1"
-  service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
+  service_account_role_arn = var.ebs_csi_role_arn
 }
 
 # =============================================================================
-# EFS CSI Driver (Helm) + Storage Class
+# EBS Default Storage Class (gp3)
 # =============================================================================
-resource "helm_release" "efs_csi_driver" {
-  name = "aws-efs-csi-driver"
-
-  repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
-  chart      = "aws-efs-csi-driver"
-  namespace  = "kube-system"
-  version    = "3.0.3"
-
-  set {
-    name  = "controller.serviceAccount.name"
-    value = "efs-csi-controller-sa"
+resource "kubernetes_storage_class_v1" "ebs_gp3" {
+  metadata {
+    name = "gp3"
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "true"
+    }
   }
 
-  set {
-    name  = "controller.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.efs_csi_role_arn
+  storage_provisioner = "ebs.csi.aws.com"
+  volume_binding_mode = "WaitForFirstConsumer"
+
+  parameters = {
+    type      = "gp3"
+    encrypted = "true"
   }
 
-  depends_on = [helm_release.aws_lbc]
+  depends_on = [aws_eks_addon.ebs_csi_driver]
 }
 
 # =============================================================================
@@ -326,7 +267,7 @@ resource "helm_release" "secrets_csi_driver" {
     value = "true"
   }
 
-  depends_on = [helm_release.efs_csi_driver]
+  depends_on = [aws_eks_addon.ebs_csi_driver]
 }
 
 resource "helm_release" "secrets_csi_driver_aws_provider" {
@@ -340,21 +281,4 @@ resource "helm_release" "secrets_csi_driver_aws_provider" {
   depends_on = [helm_release.secrets_csi_driver]
 }
 
-resource "kubernetes_storage_class_v1" "efs" {
-  metadata {
-    name = "efs"
-  }
-
-  storage_provisioner = "efs.csi.aws.com"
-
-  parameters = {
-    provisioningMode = "efs-ap"
-    fileSystemId     = var.efs_filesystem_id
-    directoryPerms   = "700"
-  }
-
-  mount_options = ["iam"]
-
-  depends_on = [helm_release.efs_csi_driver]
-}
 
