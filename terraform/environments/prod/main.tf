@@ -76,16 +76,14 @@ module "iam" {
 }
 
 # =============================================================================
-# EFS Module
+# EBS Module
 # =============================================================================
-module "efs" {
+module "ebs" {
   source = "../../modules/efs"
 
-  cluster_name              = module.eks.cluster_name
-  private_subnet_ids        = module.vpc.private_subnet_ids
-  cluster_security_group_id = module.eks.cluster_security_group_id
-  oidc_provider_arn         = module.eks.oidc_provider_arn
-  oidc_issuer               = module.eks.cluster_oidc_issuer
+  cluster_name      = module.eks.cluster_name
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_issuer       = module.eks.cluster_oidc_issuer
 }
 
 # =============================================================================
@@ -99,8 +97,7 @@ module "eks_addons" {
   oidc_provider_arn = module.eks.oidc_provider_arn
   oidc_issuer       = module.eks.cluster_oidc_issuer
   aws_region        = var.aws_region
-  efs_filesystem_id = module.efs.efs_filesystem_id
-  efs_csi_role_arn  = module.efs.efs_csi_role_arn
+  ebs_csi_role_arn  = module.ebs.ebs_csi_role_arn
 
-  depends_on = [module.efs, module.iam]
+  depends_on = [module.ebs, module.iam]
 }
