@@ -19,25 +19,15 @@ resources:
 config:
   corsOrigins: "https://example.com,https://admin.example.com"
   logLevel: "WARNING"
-  # In production, limit forwarded-allow-ips to the ingress CIDR.
-  # "*" is shown here only if you are behind a trusted LB; tighten when possible.
+  # In production, limit forwarded-allow-ips to Kong's pod CIDR/cluster.
+  # Kong sits in front and forwards requests, so trust the cluster CIDR.
   forwardedAllowIps: "*"
 
-# Production Ingress with TLS
+# Ingress: disabled — routing is handled by Kong Gateway via its
+# internal Kubernetes Service discovery. Kong routes by hostname/path
+# using KongIngress/Ingress resources or DB-less declarative config.
 ingress:
-  enabled: true
-  className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-  hosts:
-    - host: api.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - hosts:
-        - api.example.com
-      secretName: api-tls
+  enabled: false
 
 # PodDisruptionBudget — keep at least 2 pods alive during voluntary disruptions
 pdb:
@@ -59,10 +49,11 @@ topologySpreadConstraints:
     whenUnsatisfiable: DoNotSchedule
 
 # NetworkPolicy — lock down ingress/egress
+# Allow ingress from Kong namespace
 networkPolicy:
   enabled: true
   ingressControllerNamespaceLabels:
-    "kubernetes.io/metadata.name": ingress-nginx
+    "kubernetes.io/metadata.name": kong
   egress:
     dns:
       enabled: true
@@ -70,14 +61,12 @@ networkPolicy:
     database:
       enabled: true
       type: internal
-      # In-cluster PostgreSQL (same namespace, so namespaceSelector is optional)
-      # Leave namespaceSelector empty to default to the same namespace.
-      # If PG lives in a different namespace, set matchLabels accordingly.
       namespaceSelector: {}
       podSelector:
         app.kubernetes.io/name: postgresql
         app.kubernetes.io/component: primary
       port: 5432
+
 # ServiceMonitor for Prometheus
 serviceMonitor:
   enabled: true
