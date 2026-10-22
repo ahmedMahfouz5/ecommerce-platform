@@ -38,6 +38,17 @@ variable "public_subnet_cidrs" {
   type        = list(string)
 }
 
+variable "route53_zone_name" {
+  description = "Route 53 public hosted zone name (e.g., example.com). Must already exist or be created by Terraform."
+  type        = string
+}
+
+variable "nat_gateway_count" {
+  description = "Number of NAT Gateways (1 for single-AZ, 2 for multi-AZ HA)"
+  type        = number
+  default     = 1
+}
+
 variable "node_instance_types" {
   description = "Instance types for the node group"
   type        = list(string)
@@ -67,3 +78,4 @@ variable "node_capacity_type" {
   type        = string
   default     = "ON_DEMAND"
 }
+
