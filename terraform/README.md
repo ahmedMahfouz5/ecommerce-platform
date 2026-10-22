@@ -8,7 +8,7 @@ terraform/
 │   ├── vpc/            # VPC, subnets, IGW, NAT, route tables
 │   ├── eks/            # EKS cluster, node group, OIDC provider
 │   ├── iam/            # IAM users, roles, access entries, app IRSA roles
-│   ├── efs/            # EFS filesystem, mount targets, EFS CSI IAM role
+│   ├── ebs/            # EBS CSI IAM role (IRSA)
 │   └── eks-addons/     # All Helm releases + EKS add-ons + their IAM roles
 ├── environments/
 │   └── prod/
@@ -42,18 +42,18 @@ IAM users (developer, manager), admin role with assume policy, EKS access entrie
 **Inputs:** `env`, `eks_name`, `cluster_name`, `account_id`, `oidc_provider_arn`, `oidc_issuer`
 **Outputs:** `developer_iam_user_arn`, `eks_admin_role_arn`, `myapp_secrets_role_arn`
 
-### efs
-EFS filesystem (encrypted), mount targets in private subnets, and the EFS CSI driver IAM role (IRSA).
+### ebs
+EBS CSI driver IAM role (IRSA) for EBS volume provisioning.
 
-**Inputs:** `cluster_name`, `private_subnet_ids`, `cluster_security_group_id`, `oidc_provider_arn`, `oidc_issuer`
-**Outputs:** `efs_filesystem_id`, `efs_csi_role_arn`
+**Inputs:** `cluster_name`, `oidc_provider_arn`, `oidc_issuer`
+**Outputs:** `ebs_csi_role_arn`
 
 ### eks-addons
 All cluster add-ons deployed via Helm and EKS native add-ons, along with their IAM roles and pod identity associations.
 
-Contains: metrics-server, pod-identity-agent, cluster-autoscaler, AWS Load Balancer Controller, NGINX Ingress, cert-manager, EBS CSI Driver, EFS CSI Driver (Helm), Secrets Store CSI Driver + AWS Provider, and the EFS storage class.
+Contains: metrics-server, pod-identity-agent, cluster-autoscaler, AWS Load Balancer Controller, cert-manager, EBS CSI Driver (EKS add-on), Secrets Store CSI Driver + AWS Provider, and the EBS gp3 storage class.
 
-**Inputs:** `cluster_name`, `vpc_id`, `oidc_provider_arn`, `oidc_issuer`, `aws_region`, `efs_filesystem_id`, `efs_csi_role_arn`
+**Inputs:** `cluster_name`, `vpc_id`, `oidc_provider_arn`, `oidc_issuer`, `aws_region`, `ebs_csi_role_arn`
 **Outputs:** release names for key Helm charts
 
 ## Dependency Graph
@@ -61,9 +61,9 @@ Contains: metrics-server, pod-identity-agent, cluster-autoscaler, AWS Load Balan
 ```
 vpc ──→ eks ──→ iam
          │
-         ├──→ efs
+         ├──→ ebs
          │
-         └──→ eks-addons (also depends on efs, iam)
+         └──→ eks-addons (also depends on ebs, iam)
 ```
 
 ## Commands
