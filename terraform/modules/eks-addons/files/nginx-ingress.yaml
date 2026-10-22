@@ -1,2 +1,6 @@
-# Placeholder for nginx-ingress Helm values
-# Copy your actual values/nginx-ingress.yaml content here
+# =============================================================================
+# This file is no longer used. The project now uses Kong Gateway as the
+# in-cluster API Gateway, configured via files/kong-gateway.yaml.
+#
+# Kept for reference. Safe to delete after confirming migration.
+# =============================================================================
