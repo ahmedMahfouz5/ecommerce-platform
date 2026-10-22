@@ -3,6 +3,16 @@ output "vpc_id" {
   value       = module.vpc.vpc_id
 }
 
+output "public_subnet_ids" {
+  description = "IDs of the public subnets (for NLB placement)"
+  value       = module.vpc.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "IDs of the private subnets"
+  value       = module.vpc.private_subnet_ids
+}
+
 output "cluster_name" {
   description = "Name of the EKS cluster"
   value       = module.eks.cluster_name
@@ -36,4 +46,19 @@ output "myapp_secrets_role_arn" {
 output "eks_admin_role_arn" {
   description = "ARN of the EKS admin IAM role"
   value       = module.iam.eks_admin_role_arn
+}
+
+output "acm_certificate_arn" {
+  description = "ARN of the ACM certificate for NLB TLS termination"
+  value       = aws_acm_certificate.nlb.arn
+}
+
+output "route53_zone_id" {
+  description = "Route 53 hosted zone ID"
+  value       = data.aws_route53_zone.main.zone_id
+}
+
+output "route53_zone_name" {
+  description = "Route 53 hosted zone name"
+  value       = var.route53_zone_name
 }
