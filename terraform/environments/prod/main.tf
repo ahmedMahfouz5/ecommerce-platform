@@ -88,10 +88,10 @@ module "iam" {
 }
 
 # =============================================================================
-# EBS Module (EBS CSI IAM – module directory kept as 'efs' for history)
+# EBS Module (EBS CSI IAM)
 # =============================================================================
 module "ebs" {
-  source = "../../modules/efs"
+  source = "../../modules/ebs"
 
   cluster_name      = module.eks.cluster_name
   oidc_provider_arn = module.eks.oidc_provider_arn
@@ -176,3 +176,4 @@ resource "aws_acm_certificate_validation" "nlb" {
 # is created by the AWS LBC (via Kong's LoadBalancer Service), you can
 # create the record manually or let external-dns handle it.
 # =============================================================================
+
