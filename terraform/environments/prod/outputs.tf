@@ -23,9 +23,9 @@ output "oidc_provider_arn" {
   value       = module.eks.oidc_provider_arn
 }
 
-output "efs_filesystem_id" {
-  description = "ID of the EFS file system"
-  value       = module.efs.efs_filesystem_id
+output "ebs_csi_role_arn" {
+  description = "ARN of the EBS CSI driver IAM role"
+  value       = module.ebs.ebs_csi_role_arn
 }
 
 output "myapp_secrets_role_arn" {
