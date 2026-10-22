@@ -19,7 +19,12 @@ output "public_subnet_ids" {
   ]
 }
 
+output "nat_gateway_ids" {
+  description = "IDs of the NAT gateway(s)"
+  value       = aws_nat_gateway.nat[*].id
+}
+
 output "nat_gateway_id" {
-  description = "ID of the NAT gateway"
-  value       = aws_nat_gateway.nat.id
+  description = "ID of the primary NAT gateway (backwards-compatible)"
+  value       = aws_nat_gateway.nat[0].id
 }
