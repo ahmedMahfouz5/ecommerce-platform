@@ -17,7 +17,7 @@ resources:
     memory: 768Mi
 
 config:
-  corsOrigins: "https://example.com,https://admin.example.com"
+  corsOrigins: "https://ahmedmahfouz.click,https://www.ahmedmahfouz.click"
   logLevel: "WARNING"
   # In production, limit forwarded-allow-ips to Kong's pod CIDR/cluster.
   # Kong sits in front and forwards requests, so trust the cluster CIDR.
