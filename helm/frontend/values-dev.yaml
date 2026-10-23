@@ -20,7 +20,7 @@ ingress:
   enabled: true
   className: nginx
   hosts:
-    - host: frontend.dev.example.com
+    - host: frontend.dev.ahmedmahfouz.click
       paths:
         - path: /
           pathType: Prefix
