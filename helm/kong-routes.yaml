@@ -28,7 +28,7 @@ spec:
   ingressClassName: kong
   rules:
     # --- Backend API ---
-    - host: api.example.com
+    - host: api.ahmedmahfouz.click
       http:
         paths:
           - path: /
@@ -40,7 +40,7 @@ spec:
                   number: 8000
 
     # --- Frontend SPA ---
-    - host: example.com
+    - host: ahmedmahfouz.click
       http:
         paths:
           - path: /
@@ -51,7 +51,7 @@ spec:
                 port:
                   number: 8080
 
-    - host: www.example.com
+    - host: www.ahmedmahfouz.click
       http:
         paths:
           - path: /
@@ -74,8 +74,8 @@ metadata:
 plugin: cors
 config:
   origins:
-    - "https://example.com"
-    - "https://www.example.com"
+    - "https://ahmedmahfouz.click"
+    - "https://www.ahmedmahfouz.click"
   methods:
     - GET
     - POST
