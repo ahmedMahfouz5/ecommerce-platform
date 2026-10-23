@@ -57,7 +57,7 @@ proxy:
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "10"
 
     # External-DNS integration — creates Route 53 A record for this NLB
-    external-dns.alpha.kubernetes.io/hostname: "api.example.com,*.api.example.com"
+    external-dns.alpha.kubernetes.io/hostname: "api.ahmedmahfouz.click,*.api.ahmedmahfouz.click"
 
   # -- Ingress (disabled — we use the LoadBalancer Service directly)
   ingress:
