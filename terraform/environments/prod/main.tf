@@ -10,16 +10,25 @@ provider "aws" {
 # =============================================================================
 data "aws_caller_identity" "current" {}
 
-# Fetch the Route 53 hosted zone. If it does not exist yet and you have
-# permission to create it, set create_zone = true in the route53 module below.
-# Otherwise, create the zone manually or via another Terraform workspace first.
-data "aws_route53_zone" "main" {
-  name         = var.route53_zone_name
-  private_zone = false
-}
-
 # Current AWS region
 data "aws_region" "current" {}
+
+# =============================================================================
+# Route 53 Hosted Zone
+# =============================================================================
+# Creates the public hosted zone for the domain. After Terraform creates it,
+# configure the 4 NS records (shown in the route53_name_servers output) as
+# custom nameservers at your domain registrar (Name.com).
+resource "aws_route53_zone" "main" {
+  name          = var.route53_zone_name
+  comment       = "Public hosted zone for ${var.route53_zone_name} — managed by Terraform (${var.env})"
+  force_destroy = false
+
+  tags = {
+    Environment = var.env
+    Name        = var.route53_zone_name
+  }
+}
 
 # =============================================================================
 # VPC Module
