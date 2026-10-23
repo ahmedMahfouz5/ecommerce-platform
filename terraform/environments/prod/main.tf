@@ -113,7 +113,7 @@ module "eks_addons" {
   ebs_csi_role_arn  = module.ebs.ebs_csi_role_arn
 
   # Route 53
-  route53_zone_id   = data.aws_route53_zone.main.zone_id
+  route53_zone_id   = aws_route53_zone.main.zone_id
   route53_zone_name = var.route53_zone_name
 
   depends_on = [module.ebs, module.iam]
@@ -157,7 +157,7 @@ resource "aws_route53_record" "acm_validation" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.main.zone_id
+  zone_id         = aws_route53_zone.main.zone_id
 }
 
 resource "aws_acm_certificate_validation" "nlb" {
