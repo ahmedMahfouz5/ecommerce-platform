@@ -55,10 +55,16 @@ output "acm_certificate_arn" {
 
 output "route53_zone_id" {
   description = "Route 53 hosted zone ID"
-  value       = aws_route53_zone.main
+  value       = aws_route53_zone.main.zone_id
 }
 
 output "route53_zone_name" {
   description = "Route 53 hosted zone name"
   value       = var.route53_zone_name
 }
+
+output "route53_name_servers" {
+  description = "Route 53 name servers — configure these at Name.com for ahmedmahfouz.click"
+  value       = aws_route53_zone.main.name_servers
+}
+
