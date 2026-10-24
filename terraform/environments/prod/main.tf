@@ -64,20 +64,30 @@ module "eks" {
 }
 
 # =============================================================================
-# Helm and Kubernetes providers (configured from EKS module outputs)
+# Fetch cluster details dynamically using Data Sources with a dependency on the EKS module
 # =============================================================================
+data "aws_eks_cluster" "cluster" {
+  name       = module.eks.cluster_name # Or your variable name for the cluster name
+  depends_on = [module.eks]
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name       = module.eks.cluster_name # Or your variable name for the cluster name
+  depends_on = [module.eks]
+}
+
 provider "helm" {
   kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
-    token                  = module.eks.cluster_auth_token
+    host                   = data.aws_eks_cluster.cluster.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.cluster.token
   }
 }
 
 provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
-  token                  = module.eks.cluster_auth_token
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
 }
 
 # =============================================================================
