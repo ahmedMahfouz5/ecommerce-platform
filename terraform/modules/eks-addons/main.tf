@@ -251,9 +251,9 @@ resource "helm_release" "kong" {
   create_namespace = true
   version          = "3.4.1"
 
-  atomic          = true
+  atomic          = false
   cleanup_on_fail = true
-  timeout         = 600
+  timeout         = 900
 
   values = [templatefile("${path.module}/files/kong-gateway.yaml.tftpl", {
     acm_certificate_arn = var.acm_certificate_arn
@@ -376,7 +376,7 @@ resource "helm_release" "cert_manager" {
 # =============================================================================
 resource "helm_release" "secrets_csi_driver" {
   name       = "secrets-store-csi-driver"
-  repository = " https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
+  repository = "https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
   chart      = "secrets-store-csi-driver"
   namespace  = "kube-system"
   version    = "1.6.1"
