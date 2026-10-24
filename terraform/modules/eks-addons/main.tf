@@ -306,7 +306,7 @@ resource "helm_release" "external_dns" {
   repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
   namespace  = "kube-system"
-  version    = "1.15.0"
+  version    = "1.23.0"
 
   atomic          = true
   cleanup_on_fail = true
@@ -357,7 +357,7 @@ resource "helm_release" "cert_manager" {
   chart            = "cert-manager"
   namespace        = "cert-manager"
   create_namespace = true
-  version          = "v1.14.5"
+  version          = "v1.21.3"
 
   atomic          = true
   cleanup_on_fail = true
@@ -376,10 +376,10 @@ resource "helm_release" "cert_manager" {
 # =============================================================================
 resource "helm_release" "secrets_csi_driver" {
   name       = "secrets-store-csi-driver"
-  repository = "https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
+  repository = "https://github.com/kubernetes-sigs/secrets-store-csi-driver.git"
   chart      = "secrets-store-csi-driver"
   namespace  = "kube-system"
-  version    = "1.4.3"
+  version    = "1.6.1"
 
   atomic          = true
   cleanup_on_fail = true
@@ -398,7 +398,7 @@ resource "helm_release" "secrets_csi_driver_aws_provider" {
   repository = "https://aws.github.io/secrets-store-csi-driver-provider-aws"
   chart      = "secrets-store-csi-driver-provider-aws"
   namespace  = "kube-system"
-  version    = "0.3.8"
+  version    = "3.1.4"
 
   atomic          = true
   cleanup_on_fail = true
@@ -416,7 +416,7 @@ resource "helm_release" "argocd" {
   chart            = "argo-cd"
   namespace        = "argocd"
   create_namespace = true
-  version          = "7.3.3"
+  version          = "10.11.1"
 
   atomic          = true
   cleanup_on_fail = true
