@@ -68,3 +68,12 @@ output "route53_name_servers" {
   value       = aws_route53_zone.main.name_servers
 }
 
+output "configure_kubectl" {
+  description = "Command to configure kubectl for this cluster"
+  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}"
+}
+
+output "nat_public_ips" {
+  description = "NAT egress IPs (for third-party allowlists)"
+  value       = module.vpc.nat_public_ips
+}
