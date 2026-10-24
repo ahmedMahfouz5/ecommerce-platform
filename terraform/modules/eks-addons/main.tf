@@ -189,7 +189,7 @@ resource "aws_iam_role" "aws_lbc" {
 
 resource "aws_iam_policy" "aws_lbc" {
   name   = "${var.cluster_name}-aws-lbc"
-  policy = file("${path.module}/files/AWSLoadBalancerController.json")
+  policy = file("${path.module}/files/lbc-iam-policy.json")
 }
 
 resource "aws_iam_role_policy_attachment" "aws_lbc" {
@@ -403,6 +403,11 @@ resource "helm_release" "secrets_csi_driver_aws_provider" {
   atomic          = true
   cleanup_on_fail = true
   timeout         = 600
+
+  set {
+    name  = "secrets-store-csi-driver.install"
+    value = "false"
+  }
 
   depends_on = [helm_release.secrets_csi_driver]
 }
