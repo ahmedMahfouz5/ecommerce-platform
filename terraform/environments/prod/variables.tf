@@ -79,3 +79,13 @@ variable "node_capacity_type" {
   default     = "ON_DEMAND"
 }
 
+variable "eks_public_access_cidrs" {
+  description = "CIDRs allowed to reach the EKS public API endpoint"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "node_disk_size" {
+  type    = number
+  default = 20
+}
