@@ -47,3 +47,15 @@ variable "node_capacity_type" {
   type        = string
   default     = "ON_DEMAND"
 }
+
+variable "public_access_cidrs" {
+  description = "CIDRs allowed to reach the public API endpoint"
+  type        = list(string)
+  # no default on purpose: force an explicit decision
+}
+
+
+variable "node_disk_size" {
+  type    = number
+  default = 20
+}
