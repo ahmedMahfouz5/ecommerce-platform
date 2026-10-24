@@ -1,0 +1,149 @@
+# =============================================================================
+# Kong Gateway — Helm values
+#
+# Kong is the in-cluster API Gateway. It is exposed via a Service of type
+# LoadBalancer. The AWS Load Balancer Controller provisions an NLB in the
+# public subnets to forward traffic to Kong's proxy port.
+#
+# TLS:
+#   - NLB listener on port 443 terminates TLS using the ACM certificate.
+#     (Configured via the service.beta.kubernetes.io/aws-load-balancer-*
+#     annotations below.)
+#   - Kong's proxy listens on port 8443 (TLS) and 8000 (HTTP).
+#   - Backend services behind Kong use HTTP inside the cluster.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Kong image & proxy
+# ---------------------------------------------------------------------------
+image:
+  repository: kong
+  tag: "3.7"
+
+
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+
+  # NLB terminates TLS on 443 and forwards plain HTTP to Kong's 8000
+  http:
+    enabled: true
+    servicePort: 443
+    containerPort: 8000
+  tls:
+    enabled: false
+
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${acm_certificate_arn}"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    external-dns.alpha.kubernetes.io/hostname: "${domain},*.${domain}"
+
+
+  # -- TLS secret for Kong's own proxy (optional — NLB already terminates TLS)
+  #    If you want re-encryption to the pod, mount a cert-manager issued cert here.
+
+# ---------------------------------------------------------------------------
+# Database mode — "postgres" or "dbless"
+# "dbless" is simpler: declarative config via DB-less mode.
+# For production with dynamic route management, use "postgres".
+# ---------------------------------------------------------------------------
+env:
+  database: "off"
+  # # PostgreSQL connection string — point to in-cluster PostgreSQL
+  # # Override at deploy time for your specific PG instance
+  # pg_host: "postgresql-primary.default.svc.cluster.local"
+  # pg_port: "5432"
+  # pg_database: "kong"
+  # pg_user: "kong"
+  # # pg_password should come from a Secret; set via --set at deploy time.
+  # # Set via env.secrets or separate secret. For now, set via --set.
+  # pg_password: "CHANGE_ME"
+
+# ---------------------------------------------------------------------------
+# Admin API — internal only (ClusterIP)
+# ---------------------------------------------------------------------------
+admin:
+  enabled: true
+  type: ClusterIP
+  http:
+    enabled: true
+    servicePort: 8001
+    containerPort: 8001
+  tls:
+    enabled: false
+
+  # Disable admin ingress
+  ingress:
+    enabled: false
+
+# ---------------------------------------------------------------------------
+# Manager (Kong Manager UI) — internal only
+# ---------------------------------------------------------------------------
+manager:
+  enabled: true
+  type: ClusterIP
+  http:
+    enabled: true
+    servicePort: 8002
+    containerPort: 8002
+  tls:
+    enabled: false
+  ingress:
+    enabled: false
+
+# ---------------------------------------------------------------------------
+# Enterprise features (disabled for OSS)
+# ---------------------------------------------------------------------------
+enterprise:
+  enabled: false
+
+# ---------------------------------------------------------------------------
+# Plugins bundled with Kong OSS
+# ---------------------------------------------------------------------------
+# Kong OSS includes: cors, rate-limiting, key-auth, jwt, oauth2, etc.
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# ---------------------------------------------------------------------------
+# Autoscaling
+# ---------------------------------------------------------------------------
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+# ---------------------------------------------------------------------------
+# Replicas
+# ---------------------------------------------------------------------------
+replicaCount: 2
+
+# ---------------------------------------------------------------------------
+# Pod security
+# ---------------------------------------------------------------------------
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
