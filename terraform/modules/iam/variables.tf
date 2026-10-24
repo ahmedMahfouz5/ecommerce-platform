@@ -27,3 +27,25 @@ variable "oidc_issuer" {
   description = "OIDC issuer URL (for IRSA condition)"
   type        = string
 }
+
+variable "myapp_namespace" {
+  type    = string
+  default = "default" # set this to your real app namespace
+}
+
+variable "myapp_service_account" {
+  type    = string
+  default = "myapp"
+}
+
+variable "myapp_secret_arns" {
+  description = "Secrets the app may read. Null = arn:...:secret:<env>/myapp/*"
+  type        = list(string)
+  default     = null
+}
+
+variable "require_mfa" {
+  description = "Require MFA to assume the admin role"
+  type        = bool
+  default     = false
+}
