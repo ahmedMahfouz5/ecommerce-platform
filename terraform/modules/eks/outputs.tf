@@ -5,12 +5,12 @@ output "cluster_name" {
 
 output "cluster_endpoint" {
   description = "EKS cluster API endpoint"
-  value       = data.aws_eks_cluster.eks.endpoint
+  value       = aws_eks_cluster.eks.endpoint
 }
 
 output "cluster_ca_certificate" {
   description = "Base64-encoded cluster CA certificate"
-  value       = data.aws_eks_cluster.eks.certificate_authority[0].data
+  value       = aws_eks_cluster.eks.certificate_authority[0].data
   sensitive   = true
 }
 
@@ -44,3 +44,4 @@ output "cluster_auth_token" {
   value       = data.aws_eks_cluster_auth.eks.token
   sensitive   = true
 }
+
