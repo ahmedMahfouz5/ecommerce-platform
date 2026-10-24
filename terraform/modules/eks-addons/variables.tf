@@ -8,20 +8,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "IDs of the public subnets (for NLB provisioning)"
-  type        = list(string)
-}
-
-variable "oidc_provider_arn" {
-  description = "ARN of the OIDC provider (for IRSA)"
-  type        = string
-}
-
-variable "oidc_issuer" {
-  description = "OIDC issuer URL (for IRSA)"
-  type        = string
-}
 
 variable "aws_region" {
   description = "AWS region"
@@ -41,4 +27,15 @@ variable "route53_zone_id" {
 variable "route53_zone_name" {
   description = "Route 53 public hosted zone name (e.g., example.com)"
   type        = string
+}
+
+variable "acm_certificate_arn" {
+  description = "Validated ACM certificate ARN for NLB TLS termination"
+  type        = string
+}
+
+variable "disable_gp2_default" {
+  description = "Remove the default flag from EKS's built-in gp2 StorageClass. Set false if gp2 doesn't exist."
+  type        = bool
+  default     = true
 }
