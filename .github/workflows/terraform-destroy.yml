@@ -27,11 +27,10 @@ jobs:
     steps:
       - name: Check confirmation
         working-directory: ${{ github.workspace }}
+        env:
+          CONFIRM: ${{ inputs.confirm }}
         run: |
-          if [ "${{ inputs.confirm }}" != "destroy" ]; then
-            echo "Confirmation text did not match. Aborting."
-            exit 1
-          fi
+          [ "$CONFIRM" = "destroy" ] || { echo "Confirmation text did not match. Aborting."; exit 1; }
 
       - name: Checkout
         uses: actions/checkout@v7
