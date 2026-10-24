@@ -8,11 +8,6 @@ variable "vpc_cidr" {
   type        = string
 }
 
-variable "availability_zones" {
-  description = "List of availability zones"
-  type        = list(string)
-}
-
 variable "private_subnet_cidrs" {
   description = "CIDR blocks for private subnets"
   type        = list(string)
@@ -28,13 +23,20 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "nat_gateway_count" {
-  description = "Number of NAT Gateways (1 or 2). 1 = single-AZ NAT, 2 = one per public AZ for HA."
-  type        = number
-  default     = 1
+
+variable "availability_zones" {
+  type = list(string)
   validation {
-    condition     = var.nat_gateway_count == 1 || var.nat_gateway_count == 2
-    error_message = "nat_gateway_count must be 1 or 2"
+    condition     = length(var.availability_zones) >= 2
+    error_message = "EKS requires subnets in at least 2 AZs."
   }
 }
 
+variable "nat_gateway_count" {
+  type    = number
+  default = 1
+  validation {
+    condition     = var.nat_gateway_count >= 1 && var.nat_gateway_count <= length(var.availability_zones)
+    error_message = "nat_gateway_count must be between 1 and the number of AZs."
+  }
+}
