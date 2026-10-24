@@ -291,7 +291,7 @@ resource "helm_release" "external_dns" {
   }
 
   set {
-    name  = "provider"
+    name  = "provider.name"
     value = "aws"
   }
 
