@@ -13,15 +13,15 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
-    name: "Terraform"
+  terraform-plan:
+    name: "Terraform Plan"
     runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: terraform/environments/prod
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.3.0
@@ -53,13 +53,47 @@ jobs:
       - name: Export plan to JSON
         run: terraform show -json tfplan > tfplan.json
 
-      - name: Upload Terraform plan
-        uses: actions/upload-artifact@v7.0.2
+      - name: Upload Terraform plan artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
           path: |
+            terraform/environments/prod/tfplan
             terraform/environments/prod/tfplan.txt
             terraform/environments/prod/graph.dot
             terraform/environments/prod/tfplan.json
           retention-days: 7
 
+  terraform-apply:
+    name: "Terraform Apply"
+    needs: terraform-plan
+    runs-on: ubuntu-24.04
+    environment:
+      name: prod
+    defaults:
+      run:
+        working-directory: terraform/environments/prod
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::557797815982:role/github-actions-terraform
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4.0.1
+
+      - name: Download Terraform plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/environments/prod
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -no-color tfplan
