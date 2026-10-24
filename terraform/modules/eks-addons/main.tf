@@ -85,7 +85,7 @@ resource "helm_release" "metrics_server" {
   repository = "https://kubernetes-sigs.github.io/metrics-server/"
   chart      = "metrics-server"
   namespace  = "kube-system"
-  version    = "3.12.1"
+  version    = "3.14.0"
 
   atomic          = true
   cleanup_on_fail = true
@@ -154,7 +154,7 @@ resource "helm_release" "cluster_autoscaler" {
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
   namespace  = "kube-system"
-  version    = "9.37.0"
+  version    = "9.59.0"
 
   atomic          = true
   cleanup_on_fail = true
@@ -211,7 +211,7 @@ resource "helm_release" "aws_lbc" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  version    = "1.7.2"
+  version    = "3.6.1"
 
   atomic          = true
   cleanup_on_fail = true
@@ -249,7 +249,7 @@ resource "helm_release" "kong" {
   chart            = "kong"
   namespace        = "kong"
   create_namespace = true
-  version          = "2.42.0"
+  version          = "3.4.1"
 
   atomic          = true
   cleanup_on_fail = true
@@ -376,7 +376,7 @@ resource "helm_release" "cert_manager" {
 # =============================================================================
 resource "helm_release" "secrets_csi_driver" {
   name       = "secrets-store-csi-driver"
-  repository = "https://github.com/kubernetes-sigs/secrets-store-csi-driver.git"
+  repository = " https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
   chart      = "secrets-store-csi-driver"
   namespace  = "kube-system"
   version    = "1.6.1"
