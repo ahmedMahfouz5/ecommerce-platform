@@ -1,27 +1,33 @@
-# --- Developer user ---
+data "aws_region" "current" {}
 
+locals {
+  prefix      = "${var.env}-${var.eks_name}"
+  oidc_host   = replace(var.oidc_issuer, "https://", "")
+  cluster_arn = "arn:aws:eks:${data.aws_region.current.name}:${var.account_id}:cluster/${var.cluster_name}"
+  secret_arns = coalesce(var.myapp_secret_arns, ["arn:aws:secretsmanager:${data.aws_region.current.name}:${var.account_id}:secret:${var.env}/myapp/*"])
+}
+
+# =============================================================================
+# Developer (read-only)
+# =============================================================================
 resource "aws_iam_user" "developer" {
-  name = "developer"
+  name = "${local.prefix}-developer"
+}
+
+data "aws_iam_policy_document" "developer" {
+  statement {
+    actions   = ["eks:DescribeCluster"]
+    resources = [local.cluster_arn]
+  }
+  statement {
+    actions   = ["eks:ListClusters"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "developer_eks" {
-  name = "AmazonEKSDeveloperPolicy"
-
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "eks:DescribeCluster",
-                "eks:ListClusters"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-POLICY
+  name   = "${local.prefix}-developer-eks"
+  policy = data.aws_iam_policy_document.developer.json
 }
 
 resource "aws_iam_user_policy_attachment" "developer_eks" {
@@ -30,59 +36,68 @@ resource "aws_iam_user_policy_attachment" "developer_eks" {
 }
 
 resource "aws_eks_access_entry" "developer" {
-  cluster_name      = var.cluster_name
-  principal_arn     = aws_iam_user.developer.arn
-  kubernetes_groups = ["my-viewer"]
+  cluster_name  = var.cluster_name
+  principal_arn = aws_iam_user.developer.arn
+  type          = "STANDARD"
 }
 
-# --- Manager / Admin role ---
+resource "aws_eks_access_policy_association" "developer" {
+  cluster_name  = var.cluster_name
+  principal_arn = aws_iam_user.developer.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
 
-resource "aws_iam_role" "eks_admin" {
-  name = "${var.env}-${var.eks_name}-eks-admin"
+  access_scope {
+    type = "cluster"
+  }
 
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "AWS": "arn:aws:iam::${var.account_id}:root"
+  depends_on = [aws_eks_access_entry.developer]
+}
+
+# =============================================================================
+# Manager (admin via assumed role)
+# =============================================================================
+resource "aws_iam_user" "manager" {
+  name = "${local.prefix}-manager"
+}
+
+data "aws_iam_policy_document" "eks_admin_trust" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_user.manager.arn]
+    }
+
+    dynamic "condition" {
+      for_each = var.require_mfa ? [1] : []
+      content {
+        test     = "Bool"
+        variable = "aws:MultiFactorAuthPresent"
+        values   = ["true"]
       }
     }
-  ]
+  }
 }
-POLICY
+
+resource "aws_iam_role" "eks_admin" {
+  name               = "${local.prefix}-eks-admin"
+  assume_role_policy = data.aws_iam_policy_document.eks_admin_trust.json
+}
+
+data "aws_iam_policy_document" "eks_admin" {
+  statement {
+    actions = [
+      "eks:Describe*",
+      "eks:List*",
+      "eks:AccessKubernetesApi",
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "eks_admin" {
-  name = "AmazonEKSAdminPolicy"
-
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "eks:*"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "iam:PassRole",
-            "Resource": "*",
-            "Condition": {
-                "StringEquals": {
-                    "iam:PassedToService": "eks.amazonaws.com"
-                }
-            }
-        }
-    ]
-}
-POLICY
+  name   = "${local.prefix}-eks-admin"
+  policy = data.aws_iam_policy_document.eks_admin.json
 }
 
 resource "aws_iam_role_policy_attachment" "eks_admin" {
@@ -90,27 +105,16 @@ resource "aws_iam_role_policy_attachment" "eks_admin" {
   policy_arn = aws_iam_policy.eks_admin.arn
 }
 
-resource "aws_iam_user" "manager" {
-  name = "manager"
+data "aws_iam_policy_document" "assume_admin" {
+  statement {
+    actions   = ["sts:AssumeRole"]
+    resources = [aws_iam_role.eks_admin.arn]
+  }
 }
 
 resource "aws_iam_policy" "eks_assume_admin" {
-  name = "AmazonEKSAssumeAdminPolicy"
-
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "sts:AssumeRole"
-            ],
-            "Resource": "${aws_iam_role.eks_admin.arn}"
-        }
-    ]
-}
-POLICY
+  name   = "${local.prefix}-assume-eks-admin"
+  policy = data.aws_iam_policy_document.assume_admin.json
 }
 
 resource "aws_iam_user_policy_attachment" "manager" {
@@ -119,55 +123,67 @@ resource "aws_iam_user_policy_attachment" "manager" {
 }
 
 resource "aws_eks_access_entry" "manager" {
-  cluster_name      = var.cluster_name
-  principal_arn     = aws_iam_role.eks_admin.arn
-  kubernetes_groups = ["my-admin"]
+  cluster_name  = var.cluster_name
+  principal_arn = aws_iam_role.eks_admin.arn
+  type          = "STANDARD"
 }
 
-# --- App-level IRSA role for Secrets Manager ---
+resource "aws_eks_access_policy_association" "manager" {
+  cluster_name  = var.cluster_name
+  principal_arn = aws_iam_role.eks_admin.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
-data "aws_iam_policy_document" "myapp_secrets" {
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.manager]
+}
+
+# =============================================================================
+# App IRSA role: Secrets Manager read
+# =============================================================================
+data "aws_iam_policy_document" "myapp_secrets_trust" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
-    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [var.oidc_provider_arn]
+    }
 
     condition {
       test     = "StringEquals"
-      variable = "${replace(var.oidc_issuer, "https://", "")}:sub"
-      values   = ["system:serviceaccount:12-example:myapp"]
+      variable = "${local.oidc_host}:sub"
+      values   = ["system:serviceaccount:${var.myapp_namespace}:${var.myapp_service_account}"]
     }
 
-    principals {
-      identifiers = [var.oidc_provider_arn]
-      type        = "Federated"
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_host}:aud"
+      values   = ["sts.amazonaws.com"]
     }
   }
 }
 
 resource "aws_iam_role" "myapp_secrets" {
   name               = "${var.cluster_name}-myapp-secrets"
-  assume_role_policy = data.aws_iam_policy_document.myapp_secrets.json
+  assume_role_policy = data.aws_iam_policy_document.myapp_secrets_trust.json
+}
+
+data "aws_iam_policy_document" "myapp_secrets" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    resources = local.secret_arns
+  }
 }
 
 resource "aws_iam_policy" "myapp_secrets" {
-  name = "${var.cluster_name}-myapp-secrets"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
+  name   = "${var.cluster_name}-myapp-secrets"
+  policy = data.aws_iam_policy_document.myapp_secrets.json
 }
 
 resource "aws_iam_role_policy_attachment" "myapp_secrets" {
-  policy_arn = aws_iam_policy.myapp_secrets.arn
   role       = aws_iam_role.myapp_secrets.name
+  policy_arn = aws_iam_policy.myapp_secrets.arn
 }
