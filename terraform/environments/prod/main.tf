@@ -135,7 +135,7 @@ module "eks_addons" {
   route53_zone_id   = aws_route53_zone.main.zone_id
   route53_zone_name = var.route53_zone_name
 
-  depends_on = [module.ebs, module.iam]
+  depends_on = [module.ebs, module.iam, module.eks]
 }
 
 # =============================================================================
