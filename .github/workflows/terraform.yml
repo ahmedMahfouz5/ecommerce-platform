@@ -1,99 +1,101 @@
-name: "Terraform"
+name: Terraform
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - "terraform/**"
+  # pull_request:
+  #   paths: ["terraform/**"]   # plan-only on PRs; apply stays gated below
+
+# One Terraform run at a time, shared with the destroy workflow
+concurrency:
+  group: terraform-prod
+  cancel-in-progress: false
 
 permissions:
   id-token: write
   contents: read
 
-jobs:
-  terraform-plan:
-    name: "Terraform Plan"
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: terraform/environments/prod
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+env:
+  TF_VERSION: "1.10.5"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6.3.0
+defaults:
+  run:
+    working-directory: terraform/environments/prod
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
-          role-to-assume: arn:aws:iam::557797815982:role/github-actions-terraform
+          role-to-assume: ${{ vars.TF_PLAN_ROLE_ARN || 'arn:aws:iam::557797815982:role/github-actions-terraform' }}
           aws-region: us-east-1
 
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
+      - uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4.0.1
+      - name: Format check (all modules)
+        working-directory: terraform
+        run: terraform fmt -check -recursive
 
-      - name: Terraform Init
+      - name: Init
         run: terraform init
 
-      - name: Terraform Format
-        run: terraform fmt -check
+      - name: Validate
+        run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan -no-color
+      - name: Plan
+        run: terraform plan -out=tfplan -lock-timeout=5m -no-color
 
-      - name: Export plan to readable text
-        run: terraform show -no-color tfplan > tfplan.txt
+      - name: Plan summary
+        run: |
+          {
+            echo '### Terraform plan'
+            echo '```'
+            terraform show -no-color tfplan
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Export dependency graph
-        run: terraform graph > graph.dot
-
-      - name: Export plan to JSON
-        run: terraform show -json tfplan > tfplan.json
-
-      - name: Upload Terraform plan artifacts
-        uses: actions/upload-artifact@v4
+      # Binary plan only: needed by apply, short retention.
+      - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
-          path: |
-            terraform/environments/prod/tfplan
-            terraform/environments/prod/tfplan.txt
-            terraform/environments/prod/graph.dot
-            terraform/environments/prod/tfplan.json
-          retention-days: 7
+          path: terraform/environments/prod/tfplan
+          retention-days: 1
 
-  terraform-apply:
-    name: "Terraform Apply"
-    needs: terraform-plan
+  apply:
+    name: Apply
+    needs: plan
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     environment:
       name: prod
-    defaults:
-      run:
-        working-directory: terraform/environments/prod
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6.3.0
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
-          role-to-assume: arn:aws:iam::557797815982:role/github-actions-terraform
+          role-to-assume: ${{ vars.TF_APPLY_ROLE_ARN || 'arn:aws:iam::557797815982:role/github-actions-terraform' }}
           aws-region: us-east-1
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4.0.1
+      - uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Download Terraform plan artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: terraform-plan
           path: terraform/environments/prod
 
-      - name: Terraform Init
+      - name: Init
         run: terraform init
 
-      - name: Terraform Apply
-        run: terraform apply -no-color tfplan
+      - name: Apply
+        run: terraform apply -lock-timeout=5m -no-color tfplan
