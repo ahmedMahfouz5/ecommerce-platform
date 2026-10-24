@@ -44,3 +44,18 @@ docker-compose.override.yml
 # --- Alembic ---
 *.pyc
 .aider*
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!example.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
