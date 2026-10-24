@@ -52,7 +52,7 @@ jobs:
         run: terraform init
 
       - name: Update kubeconfig for EKS
-        run: aws eks update-kubeconfig --region us-east-1 --name staging-demo
+        run: aws eks update-kubeconfig --region us-east-2 --name staging-demo
 
       - name: Terraform Plan (destroy)
         run: terraform plan -destroy -out=destroy.tfplan -no-color
@@ -105,7 +105,7 @@ jobs:
         run: terraform init
 
       - name: Update kubeconfig for EKS
-        run: aws eks update-kubeconfig --region us-east-1 --name staging-demo
+        run: aws eks update-kubeconfig --region us-east-2 --name staging-demo
 
       - name: Terraform Destroy (apply saved plan)
         run: terraform apply -input=false destroy.tfplan
