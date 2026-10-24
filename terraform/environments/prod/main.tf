@@ -1,33 +1,53 @@
-# =============================================================================
-# Provider configuration
-# =============================================================================
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      Environment = var.env
+      Project     = "ecommerce-platform"
+      ManagedBy   = "terraform"
+    }
+  }
 }
 
-# =============================================================================
-# Data sources
-# =============================================================================
 data "aws_caller_identity" "current" {}
 
-# Current AWS region
-data "aws_region" "current" {}
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
 
-# =============================================================================
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.aws_region]
+    }
+  }
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.aws_region]
+  }
+}
+#===========================================================================
 # Route 53 Hosted Zone
 # =============================================================================
-# Creates the public hosted zone for the domain. After Terraform creates it,
-# configure the 4 NS records (shown in the route53_name_servers output) as
-# custom nameservers at your domain registrar (Name.com).
-resource "aws_route53_zone" "main" {
-  name          = var.route53_zone_name
-  comment       = "Public hosted zone for ${var.route53_zone_name} — managed by Terraform (${var.env})"
-  force_destroy = false
+# Keeps the same 4 nameservers across destroy/recreate, so Name.com is configured once
+resource "aws_route53_delegation_set" "main" {
+  reference_name = "ecommerce-${var.env}"
+}
 
-  tags = {
-    Environment = var.env
-    Name        = var.route53_zone_name
-  }
+resource "aws_route53_zone" "main" {
+  name              = var.route53_zone_name
+  comment           = "Public hosted zone for ${var.route53_zone_name}, managed by Terraform (${var.env})"
+  delegation_set_id = aws_route53_delegation_set.main.id
+  force_destroy     = var.route53_force_destroy
 }
 
 # =============================================================================
@@ -76,20 +96,6 @@ data "aws_eks_cluster" "cluster" {
 data "aws_eks_cluster_auth" "cluster" {
   name       = module.eks.cluster_name # Or your variable name for the cluster name
   depends_on = [module.eks]
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = data.aws_eks_cluster.cluster.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
-  }
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
 }
 
 # =============================================================================
