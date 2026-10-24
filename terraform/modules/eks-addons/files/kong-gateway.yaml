@@ -72,16 +72,16 @@ proxy:
 # For production with dynamic route management, use "postgres".
 # ---------------------------------------------------------------------------
 env:
-  database: "postgres"
-  # PostgreSQL connection string — point to in-cluster PostgreSQL
-  # Override at deploy time for your specific PG instance
-  pg_host: "postgresql-primary.default.svc.cluster.local"
-  pg_port: "5432"
-  pg_database: "kong"
-  pg_user: "kong"
-  # pg_password should come from a Secret; set via --set at deploy time.
-  # Set via env.secrets or separate secret. For now, set via --set.
-  pg_password: "CHANGE_ME"
+  database: "off"
+  # # PostgreSQL connection string — point to in-cluster PostgreSQL
+  # # Override at deploy time for your specific PG instance
+  # pg_host: "postgresql-primary.default.svc.cluster.local"
+  # pg_port: "5432"
+  # pg_database: "kong"
+  # pg_user: "kong"
+  # # pg_password should come from a Secret; set via --set at deploy time.
+  # # Set via env.secrets or separate secret. For now, set via --set.
+  # pg_password: "CHANGE_ME"
 
 # ---------------------------------------------------------------------------
 # Admin API — internal only (ClusterIP)
