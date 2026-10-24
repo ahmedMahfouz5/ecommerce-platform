@@ -89,3 +89,9 @@ variable "node_disk_size" {
   type    = number
   default = 20
 }
+
+variable "route53_force_destroy" {
+  description = "Delete all records (including external-dns ones) when destroying the zone"
+  type        = bool
+  default     = false
+}
