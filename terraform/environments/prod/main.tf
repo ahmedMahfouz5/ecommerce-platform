@@ -61,6 +61,8 @@ module "eks" {
   node_max_size       = var.node_max_size
   node_min_size       = var.node_min_size
   node_capacity_type  = var.node_capacity_type
+  public_access_cidrs = var.eks_public_access_cidrs
+  node_disk_size      = var.node_disk_size
 }
 
 # =============================================================================
@@ -123,17 +125,13 @@ module "ebs" {
 module "eks_addons" {
   source = "../../modules/eks-addons"
 
-  cluster_name      = module.eks.cluster_name
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_issuer       = module.eks.cluster_oidc_issuer
-  aws_region        = var.aws_region
-  ebs_csi_role_arn  = module.ebs.ebs_csi_role_arn
-
-  # Route 53
-  route53_zone_id   = aws_route53_zone.main.zone_id
-  route53_zone_name = var.route53_zone_name
+  cluster_name        = module.eks.cluster_name
+  vpc_id              = module.vpc.vpc_id
+  aws_region          = var.aws_region
+  ebs_csi_role_arn    = module.ebs.ebs_csi_role_arn
+  route53_zone_id     = aws_route53_zone.main.zone_id
+  route53_zone_name   = var.route53_zone_name
+  acm_certificate_arn = aws_acm_certificate_validation.nlb.certificate_arn
 
   depends_on = [module.ebs, module.iam, module.eks]
 }
