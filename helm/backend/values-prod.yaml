@@ -6,15 +6,15 @@
 # =============================================================================
 
 # At least 2 replicas across zones
-replicaCount: 3
+replicaCount: 1
 
 resources:
   requests:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 100m
+    memory: 256Mi
   limits:
-    cpu: 1000m
-    memory: 768Mi
+    cpu: 150m
+    memory: 300Mi
 
 config:
   corsOrigins: "https://ahmedmahfouz.click,https://www.ahmedmahfouz.click"
