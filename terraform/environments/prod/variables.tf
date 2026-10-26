@@ -95,3 +95,9 @@ variable "route53_force_destroy" {
   type        = bool
   default     = false
 }
+
+variable "terraform_user_name" {
+  description = "Name of the existing terraform IAM user (created outside this module)"
+  type        = string
+}
+

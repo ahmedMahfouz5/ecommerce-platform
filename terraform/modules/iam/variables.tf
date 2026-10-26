@@ -49,3 +49,9 @@ variable "require_mfa" {
   type        = bool
   default     = false
 }
+
+variable "terraform_user_name" {
+  description = "Name of the existing terraform IAM user"
+  type        = string
+}
+

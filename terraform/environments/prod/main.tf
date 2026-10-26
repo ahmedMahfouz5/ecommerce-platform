@@ -104,12 +104,13 @@ data "aws_eks_cluster_auth" "cluster" {
 module "iam" {
   source = "../../modules/iam"
 
-  env               = var.env
-  eks_name          = var.eks_name
-  cluster_name      = module.eks.cluster_name
-  account_id        = data.aws_caller_identity.current.account_id
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_issuer       = module.eks.cluster_oidc_issuer
+  env                 = var.env
+  eks_name            = var.eks_name
+  cluster_name        = module.eks.cluster_name
+  account_id          = data.aws_caller_identity.current.account_id
+  oidc_provider_arn   = module.eks.oidc_provider_arn
+  oidc_issuer         = module.eks.cluster_oidc_issuer
+  terraform_user_name = var.terraform_user_name
 
   depends_on = [module.eks]
 }
