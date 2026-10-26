@@ -88,16 +88,6 @@ jobs:
       - name: Apply (ebs)
         run: terraform apply -target=module.ebs -auto-approve -lock-timeout=5m -no-color
 
-      - name: Apply (route53-acm)
-        run: |
-          terraform apply \
-            -target=aws_route53_delegation_set.main \
-            -target=aws_route53_zone.main \
-            -target=aws_acm_certificate.nlb \
-            -target=aws_route53_record.acm_validation \
-            -target=aws_acm_certificate_validation.nlb \
-            -auto-approve -lock-timeout=5m -no-color
-
       - name: Apply (eks-addons)
         run: terraform apply -target=module.eks-addons -auto-approve -lock-timeout=5m -no-color
 
