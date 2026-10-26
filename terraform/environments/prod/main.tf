@@ -129,7 +129,7 @@ module "ebs" {
 # =============================================================================
 # EKS Add-ons Module
 # =============================================================================
-module "eks_addons" {
+module "eks-addons" {
   source = "../../modules/eks-addons"
 
   cluster_name        = module.eks.cluster_name
