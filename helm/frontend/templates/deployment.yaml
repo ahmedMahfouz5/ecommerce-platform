@@ -74,13 +74,20 @@ spec:
               value: {{ .Values.nginx.proxyReadTimeout | quote }}
             - name: CLIENT_MAX_BODY_SIZE
               value: {{ .Values.nginx.clientMaxBodySize | quote }}
-            {{- if .Values.nginx.localResolvers }}
-            - name: NGINX_LOCAL_RESOLVERS
-              value: {{ .Values.nginx.localResolvers | quote }}
-            {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+             {{- if .Values.nginx.localResolvers }}
+             - name: NGINX_LOCAL_RESOLVERS
+               value: {{ .Values.nginx.localResolvers | quote }}
+             {{- else }}
+             # The nginx image only auto-detects resolvers from /etc/resolv.conf
+             # (15-local-resolvers.envsh) when this variable is non-empty.
+             # Without it NGINX_LOCAL_RESOLVERS stays unset and nginx fails with
+             # 'host not found in resolver "${NGINX_LOCAL_RESOLVERS}"'.
+             - name: NGINX_ENTRYPOINT_LOCAL_RESOLVERS
+               value: "1"
+             {{- end }}
+             {{- with .Values.extraEnv }}
+             {{- toYaml . | nindent 12 }}
+
 
           # ---- startup probe (generous failureThreshold for slow DNS) ----
           startupProbe:
