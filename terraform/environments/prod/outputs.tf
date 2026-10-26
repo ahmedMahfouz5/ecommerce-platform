@@ -82,3 +82,19 @@ output "argocd_url" {
   description = "Public URL of Argo CD"
   value       = module.eks-addons.argocd_url
 }
+
+output "asset_bucket_name" {
+  description = "Name of the S3 asset bucket"
+  value       = module.s3-assets.bucket_name
+}
+
+output "asset_bucket_arn" {
+  description = "ARN of the S3 asset bucket"
+  value       = module.s3-assets.bucket_arn
+}
+
+output "asset_bucket_regional_domain_name" {
+  description = "Regional domain name of the S3 asset bucket"
+  value       = module.s3-assets.bucket_regional_domain_name
+}
+

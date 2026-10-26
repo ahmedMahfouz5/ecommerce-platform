@@ -144,6 +144,16 @@ module "eks-addons" {
 }
 
 # =============================================================================
+# S3 Asset Bucket
+# =============================================================================
+module "s3-assets" {
+  source = "../../modules/s3-assets"
+
+  env        = var.env
+  project    = "ecommerce"
+  aws_region = var.aws_region
+}
+# =============================================================================
 # ACM Certificate for NLB TLS termination
 # =============================================================================
 # The certificate MUST be in the same region as the NLB.
