@@ -13,8 +13,8 @@ output "myapp_secrets_role_arn" {
   value       = aws_iam_role.myapp_secrets.arn
 }
 
-output "github_actions_terraform_role_arn" {
-  description = "ARN of the GitHub Actions Terraform IAM role"
-  value       = data.aws_iam_role.github_actions_terraform.arn
-}
+# output "github_actions_terraform_role_arn" {
+#   description = "ARN of the GitHub Actions Terraform IAM role"
+#   value       = data.aws_iam_role.github_actions_terraform.arn
+# }
 
