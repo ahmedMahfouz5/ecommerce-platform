@@ -10,7 +10,24 @@ spec:
     repoURL: https://github.com/ahmedMahfouz5/ecommerce-platform.git
     targetRevision: main
     path: helm/postgresql
-    helm: { releaseName: postgres }
+    helm:
+      releaseName: postgres
+      valueFiles: [values-local.yaml]
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-migration
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "1" }
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedMahfouz5/ecommerce-platform.git
+    targetRevision: main
+    path: migration
   destination: { server: https://kubernetes.default.svc, namespace: default }
   syncPolicy: { automated: { prune: true, selfHeal: true } }
 ---
@@ -19,7 +36,7 @@ kind: Application
 metadata:
   name: backend-prod
   namespace: argocd
-  annotations: { argocd.argoproj.io/sync-wave: "1" }
+  annotations: { argocd.argoproj.io/sync-wave: "2" }
 spec:
   project: default
   source:
@@ -37,7 +54,7 @@ kind: Application
 metadata:
   name: frontend-prod
   namespace: argocd
-  annotations: { argocd.argoproj.io/sync-wave: "2" }
+  annotations: { argocd.argoproj.io/sync-wave: "3" }
 spec:
   project: default
   source:
@@ -55,7 +72,7 @@ kind: Application
 metadata:
   name: kong-routes
   namespace: argocd
-  annotations: { argocd.argoproj.io/sync-wave: "3" }
+  annotations: { argocd.argoproj.io/sync-wave: "4" }
 spec:
   project: default
   source:
