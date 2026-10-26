@@ -177,38 +177,46 @@ resource "aws_eks_access_policy_association" "terraform" {
 # =============================================================================
 # The role "github-actions-terraform" already exists (created outside Terraform).
 # We only add the EKS access entry + policies.
-data "aws_iam_role" "github_actions_terraform" {
-  name = "github-actions-terraform"
-}
+#
+# IMPORTANT: If the access entry already exists on the cluster (created outside
+# Terraform), import it FIRST before applying:
+#
+#   terraform import \
+#     'module.iam.aws_eks_access_entry.github_actions_terraform' \
+#     '<cluster-name>:arn:aws:iam::<account-id>:role/github-actions-terraform'
+#
+# data "aws_iam_role" "github_actions_terraform" {
+#   name = "github-actions-terraform"
+# }
 
-resource "aws_eks_access_entry" "github_actions_terraform" {
-  cluster_name  = var.cluster_name
-  principal_arn = data.aws_iam_role.github_actions_terraform.arn
-  type          = "STANDARD"
-}
+# resource "aws_eks_access_entry" "github_actions_terraform" {
+#   cluster_name  = var.cluster_name
+#   principal_arn = data.aws_iam_role.github_actions_terraform.arn
+#   type          = "STANDARD"
+# }
 
-locals {
-  github_actions_terraform_eks_policies = toset([
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy",
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy",
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy",
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
-  ])
-}
+# locals {
+#   github_actions_terraform_eks_policies = toset([
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy",
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy",
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy",
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
+#   ])
+# }
 
-resource "aws_eks_access_policy_association" "github_actions_terraform" {
-  for_each = local.github_actions_terraform_eks_policies
+# resource "aws_eks_access_policy_association" "github_actions_terraform" {
+#   for_each = local.github_actions_terraform_eks_policies
 
-  cluster_name  = var.cluster_name
-  principal_arn = aws_eks_access_entry.github_actions_terraform.principal_arn
-  policy_arn    = each.value
+#   cluster_name  = var.cluster_name
+#   principal_arn = aws_eks_access_entry.github_actions_terraform.principal_arn
+#   policy_arn    = each.value
 
-  access_scope {
-    type = "cluster"
-  }
+#   access_scope {
+#     type = "cluster"
+#   }
 
-  depends_on = [aws_eks_access_entry.github_actions_terraform]
-}
+#   depends_on = [aws_eks_access_entry.github_actions_terraform]
+# }
 
 # =============================================================================
 # App IRSA role: Secrets Manager read
@@ -257,3 +265,4 @@ resource "aws_iam_role_policy_attachment" "myapp_secrets" {
   role       = aws_iam_role.myapp_secrets.name
   policy_arn = aws_iam_policy.myapp_secrets.arn
 }
+
