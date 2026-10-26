@@ -10,6 +10,9 @@ data:
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
   FORWARDED_ALLOW_IPS: {{ .Values.config.forwardedAllowIps | quote }}
   BACKEND_PORT: {{ .Values.config.port | quote }}
+  AWS_REGION: {{ .Values.config.awsRegion | quote }}
+  S3_ASSETS_BUCKET: {{ .Values.config.s3AssetsBucket | quote }}
+  S3_PRESIGNED_URL_EXPIRATION_SECONDS: {{ .Values.config.s3PresignedUrlExpirationSeconds | quote }}
   {{- range $key, $val := .Values.config.extraEnv }}
   {{ $key }}: {{ $val | quote }}
   {{- end }}

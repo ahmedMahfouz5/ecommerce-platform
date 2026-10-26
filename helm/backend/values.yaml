@@ -80,6 +80,12 @@ config:
   port: 8000
   # -- Forwarded-allow-ips for uvicorn ("*" trusts all)
   forwardedAllowIps: "*"
+  # -- AWS region for S3 client
+  awsRegion: "us-east-2"
+  # -- S3 bucket name for product-image assets
+  s3AssetsBucket: "ecommerce-staging-us-east-2-assets"
+  # -- Presigned URL lifetime in seconds
+  s3PresignedUrlExpirationSeconds: "300"
   # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
   extraEnv: {}
   #   FEATURE_NEW_CHECKOUT: "false"

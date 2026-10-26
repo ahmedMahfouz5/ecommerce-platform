@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.modules.products.image_router import router as product_images_router
 from app.modules.products.router import router as products_router
 from app.routers import health
 
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     # Register routers
     app.include_router(health.router)
     app.include_router(products_router)
+    app.include_router(product_images_router)
 
     return app
 
