@@ -98,3 +98,8 @@ output "asset_bucket_regional_domain_name" {
   value       = module.s3-assets.bucket_regional_domain_name
 }
 
+output "backend_s3_role_arn" {
+  description = "ARN of the IAM role for backend S3 asset bucket access"
+  value       = module.eks-addons.backend_s3_role_arn
+}
+

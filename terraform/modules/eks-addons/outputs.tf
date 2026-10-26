@@ -37,3 +37,14 @@ output "argocd_url" {
   description = "Public URL of Argo CD"
   value       = "https://${local.argocd_host}"
 }
+
+output "backend_s3_role_arn" {
+  description = "ARN of the IAM role for backend S3 asset bucket access"
+  value       = aws_iam_role.backend_s3.arn
+}
+
+output "backend_s3_role_name" {
+  description = "Name of the IAM role for backend S3 asset bucket access"
+  value       = aws_iam_role.backend_s3.name
+}
+

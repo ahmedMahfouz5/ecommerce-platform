@@ -416,7 +416,7 @@ resource "helm_release" "secrets_csi_driver_aws_provider" {
 # Argo CD (exposed through Kong at https://argocd.<zone>)
 #
 # Traffic path:
-#   client --HTTPS--> NLB (ACM wildcard cert, TLS terminated)
+#   client --HTTPS---> NLB (ACM wildcard cert, TLS terminated)
 #          --HTTP---> Kong proxy (:8000)
 #          --HTTP---> argocd-server (:80, server.insecure=true)
 #
@@ -477,3 +477,46 @@ resource "helm_release" "argocd" {
     helm_release.external_dns,
   ]
 }
+
+# =============================================================================
+# Backend S3 Asset Bucket Access (Pod Identity)
+#
+# Grants the FastAPI backend upload access to the ecommerce asset S3 bucket.
+# The backend will use this to generate presigned PUT URLs, so the frontend
+# can upload product images directly to S3 without routing bytes through
+# FastAPI.
+#
+# Permissions are scoped to s3:PutObject on objects within the asset bucket
+# ARN (arn:aws:s3:::<bucket>/*). No bucket-level admin permissions are granted.
+# =============================================================================
+resource "aws_iam_role" "backend_s3" {
+  name               = "${var.cluster_name}-backend-s3"
+  assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
+}
+
+data "aws_iam_policy_document" "backend_s3" {
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["${var.backend_s3_bucket_arn}/*"]
+  }
+}
+
+resource "aws_iam_policy" "backend_s3" {
+  name   = "${var.cluster_name}-backend-s3"
+  policy = data.aws_iam_policy_document.backend_s3.json
+}
+
+resource "aws_iam_role_policy_attachment" "backend_s3" {
+  policy_arn = aws_iam_policy.backend_s3.arn
+  role       = aws_iam_role.backend_s3.name
+}
+
+resource "aws_eks_pod_identity_association" "backend_s3" {
+  cluster_name    = var.cluster_name
+  namespace       = var.backend_namespace
+  service_account = var.backend_service_account
+  role_arn        = aws_iam_role.backend_s3.arn
+
+  depends_on = [aws_eks_addon.pod_identity]
+}
+

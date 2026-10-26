@@ -44,3 +44,24 @@ variable "argocd_subdomain" {
   type        = string
   default     = "argocd"
 }
+
+# =============================================================================
+# Backend S3 Asset Bucket Access (Pod Identity)
+# =============================================================================
+variable "backend_s3_bucket_arn" {
+  description = "ARN of the S3 asset bucket the backend needs PutObject access to"
+  type        = string
+}
+
+variable "backend_namespace" {
+  description = "Kubernetes namespace where the backend runs"
+  type        = string
+  default     = "default"
+}
+
+variable "backend_service_account" {
+  description = "Kubernetes service account name of the backend Deployment"
+  type        = string
+  default     = "backend-prod"
+}
+

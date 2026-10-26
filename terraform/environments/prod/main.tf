@@ -132,13 +132,16 @@ module "ebs" {
 module "eks-addons" {
   source = "../../modules/eks-addons"
 
-  cluster_name        = module.eks.cluster_name
-  vpc_id              = module.vpc.vpc_id
-  aws_region          = var.aws_region
-  ebs_csi_role_arn    = module.ebs.ebs_csi_role_arn
-  route53_zone_id     = aws_route53_zone.main.zone_id
-  route53_zone_name   = var.route53_zone_name
-  acm_certificate_arn = aws_acm_certificate_validation.nlb.certificate_arn
+  cluster_name            = module.eks.cluster_name
+  vpc_id                  = module.vpc.vpc_id
+  aws_region              = var.aws_region
+  ebs_csi_role_arn        = module.ebs.ebs_csi_role_arn
+  route53_zone_id         = aws_route53_zone.main.zone_id
+  route53_zone_name       = var.route53_zone_name
+  acm_certificate_arn     = aws_acm_certificate_validation.nlb.certificate_arn
+  backend_s3_bucket_arn   = module.s3-assets.bucket_arn
+  backend_namespace       = "default"
+  backend_service_account = "backend-prod"
 
   depends_on = [module.ebs, module.iam, module.eks]
 }
