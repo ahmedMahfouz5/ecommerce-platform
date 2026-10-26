@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "0" }
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedMahfouz5/ecommerce-platform.git
+    targetRevision: main
+    path: helm/postgresql
+    helm: { releaseName: postgres }
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-prod
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "1" }
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedMahfouz5/ecommerce-platform.git
+    targetRevision: main
+    path: helm/backend
+    helm:
+      releaseName: backend-prod
+      valueFiles: [values-prod.yaml]
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-prod
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "2" }
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedMahfouz5/ecommerce-platform.git
+    targetRevision: main
+    path: helm/frontend
+    helm:
+      releaseName: frontend-prod
+      valueFiles: [values-prod.yaml]
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kong-routes
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "3" }
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedMahfouz5/ecommerce-platform.git
+    targetRevision: main
+    path: helm
+    directory: { include: "kong-routes.yaml" }
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
