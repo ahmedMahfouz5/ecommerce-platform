@@ -77,3 +77,8 @@ output "nat_public_ips" {
   description = "NAT egress IPs (for third-party allowlists)"
   value       = module.vpc.nat_public_ips
 }
+
+output "argocd_url" {
+  description = "Public URL of Argo CD"
+  value       = module.eks-addons.argocd_url
+}

@@ -413,8 +413,22 @@ resource "helm_release" "secrets_csi_driver_aws_provider" {
 }
 
 # =============================================================================
-# Argo CD
+# Argo CD (exposed through Kong at https://argocd.<zone>)
+#
+# Traffic path:
+#   client --HTTPS--> NLB (ACM wildcard cert, TLS terminated)
+#          --HTTP---> Kong proxy (:8000)
+#          --HTTP---> argocd-server (:80, server.insecure=true)
+#
+# No extra ALB / certificate is needed:
+#   - the ACM cert already covers *.<zone>
+#   - external-dns already publishes *.<zone> -> NLB (Kong Service annotation)
+#     and will also create an explicit argocd.<zone> record from the Ingress.
 # =============================================================================
+locals {
+  argocd_host = "${var.argocd_subdomain}.${var.route53_zone_name}"
+}
+
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -427,18 +441,39 @@ resource "helm_release" "argocd" {
   cleanup_on_fail = true
   timeout         = 900
 
-  set {
-    name  = "server.service.type"
-    value = "ClusterIP"
-  }
-  set {
-    name  = "server.ingress.enabled"
-    value = "false"
-  }
-  set {
-    name  = "configs.params.server\\.insecure"
-    value = "true"
-  }
+  values = [yamlencode({
+    global = {
+      domain = local.argocd_host
+    }
 
-  depends_on = [helm_release.aws_lbc]
+    configs = {
+      cm = {
+        url = "https://${local.argocd_host}"
+      }
+      params = {
+        # TLS is terminated at the NLB, Argo CD serves plain HTTP behind Kong
+        "server.insecure" = true
+      }
+    }
+
+    server = {
+      service = {
+        type = "ClusterIP"
+      }
+      ingress = {
+        enabled          = true
+        ingressClassName = "kong"
+        hostname         = local.argocd_host
+        path             = "/"
+        pathType         = "Prefix"
+      }
+    }
+  })]
+
+  # The "kong" IngressClass is created by the Kong release; it must exist first.
+  # external-dns must be running to publish the record.
+  depends_on = [
+    helm_release.kong,
+    helm_release.external_dns,
+  ]
 }

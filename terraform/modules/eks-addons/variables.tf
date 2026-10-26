@@ -39,3 +39,8 @@ variable "disable_gp2_default" {
   type        = bool
   default     = true
 }
+variable "argocd_subdomain" {
+  description = "Subdomain for Argo CD; final host is <argocd_subdomain>.<route53_zone_name>"
+  type        = string
+  default     = "argocd"
+}
