@@ -76,7 +76,7 @@ serviceMonitor:
     release: prometheus
 
 # Production priority class
-priorityClassName: "high-priority"
+# priorityClassName: "high-priority"
 
 # Graceful shutdown
 terminationGracePeriodSeconds: 60
