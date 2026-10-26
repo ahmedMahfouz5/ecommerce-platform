@@ -51,23 +51,7 @@ jobs:
         run: terraform validate
 
       - name: Plan
-        run: terraform plan -out=tfplan -lock-timeout=5m -no-color
-
-      - name: Plan summary
-        run: |
-          {
-            echo '### Terraform plan'
-            echo '```'
-            terraform show -no-color tfplan
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      # Binary plan only: needed by apply, short retention.
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: terraform/environments/prod/tfplan
-          retention-days: 1
+        run: terraform plan -lock-timeout=5m -no-color
 
   apply:
     name: Apply
@@ -89,13 +73,34 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan
-          path: terraform/environments/prod
-
       - name: Init
         run: terraform init
 
-      - name: Apply
-        run: terraform apply -lock-timeout=5m -no-color tfplan
+      - name: Apply (vpc)
+        run: terraform apply -target=module.vpc -auto-approve -lock-timeout=5m -no-color
+
+      - name: Apply (eks)
+        run: terraform apply -target=module.eks -auto-approve -lock-timeout=5m -no-color
+
+      - name: Apply (iam)
+        run: terraform apply -target=module.iam -auto-approve -lock-timeout=5m -no-color
+
+      - name: Apply (ebs)
+        run: terraform apply -target=module.ebs -auto-approve -lock-timeout=5m -no-color
+
+      - name: Apply (route53-acm)
+        run: |
+          terraform apply \
+            -target=aws_route53_delegation_set.main \
+            -target=aws_route53_zone.main \
+            -target=aws_acm_certificate.nlb \
+            -target=aws_route53_record.acm_validation \
+            -target=aws_acm_certificate_validation.nlb \
+            -auto-approve -lock-timeout=5m -no-color
+
+      - name: Apply (eks-addons)
+        run: terraform apply -target=module.eks-addons -auto-approve -lock-timeout=5m -no-color
+
+      - name: Apply (remaining)
+        run: terraform apply -auto-approve -lock-timeout=5m -no-color
+
