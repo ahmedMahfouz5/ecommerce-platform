@@ -36,7 +36,7 @@ spec:
       containers:
         - name: migrate
           # TODO: set the actual image tag (e.g. git SHA)
-          image: ahmedmahfouz0/backend:6545cea5ba32e1719aaef62bf57ee5a48173bd12
+          image: ahmedmahfouz0/backend:204f687c11c162472a8159d218f9b6be04cc3073
           imagePullPolicy: IfNotPresent
           command: ["alembic", "upgrade", "head"]
 
