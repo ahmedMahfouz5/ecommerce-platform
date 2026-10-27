@@ -65,3 +65,18 @@ variable "backend_service_account" {
   default     = "backend-prod"
 }
 
+# =============================================================================
+# Argo CD App-of-Apps bootstrap
+# =============================================================================
+variable "repo_url" {
+  description = "Git repository URL for the Argo CD child applications"
+  type        = string
+  default     = "https://github.com/ahmedMahfouz5/ecommerce-platform.git"
+}
+
+variable "target_revision" {
+  description = "Git branch/tag/revision for the Argo CD child applications"
+  type        = string
+  default     = "main"
+}
+

@@ -520,3 +520,44 @@ resource "aws_eks_pod_identity_association" "backend_s3" {
   depends_on = [aws_eks_addon.pod_identity]
 }
 
+# =============================================================================
+# Argo CD App-of-Apps bootstrap
+#
+# Renders apps.yaml from the template and applies it with kubectl after
+# Argo CD is deployed and its CRDs are registered.
+#
+# The rendered YAML contains one Application per microservice (postgres,
+# migration, backend, frontend, kong-routes) with sync-wave ordering, so
+# Argo CD auto-syncs the full platform once this manifest lands.
+#
+# A trigger of sha256 ensures the manifest is re-applied whenever the
+# template content, repo URL, or target revision changes.
+# =============================================================================
+locals {
+  apps_manifest = templatefile("${path.module}/files/apps.yaml.tftpl", {
+    repo_url        = var.repo_url
+    target_revision = var.target_revision
+  })
+}
+
+resource "null_resource" "argocd_apps" {
+  triggers = {
+    manifest_sha256 = sha256(local.apps_manifest)
+    argo_ready      = helm_release.argocd.id
+  }
+
+  # Wait for the Argo CD server Deployment to be available, then apply the
+  # apps.yaml. The "kubectl wait" ensures the API server already knows the
+  # Application CRD before we submit the custom resources.
+  provisioner "local-exec" {
+    command     = <<-EOT
+      kubectl wait --for=condition=available deployment/argocd-server \
+        -n argocd --timeout=300s 2>/dev/null
+      echo '${local.apps_manifest}' | kubectl apply -f -
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  depends_on = [helm_release.argocd]
+}
+

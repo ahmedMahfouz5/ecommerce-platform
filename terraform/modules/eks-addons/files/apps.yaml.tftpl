@@ -1,0 +1,84 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "0" }
+spec:
+  project: default
+  source:
+    repoURL: ${repo_url}
+    targetRevision: ${target_revision}
+    path: helm/postgresql
+    helm:
+      releaseName: postgres
+      valueFiles: [values-local.yaml]
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-migration
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "1" }
+spec:
+  project: default
+  source:
+    repoURL: ${repo_url}
+    targetRevision: ${target_revision}
+    path: migration
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-prod
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "2" }
+spec:
+  project: default
+  source:
+    repoURL: ${repo_url}
+    targetRevision: ${target_revision}
+    path: helm/backend
+    helm:
+      releaseName: backend-prod
+      valueFiles: [values-prod.yaml]
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-prod
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "3" }
+spec:
+  project: default
+  source:
+    repoURL: ${repo_url}
+    targetRevision: ${target_revision}
+    path: helm/frontend
+    helm:
+      releaseName: frontend-prod
+      valueFiles: [values-prod.yaml]
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kong-routes
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "4" }
+spec:
+  project: default
+  source:
+    repoURL: ${repo_url}
+    targetRevision: ${target_revision}
+    path: helm
+    directory: { include: "kong-routes.yaml" }
+  destination: { server: https://kubernetes.default.svc, namespace: default }
+  syncPolicy: { automated: { prune: true, selfHeal: true } }
