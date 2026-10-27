@@ -48,7 +48,7 @@ describe("ProductForm", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
-    const data = onSubmit.mock.calls[0][0];
+    const data = onSubmit.mock.calls[0]?.[0];
     expect(data.name).toBe("New Product");
     expect(data.price).toBe(19.99);
     expect(data.category).toBe("books");

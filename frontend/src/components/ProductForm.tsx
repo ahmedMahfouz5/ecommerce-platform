@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { ProductCreate, ProductUpdate } from "../types/product";
+import type { ProductCreate } from "../types/product";
 
 interface ProductFormProps {
   /** Called with form data on submit. */
@@ -50,7 +50,7 @@ export function ProductForm({
     if (!form.name.trim()) errors.name = "Name is required.";
     if (!form.category.trim()) errors.category = "Category is required.";
     if (form.price <= 0) errors.price = "Price must be greater than 0.";
-    if (form.stock_quantity < 0)
+    if ((form.stock_quantity ?? 0) < 0)
       errors.stock_quantity = "Stock cannot be negative.";
     setValidation(errors);
     return Object.keys(errors).length === 0;

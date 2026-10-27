@@ -46,11 +46,6 @@ describe("getImageUrl", () => {
 });
 
 describe("validateImageFile", () => {
-  function fakeFile(overrides: Partial<{ type: string; size: number }> = {}): File {
-    return new File([""], "test.jpg", {
-      type: overrides.type ?? "image/jpeg",
-    }) as File & { size: number };
-  }
 
   it("returns null for valid JPEG", () => {
     // File constructor doesn't let us set size, so test via a mock

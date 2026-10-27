@@ -22,7 +22,7 @@ describe("fetchProducts", () => {
     await fetchProducts();
 
     expect(mock).toHaveBeenCalledTimes(1);
-    const url = mock.mock.calls[0][0] as string;
+    const url = mock.mock.calls[0]?.[0] as string;
     expect(url).toContain("/products?page=1&pageSize=20");
   });
 
@@ -36,7 +36,7 @@ describe("fetchProducts", () => {
 
     await fetchProducts(2, 10, "electronics");
 
-    const url = mock.mock.calls[0][0] as string;
+    const url = mock.mock.calls[0]?.[0] as string;
     expect(url).toContain("page=2");
     expect(url).toContain("pageSize=10");
     expect(url).toContain("category=electronics");
@@ -69,7 +69,7 @@ describe("fetchProducts", () => {
     const ctrl = new AbortController();
     await fetchProducts(1, 20, undefined, ctrl.signal);
 
-    expect(mock.mock.calls[0][1]?.signal).toBe(ctrl.signal);
+    expect(mock.mock.calls[0]?.[1]?.signal).toBe(ctrl.signal);
   });
 });
 
@@ -90,7 +90,7 @@ describe("fetchProduct", () => {
     vi.stubGlobal("fetch", mock);
 
     await fetchProduct("abc");
-    expect(mock.mock.calls[0][0]).toBe(`${BASE}/abc`);
+    expect(mock.mock.calls[0]?.[0]).toBe(`${BASE}/abc`);
   });
 
   it("throws on 404", async () => {
@@ -126,8 +126,8 @@ describe("createProduct", () => {
       category: "books",
     });
 
-    expect(mock.mock.calls[0][1]?.method).toBe("POST");
-    const body = JSON.parse(mock.mock.calls[0][1]?.body as string);
+    expect(mock.mock.calls[0]?.[1]?.method).toBe("POST");
+    const body = JSON.parse(mock.mock.calls[0]?.[1]?.body as string);
     expect(body.name).toBe("Test");
     expect(body.price).toBe(9.99);
   });
@@ -144,8 +144,8 @@ describe("updateProduct", () => {
 
     await updateProduct("abc", { name: "Updated" });
 
-    expect(mock.mock.calls[0][1]?.method).toBe("PUT");
-    const body = JSON.parse(mock.mock.calls[0][1]?.body as string);
+    expect(mock.mock.calls[0]?.[1]?.method).toBe("PUT");
+    const body = JSON.parse(mock.mock.calls[0]?.[1]?.body as string);
     expect(body.name).toBe("Updated");
     expect(body.price).toBeUndefined();
   });
@@ -161,6 +161,6 @@ describe("deleteProduct", () => {
     vi.stubGlobal("fetch", mock);
 
     await deleteProduct("abc");
-    expect(mock.mock.calls[0][1]?.method).toBe("DELETE");
+    expect(mock.mock.calls[0]?.[1]?.method).toBe("DELETE");
   });
 });
