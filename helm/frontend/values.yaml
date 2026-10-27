@@ -5,14 +5,13 @@
 # -- Override the full resource name (defaults to release-chart)
 nameOverride: ""
 fullnameOverride: ""
-
 # ---------------------------------------------------------------------------
 # Image
 # ---------------------------------------------------------------------------
 image:
   repository: ahmedmahfouz0/frontend
   # tag is REQUIRED — set it at install/upgrade time to the git SHA
-  tag: "b7ce1cf3a8e514d02078d7bc001de325021dbff9"
+  tag: "4fb7c6a8ef700282ef314af026e091bb378776db"
   # digest (optional) — when set, overrides tag; e.g. sha256:abc123…
   digest: ""
   pullPolicy: IfNotPresent
@@ -21,12 +20,10 @@ image:
 
 # -- Number of replicas (>= 1)
 replicaCount: 1
-
 # ---------------------------------------------------------------------------
 # Backend service discovery — sets BACKEND_URL envsubst variable in nginx
 # ---------------------------------------------------------------------------
 backendUrl: "http://backend:8000"
-
 # ---------------------------------------------------------------------------
 # Nginx tunables (injected as envsubst variables into the ConfigMap template)
 # ---------------------------------------------------------------------------
@@ -41,7 +38,6 @@ nginx:
   proxyReadTimeout: "60s"
   # -- client_max_body_size
   clientMaxBodySize: "1m"
-
 # ---------------------------------------------------------------------------
 # Probes
 # ---------------------------------------------------------------------------
@@ -66,30 +62,27 @@ probes:
     initialDelaySeconds: 0
     periodSeconds: 5
     timeoutSeconds: 3
-    failureThreshold: 12   # up to 60 s for slow DNS / backend availability
-
+    failureThreshold: 12 # up to 60 s for slow DNS / backend availability
 # ---------------------------------------------------------------------------
 # Resources — requests and limits are both required
 # ---------------------------------------------------------------------------
 resources:
   requests:
-    cpu: 50m      # ~5 % of a core under light load
-    memory: 64Mi  # nginx baseline ~ 10-20 Mi; 64 Mi is safe
+    cpu: 50m # ~5 % of a core under light load
+    memory: 64Mi # nginx baseline ~ 10-20 Mi; 64 Mi is safe
   limits:
-    cpu: 200m     # burst headroom
+    cpu: 200m # burst headroom
     memory: 128Mi # prevents OOM from spike traffic
-
 # ---------------------------------------------------------------------------
 # Pod-level security context
 # ---------------------------------------------------------------------------
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 101      # nginx-unprivileged default
+  runAsUser: 101 # nginx-unprivileged default
   runAsGroup: 101
   fsGroup: 101
   seccompProfile:
     type: RuntimeDefault
-
 # -- Container-level security context
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -97,22 +90,18 @@ containerSecurityContext:
   capabilities:
     drop:
       - ALL
-
 # -- ServiceAccount
 serviceAccount:
   create: true
   # name: custom-sa-name
-
 # -- Do not mount the default API token (least privilege)
 automountServiceAccountToken: false
-
 # ---------------------------------------------------------------------------
 # Service
 # ---------------------------------------------------------------------------
 service:
   type: ClusterIP
   port: 8080
-
 # ---------------------------------------------------------------------------
 # PodDisruptionBudget
 # ---------------------------------------------------------------------------
@@ -120,7 +109,6 @@ pdb:
   enabled: false
   minAvailable: 1
   # maxUnavailable: 1
-
 # ---------------------------------------------------------------------------
 # HorizontalPodAutoscaler
 # ---------------------------------------------------------------------------
@@ -130,7 +118,6 @@ hpa:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
-
 # ---------------------------------------------------------------------------
 # Ingress
 # ---------------------------------------------------------------------------
@@ -147,8 +134,7 @@ ingress:
   #       - frontend.local
   #     secretName: frontend-tls
   annotations: {}
-    # cert-manager.io/cluster-issuer: letsencrypt-prod
-
+  # cert-manager.io/cluster-issuer: letsencrypt-prod
 # ---------------------------------------------------------------------------
 # NetworkPolicy
 # ---------------------------------------------------------------------------
@@ -156,31 +142,25 @@ networkPolicy:
   enabled: false
   # Namespace of the ingress controller (default: ingress-nginx)
   ingressControllerNamespace: ingress-nginx
-
 # ---------------------------------------------------------------------------
 # Pod scheduling & lifecycle
 # ---------------------------------------------------------------------------
 terminationGracePeriodSeconds: 30
-
 # preStop sleep allows in-flight connections to drain before SIGTERM
 preStopSleepSeconds: 10
-
 # Topology spread — default is a soft spread across nodes when > 1 replica
 topologySpreadConstraints:
   enabled: false
   maxSkew: 1
   topologyKey: kubernetes.io/hostname
   whenUnsatisfiable: ScheduleAnyway
-
 nodeSelector: {}
 tolerations: []
 affinity: {}
-
 # -- Extra pod annotations
 podAnnotations: {}
 # -- Extra pod labels
 podLabels: {}
-
 # -- Extra environment variables (rarely needed)
 extraEnv: []
 #   - name: MY_VAR
@@ -189,4 +169,3 @@ extraEnv: []
 # -- Extra volumes & volume mounts
 extraVolumes: []
 extraVolumeMounts: []
-
