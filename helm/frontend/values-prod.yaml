@@ -4,7 +4,7 @@
 #   helm install frontend-prod ./helm/frontend -f helm/frontend/values-prod.yaml
 # =============================================================================
 
-replicaCount: 2
+replicaCount: 1
 
 backendUrl: "http://backend-prod.default.svc.cluster.local:8000"
 
