@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchProduct } from "../api/products";
+import { getImageUrl } from "../api/images";
 import type { Product } from "../types/product";
 
-function formatPrice(price: string): string {
-  const parsed = parseFloat(price);
-  return `$${parsed.toFixed(2)}`;
+function formatPrice(price: number): string {
+  return `$${price.toFixed(2)}`;
 }
 
 interface ProductDetailProps {
@@ -16,27 +16,43 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadProduct = useCallback(async () => {
+    // Cancel any in-flight request before starting a new one
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchProduct(productId);
+      const data = await fetchProduct(productId, controller.signal);
       setProduct(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load product");
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setError(
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "detail" in err
+            ? (err as { detail: string }).detail
+            : "Failed to load product",
+      );
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [productId]);
 
   useEffect(() => {
     loadProduct();
+    return () => abortRef.current?.abort();
   }, [loadProduct]);
 
   if (loading) {
     return (
-      <div className="product-detail product-detail--loading">
+      <div className="product-detail product-detail--loading" role="status">
         <p>Loading product...</p>
       </div>
     );
@@ -44,7 +60,7 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 
   if (error) {
     return (
-      <div className="product-detail product-detail--error">
+      <div className="product-detail product-detail--error" role="alert">
         <p>Error: {error}</p>
         <button onClick={onBack}>Back to Products</button>
         <button onClick={loadProduct}>Retry</button>
@@ -61,6 +77,8 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
     );
   }
 
+  const imageUrl = getImageUrl(product.image_url);
+
   return (
     <div className="product-detail">
       <button className="product-detail__back" onClick={onBack}>
@@ -69,10 +87,12 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 
       <div className="product-detail__layout">
         <div className="product-detail__image">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} />
+          {imageUrl ? (
+            <img src={imageUrl} alt={product.name} />
           ) : (
-            <div className="product-detail__image-placeholder">No Image</div>
+            <div className="product-detail__image-placeholder" aria-hidden="true">
+              No Image
+            </div>
           )}
         </div>
 
@@ -103,4 +123,3 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 }
 
 export default ProductDetail;
-

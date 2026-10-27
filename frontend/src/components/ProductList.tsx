@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchProducts } from "../api/products";
 import type { Product } from "../types/product";
 import ProductCard from "./ProductCard";
@@ -14,30 +14,69 @@ function ProductList({ onSelectProduct }: ProductListProps) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [category, setCategory] = useState("");
+  const [search, setSearch] = useState("");
+
+  // Track the in-flight request so we can cancel it on new requests
+  const abortRef = useRef<AbortController | null>(null);
 
   const pageSize = 12;
 
   const loadProducts = useCallback(async () => {
+    // Cancel previous in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchProducts(page, pageSize, category || undefined);
-      setProducts(data.items);
-      setTotalPages(data.total_pages);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load products");
+      const data = await fetchProducts(
+        page,
+        pageSize,
+        category || undefined,
+        controller.signal,
+      );
+      // Client-side search filtering (backend doesn't support search yet)
+      let items = data.items;
+      if (search.trim()) {
+        const term = search.toLowerCase();
+        items = items.filter(
+          (p) =>
+            p.name.toLowerCase().includes(term) ||
+            (p.description && p.description.toLowerCase().includes(term)),
+        );
+      }
+
+      setProducts(items);
+      setTotalPages(search.trim() ? 1 : data.total_pages);
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setError(
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "detail" in err
+            ? (err as { detail: string }).detail
+            : "Failed to load products",
+      );
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
-  }, [page, category]);
+  }, [page, category, search]);
 
   useEffect(() => {
     loadProducts();
+    return () => abortRef.current?.abort();
   }, [loadProducts]);
 
-  // Reset to page 1 when category changes
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
+    setPage(1);
+  };
+
+  const handleSearchChange = (q: string) => {
+    setSearch(q);
     setPage(1);
   };
 
@@ -47,11 +86,20 @@ function ProductList({ onSelectProduct }: ProductListProps) {
         <h2>Products</h2>
         <div className="product-list__filters">
           <input
+            type="search"
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="product-list__filter-input"
+            aria-label="Search products"
+          />
+          <input
             type="text"
             placeholder="Filter by category..."
             value={category}
             onChange={(e) => handleCategoryChange(e.target.value)}
             className="product-list__filter-input"
+            aria-label="Filter by category"
           />
           {category && (
             <button
@@ -65,13 +113,13 @@ function ProductList({ onSelectProduct }: ProductListProps) {
       </div>
 
       {loading && (
-        <div className="product-list__state">
+        <div className="product-list__state" role="status">
           <p>Loading products...</p>
         </div>
       )}
 
       {error && (
-        <div className="product-list__state product-list__state--error">
+        <div className="product-list__state product-list__state--error" role="alert">
           <p>Error: {error}</p>
           <button onClick={loadProducts}>Retry</button>
         </div>
@@ -80,7 +128,7 @@ function ProductList({ onSelectProduct }: ProductListProps) {
       {!loading && !error && products.length === 0 && (
         <div className="product-list__state product-list__state--empty">
           <p>No products found.</p>
-          {category && <p>Try a different category filter.</p>}
+          {(category || search) && <p>Try a different filter or search term.</p>}
         </div>
       )}
 
@@ -96,7 +144,7 @@ function ProductList({ onSelectProduct }: ProductListProps) {
             ))}
           </div>
 
-          {totalPages > 1 && (
+          {totalPages > 1 && !search.trim() && (
             <div className="product-list__pagination">
               <button
                 disabled={page <= 1}

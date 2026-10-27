@@ -26,6 +26,16 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # ========== build ==========
 FROM deps AS build
 
+# Build-time variables consumed by Vite (VITE_* are statically replaced).
+# Supply via --build-arg, e.g.:
+#   docker build --build-arg VITE_IMAGE_BASE_URL=https://cdn.example.com/ ...
+ARG VITE_API_TARGET="http://backend:8000"
+ARG VITE_IMAGE_BASE_URL=""
+
+# Expose ARGs as ENVs so Vite picks them up during `npm run build`.
+ENV VITE_API_TARGET=${VITE_API_TARGET}
+ENV VITE_IMAGE_BASE_URL=${VITE_IMAGE_BASE_URL}
+
 COPY . .
 
 RUN npm run build
@@ -72,3 +82,4 @@ EXPOSE 8080
 # HEALTHCHECK is only useful for docker-compose; Kubernetes ignores it.
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
     CMD wget -q --spider http://127.0.0.1:8080/healthz || exit 1
+

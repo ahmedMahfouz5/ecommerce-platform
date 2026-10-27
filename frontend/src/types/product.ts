@@ -2,7 +2,8 @@ export interface Product {
   id: string;
   name: string;
   description: string | null;
-  price: string;
+  /** Price as received from the API (Decimal serialized as number). */
+  price: number;
   stock_quantity: number;
   category: string;
   image_url: string | null;

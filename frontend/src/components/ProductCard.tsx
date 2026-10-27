@@ -1,8 +1,8 @@
 import type { Product } from "../types/product";
+import { getImageUrl } from "../api/images";
 
-function formatPrice(price: string): string {
-  const parsed = parseFloat(price);
-  return `$${parsed.toFixed(2)}`;
+function formatPrice(price: number): string {
+  return `$${price.toFixed(2)}`;
 }
 
 interface ProductCardProps {
@@ -11,13 +11,29 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onSelect }: ProductCardProps) {
+  const imageUrl = getImageUrl(product.image_url);
+
   return (
-    <article className="product-card" onClick={() => onSelect(product.id)}>
+    <article
+      className="product-card"
+      onClick={() => onSelect(product.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(product.id);
+        }
+      }}
+      aria-label={`View details for ${product.name}`}
+    >
       <div className="product-card__image">
-        {product.image_url ? (
-          <img src={product.image_url} alt={product.name} />
+        {imageUrl ? (
+          <img src={imageUrl} alt={product.name} loading="lazy" />
         ) : (
-          <div className="product-card__image-placeholder">No Image</div>
+          <div className="product-card__image-placeholder" aria-hidden="true">
+            No Image
+          </div>
         )}
       </div>
       <div className="product-card__body">

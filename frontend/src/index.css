@@ -16,28 +16,435 @@ body {
 
 /* ── App Layout ───────────────────────────────────────── */
 
+/* ── App Header Navigation ─────────────────────────────── */
+
 .app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: #1a1a2e;
   color: white;
   padding: 1rem 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.app__title {
-  cursor: pointer;
-  display: inline-block;
+.app__title-link {
+  color: inherit;
+  text-decoration: none;
   font-size: 1.5rem;
   font-weight: 700;
 }
 
-.app__title:hover {
+.app__title-link:hover {
   opacity: 0.85;
+}
+
+.app__nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.app__nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.15s;
+}
+
+.app__nav-link:hover {
+  color: white;
 }
 
 .app__main {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
+}
+
+/* ── Login Page ────────────────────────────────────────── */
+
+.login-page {
+  display: flex;
+  justify-content: center;
+  padding-top: 3rem;
+}
+
+.login-form {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.login-form h2 {
+  margin-bottom: 0.5rem;
+  color: #1a1a2e;
+}
+
+.login-form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.login-form input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: #1a1a2e;
+  box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.15);
+}
+
+.login-form button {
+  margin-top: 0.5rem;
+  padding: 0.65rem;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.login-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-form__error {
+  background: #fdecea;
+  color: #c0392b;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+/* ── Admin Page ────────────────────────────────────────── */
+
+.admin-page {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.admin-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-page__header h2 {
+  color: #1a1a2e;
+}
+
+.admin-page__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.admin-page__nav-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #27ae60;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.admin-page__logout-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.admin-page__success,
+.product-edit__success {
+  background: #eafaf1;
+  color: #27ae60;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.admin-page__error,
+.product-edit__error {
+  background: #fdecea;
+  color: #c0392b;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.admin-page__create {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.admin-page__create h3 {
+  margin-bottom: 1rem;
+  color: #1a1a2e;
+}
+
+/* ── Product Form ──────────────────────────────────────── */
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 600px;
+}
+
+.product-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.product-form__field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.product-form__field input,
+.product-form__field textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.product-form__field input:focus,
+.product-form__field textarea:focus {
+  outline: none;
+  border-color: #1a1a2e;
+  box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.15);
+}
+
+.product-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .product-form__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.product-form__error {
+  color: #c0392b;
+  font-size: 0.8rem;
+}
+
+.product-form__submit {
+  padding: 0.65rem 1.5rem;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.product-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Product Edit Page ─────────────────────────────────── */
+
+.product-edit {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.product-edit--error {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #c0392b;
+}
+
+.product-edit--error button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: #1a1a2e;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.product-edit__back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  padding: 0.4rem 0;
+  background: none;
+  border: none;
+  color: #1a1a2e;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.product-edit__back:hover {
+  text-decoration: underline;
+}
+
+.product-edit h2 {
+  margin-bottom: 1.5rem;
+  color: #1a1a2e;
+}
+
+.product-edit__image-section,
+.product-edit__form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+.product-edit__image-section h3,
+.product-edit__form-section h3,
+.product-edit__danger h3 {
+  font-size: 1.1rem;
+  color: #1a1a2e;
+  margin-bottom: 1rem;
+}
+
+.product-edit__current-image {
+  max-width: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.product-edit__current-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.product-edit__no-image {
+  color: #999;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.product-edit__danger {
+  padding-top: 1rem;
+}
+
+.product-edit__delete-btn {
+  padding: 0.65rem 1.25rem;
+  background: #c0392b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.product-edit__delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.product-edit__delete-btn:not(:disabled):hover {
+  background: #a93226;
+}
+
+/* ── Image Uploader ────────────────────────────────────── */
+
+.image-uploader {
+  max-width: 400px;
+}
+
+.image-uploader__label {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  background: #f0f0f0;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.15s;
+}
+
+.image-uploader__label:hover {
+  background: #e0e0e0;
+}
+
+.image-uploader__input {
+  display: none;
+}
+
+.image-uploader__status {
+  color: #666;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+}
+
+.image-uploader__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.image-uploader__progress progress {
+  flex: 1;
+  height: 10px;
+}
+
+.image-uploader__cancel-btn,
+.image-uploader__retry-btn,
+.image-uploader__upload-another {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.image-uploader__error {
+  color: #c0392b;
+  font-size: 0.9rem;
+}
+
+.image-uploader__error p {
+  margin-bottom: 0.5rem;
+}
+
+.image-uploader__done {
+  color: #27ae60;
 }
 
 /* ── Product List ──────────────────────────────────────── */
@@ -58,6 +465,7 @@ body {
 
 .product-list__filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
 }
@@ -67,7 +475,19 @@ body {
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 0.95rem;
-  min-width: 220px;
+  min-width: 180px;
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .product-list__filters {
+  flex-direction: column;
+    width: 100%;
+}
+
+  .product-list__filter-input {
+    width: 100%;
+  }
 }
 
 .product-list__clear-filter {
@@ -354,3 +774,4 @@ body {
   padding-top: 1rem;
   border-top: 1px solid #eee;
 }
+
