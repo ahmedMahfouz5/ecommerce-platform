@@ -111,16 +111,19 @@ variable "database_url" {
   description = "Database connection URL for the FastAPI backend (stored in ecommerce-secret)"
   type        = string
   sensitive   = true
+  default     = "postgresql+asyncpg://postgres:password@postgres:5432/ecommerce"
 }
 
 variable "secret_key" {
   description = "Secret key used by FastAPI for JWT signing, etc."
   type        = string
   sensitive   = true
+  default     = "password"
 }
 
 variable "postgres_password" {
   description = "PostgreSQL password shared between backend and postgres chart"
   type        = string
   sensitive   = true
+  default     = "password"
 }
