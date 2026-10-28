@@ -26,7 +26,7 @@ resource "aws_kms_key" "eks" {
 }
 
 resource "aws_kms_alias" "eks" {
-  name          = "alias/${var.env}-${var.eks_name}-eks"
+  name          = "alias/${var.env}-${var.eks_name}-eks-2"
   target_key_id = aws_kms_key.eks.key_id
 }
 

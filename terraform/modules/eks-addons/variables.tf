@@ -80,3 +80,26 @@ variable "target_revision" {
   default     = "main"
 }
 
+# =============================================================================
+# kube-prometheus-stack (Prometheus + Grafana)
+# =============================================================================
+# variable "grafana_subdomain" {
+#   description = "Subdomain for Grafana; final host is <grafana_subdomain>.<route53_zone_name>"
+#   type        = string
+#   default     = "grafana"
+# }
+
+variable "grafana_admin_user" {
+  description = "Grafana admin username"
+  type        = string
+  default     = "admin"
+  sensitive   = true
+}
+
+variable "grafana_admin_password" {
+  description = "Grafana admin password (override in production!)"
+  type        = string
+  default     = "admin"
+  sensitive   = true
+}
+
