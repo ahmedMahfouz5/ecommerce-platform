@@ -56,7 +56,7 @@ variable "backend_s3_bucket_arn" {
 variable "backend_namespace" {
   description = "Kubernetes namespace where the backend runs"
   type        = string
-  default     = "default"
+  default     = "prod"
 }
 
 variable "backend_service_account" {
