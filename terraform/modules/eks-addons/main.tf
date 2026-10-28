@@ -257,6 +257,7 @@ resource "helm_release" "kong" {
 
   values = [templatefile("${path.module}/files/kong-gateway.yaml.tftpl", {
     acm_certificate_arn = var.acm_certificate_arn
+    route53_zone_name   = var.route53_zone_name
     domain              = var.route53_zone_name
   })]
 
