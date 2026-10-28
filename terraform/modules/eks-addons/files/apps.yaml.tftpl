@@ -85,7 +85,12 @@ spec:
       releaseName: postgres
       valueFiles: [values-local.yaml]
   destination: { server: https://kubernetes.default.svc, namespace: prod }
-  syncPolicy: { automated: { prune: true, selfHeal: true } }
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -100,7 +105,12 @@ spec:
     targetRevision: ${target_revision}
     path: migration
   destination: { server: https://kubernetes.default.svc, namespace: prod }
-  syncPolicy: { automated: { prune: true, selfHeal: true } }
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -118,7 +128,12 @@ spec:
       releaseName: backend-prod
       valueFiles: [values-prod.yaml]
   destination: { server: https://kubernetes.default.svc, namespace: prod }
-  syncPolicy: { automated: { prune: true, selfHeal: true } }
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -136,3 +151,10 @@ spec:
       releaseName: frontend-prod
       valueFiles: [values-prod.yaml]
   destination: { server: https://kubernetes.default.svc, namespace: prod }
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
