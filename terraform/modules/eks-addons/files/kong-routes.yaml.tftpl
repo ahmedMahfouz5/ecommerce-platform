@@ -1,18 +1,16 @@
-# =============================================================================
-# Kong declarative routing configuration with Terraform variables
-# =============================================================================
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: api-gateway-routes
+  name: api-routes
   namespace: ${namespace}
   annotations:
     konghq.com/strip-path: "false"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/plugins: cors-plugin,rate-limiting-plugin
 spec:
   ingressClassName: kong
   rules:
-    # --- Backend API ---
     - host: api.${route53_zone_name}
       http:
         paths:
@@ -23,8 +21,19 @@ spec:
                 name: backend-prod
                 port:
                   number: 8000
-
-    # --- Frontend SPA ---
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-routes
+  namespace: ${namespace}
+  annotations:
+    konghq.com/strip-path: "false"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+spec:
+  ingressClassName: kong
+  rules:
     - host: ${route53_zone_name}
       http:
         paths:
@@ -35,7 +44,6 @@ spec:
                 name: frontend-prod
                 port:
                   number: 8080
-
     - host: www.${route53_zone_name}
       http:
         paths:

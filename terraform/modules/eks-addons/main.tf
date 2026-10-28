@@ -623,16 +623,29 @@ resource "null_resource" "kong_routes" {
   triggers = {
     manifest_sha256 = sha256(local.kong_routes_manifest)
     kong_ready      = helm_release.kong.id
+    manifest        = local.kong_routes_manifest # needed so destroy can read it
   }
 
-  # Wait for the Kong Deployment to be available, then apply the routes.
   provisioner "local-exec" {
-    command     = <<-EOT
-      kubectl wait --for=condition=available deployment/kong \
-        -n kong --timeout=600s 2>/dev/null
-      echo '${local.kong_routes_manifest}' | kubectl apply -f -
-    EOT
     interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      kubectl wait --for=condition=available deployment/kong-kong \
+        -n kong --timeout=600s
+      kubectl apply -f - <<'MANIFEST'
+      ${local.kong_routes_manifest}
+      MANIFEST
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      kubectl delete --ignore-not-found -f - <<'MANIFEST'
+      ${self.triggers.manifest}
+      MANIFEST
+    EOT
   }
 
   depends_on = [helm_release.kong]

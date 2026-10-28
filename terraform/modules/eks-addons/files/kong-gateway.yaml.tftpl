@@ -1,24 +1,12 @@
-# =============================================================================
-# Kong Gateway — Helm values
-#
-# Kong is the in-cluster API Gateway. It is exposed via a Service of type
-# LoadBalancer. The AWS Load Balancer Controller provisions an NLB in the
-# public subnets to forward traffic to Kong's proxy port.
-#
-# TLS:
-#   - NLB listener on port 443 terminates TLS using the ACM certificate.
-#     (Configured via the service.beta.kubernetes.io/aws-load-balancer-*
-#     annotations below.)
-#   - Kong's proxy listens on port 8000 (HTTP) since the NLB terminates TLS.
-#   - Backend services behind Kong use HTTP inside the cluster.
-# =============================================================================
-
-# ---------------------------------------------------------------------------
-# Kong image & proxy
-# ---------------------------------------------------------------------------
 image:
   repository: kong
   tag: "3.7"
+
+env:
+  database: "off"
+  # Makes Kong build redirects as https://host/ (443), not https://host:8443/
+  port_maps: "80:8000,443:8443"
+
 proxy:
   enabled: true
   type: LoadBalancer
@@ -27,47 +15,27 @@ proxy:
     enabled: true
     servicePort: 80
     containerPort: 8000
-    
-  tls:
-    enabled: false
 
-  # Use stream_listeners to open port 443 on the Kubernetes Service without local pod TLS termination
-  stream_listeners:
-    - port: 443
-      container_port: 8000
+  tls:
+    enabled: true
+    servicePort: 443
+    containerPort: 8443
 
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
     service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-    
-    # Open both ports on the AWS side
-    service.beta.kubernetes.io/aws-load-balancer-ports: "80, 443"
-    
-    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: "proxy_protocol.v2.enabled=false"
-    
-    # Attach your ACM Certificate ARN
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${acm_certificate_arn}"
-    
-    # Terminate SSL only on 443
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-    
-    # Force HTTP to HTTPS redirect
-    service.beta.kubernetes.io/aws-load-balancer-ssl-redirect: "443"
-    
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    external-dns.alpha.kubernetes.io/hostname: "${domain},www.${domain},api.${domain}"
-    
-# ---------------------------------------------------------------------------
-# Database mode — "postgres" or "dbless"
-# "dbless" is simpler: declarative config via DB-less mode.
-# For production with dynamic route management, use "postgres".
-# ---------------------------------------------------------------------------
-env:
-  database: "off"
 
+    # ACM termination on 443 only; 80 stays plain TCP
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${acm_certificate_arn}"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+
+    # Re-encrypt to Kong's TLS listener
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "ssl"
+
+    external-dns.alpha.kubernetes.io/hostname: "${domain},[www.${domain},api.${domain}](https://www.${domain},api.${domain})"
 # ---------------------------------------------------------------------------
 # Admin API — internal only (ClusterIP)
 # ---------------------------------------------------------------------------
