@@ -140,7 +140,7 @@ module "eks-addons" {
   route53_zone_name       = var.route53_zone_name
   acm_certificate_arn     = aws_acm_certificate_validation.nlb.certificate_arn
   backend_s3_bucket_arn   = module.s3-assets.bucket_arn
-  backend_namespace       = "default"
+  backend_namespace       = "prod"
   backend_service_account = "backend-prod"
 
   depends_on = [module.ebs, module.iam, module.eks]

@@ -6,7 +6,7 @@
 
 replicaCount: 1
 
-backendUrl: "http://backend-prod.default.svc.cluster.local:8000"
+backendUrl: "http://backend-prod.prod.svc.cluster.local:8000"
 
 resources:
   requests:

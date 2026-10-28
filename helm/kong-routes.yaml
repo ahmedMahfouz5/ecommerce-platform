@@ -19,7 +19,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-gateway-routes
-  namespace: default
+  namespace: prod
   annotations:
     konghq.com/strip-path: "false"
     konghq.com/protocols: "http,https"
@@ -70,7 +70,7 @@ apiVersion: configuration.konghq.com/v1
 kind: KongPlugin
 metadata:
   name: cors-plugin
-  namespace: default
+  namespace: prod
 plugin: cors
 config:
   origins:
@@ -105,7 +105,7 @@ apiVersion: configuration.konghq.com/v1
 kind: KongPlugin
 metadata:
   name: rate-limiting-plugin
-  namespace: default
+  namespace: prod
 plugin: rate-limiting
 config:
   minute: 100
