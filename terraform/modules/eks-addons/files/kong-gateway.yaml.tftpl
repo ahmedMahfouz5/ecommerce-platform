@@ -23,15 +23,18 @@ proxy:
   enabled: true
   type: LoadBalancer
 
-  # Expose both 80 and 443 at the service level so Helm creates both ports
   http:
     enabled: true
     servicePort: 80
     containerPort: 8000
-  
-# Keep TLS disabled locally because the AWS NLB handles external TLS termination
+    
   tls:
     enabled: false
+
+  # Use stream_listeners to open port 443 on the Kubernetes Service without local pod TLS termination
+  stream_listeners:
+    - port: 443
+      container_port: 8000
 
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: "external"
@@ -56,6 +59,7 @@ proxy:
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
     service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
     external-dns.alpha.kubernetes.io/hostname: "${domain},www.${domain},api.${domain}"
+    
 # ---------------------------------------------------------------------------
 # Database mode — "postgres" or "dbless"
 # "dbless" is simpler: declarative config via DB-less mode.
