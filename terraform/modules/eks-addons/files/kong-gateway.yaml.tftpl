@@ -35,7 +35,7 @@ proxy:
     # Re-encrypt to Kong's TLS listener
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "ssl"
 
-    external-dns.alpha.kubernetes.io/hostname: "${domain},[www.${domain},api.${domain}](https://www.${domain},api.${domain})"
+    external-dns.alpha.kubernetes.io/hostname: "${domain},www.${domain},api.${domain}"
 # ---------------------------------------------------------------------------
 # Admin API — internal only (ClusterIP)
 # ---------------------------------------------------------------------------
@@ -110,3 +110,11 @@ containerSecurityContext:
   capabilities:
     drop:
       - ALL
+
+controller:
+  enabled: true
+  # If this is omitted or empty, Kong watches ALL namespaces by default.
+  # If you want to restrict it, make sure "prod" is included:
+  # watchNamespaces:
+  #   - kong
+  #   - prod

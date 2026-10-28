@@ -614,7 +614,7 @@ resource "null_resource" "ecommerce_secret" {
 # =============================================================================
 locals {
   kong_routes_manifest = templatefile("${path.module}/files/kong-routes.yaml.tftpl", {
-    namespace         = var.backend_namespace
+    namespace         = "prod"
     route53_zone_name = var.route53_zone_name
   })
 }
