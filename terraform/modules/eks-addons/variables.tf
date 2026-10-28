@@ -103,3 +103,24 @@ variable "grafana_admin_password" {
   sensitive   = true
 }
 
+
+# ... existing variables ...
+
+# -- E-Commerce Secret --
+variable "database_url" {
+  description = "Database connection URL for the FastAPI backend (stored in ecommerce-secret)"
+  type        = string
+  sensitive   = true
+}
+
+variable "secret_key" {
+  description = "Secret key used by FastAPI for JWT signing, etc."
+  type        = string
+  sensitive   = true
+}
+
+variable "postgres_password" {
+  description = "PostgreSQL password shared between backend and postgres chart"
+  type        = string
+  sensitive   = true
+}

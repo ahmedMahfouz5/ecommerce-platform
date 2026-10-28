@@ -668,3 +668,71 @@ resource "null_resource" "argocd_apps" {
   depends_on = [helm_release.argocd]
 }
 
+# =============================================================================
+# E-Commerce Secret Bootstrap
+#
+# Renders ecommerce-secret.yaml from the template and applies it with kubectl
+# after Argo CD is ready. Sensitive values stay in Terraform state but are
+# rendered into the YAML at apply time.
+# =============================================================================
+locals {
+  ecommerce_secret_manifest = templatefile("${path.module}/files/ecommerce-secret.yaml.tftpl", {
+    namespace         = var.backend_namespace
+    database_url      = var.database_url
+    secret_key        = var.secret_key
+    postgres_password = var.postgres_password
+  })
+}
+
+resource "null_resource" "ecommerce_secret" {
+  triggers = {
+    manifest_sha256 = sha256(local.ecommerce_secret_manifest)
+    argo_ready      = helm_release.argocd.id
+  }
+
+  provisioner "local-exec" {
+    command     = <<-EOT
+      kubectl wait --for=condition=available deployment/argocd-server \
+        -n argocd --timeout=300s 2>/dev/null
+      echo '${local.ecommerce_secret_manifest}' | kubectl apply -f -
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
+# =============================================================================
+# Kong Routes Bootstrap
+#
+# Renders kong-routes.yaml from the template and applies it with kubectl after
+# Kong is deployed and its CRDs are registered.
+# =============================================================================
+locals {
+  kong_routes_manifest = templatefile("${path.module}/files/kong-routes.yaml.tftpl", {
+    namespace         = var.backend_namespace
+    route53_zone_name = var.route53_zone_name
+  })
+}
+
+resource "null_resource" "kong_routes" {
+  triggers = {
+    manifest_sha256 = sha256(local.kong_routes_manifest)
+    kong_ready      = helm_release.kong.id
+  }
+
+  # Wait for the Kong Deployment to be available, then apply the routes.
+  provisioner "local-exec" {
+    command     = <<-EOT
+      kubectl wait --for=condition=available deployment/kong \
+        -n kong --timeout=600s 2>/dev/null
+      echo '${local.kong_routes_manifest}' | kubectl apply -f -
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  depends_on = [helm_release.kong]
+}
+
+
+
