@@ -1,3 +1,6 @@
+# =============================================================================
+# Kong declarative routing configuration with Terraform variables
+# =============================================================================
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -6,8 +9,6 @@ metadata:
   namespace: ${namespace}
   annotations:
     konghq.com/strip-path: "false"
-    konghq.com/protocols: "http,https"
-    konghq.com/https-redirect-status-code: "301"
 spec:
   ingressClassName: kong
   rules:
