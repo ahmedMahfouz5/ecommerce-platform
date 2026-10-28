@@ -29,11 +29,9 @@ proxy:
     servicePort: 80
     containerPort: 8000
   
-  # Enable TLS block so the Helm chart creates the 443 port mapping
+# Keep TLS disabled locally because the AWS NLB handles external TLS termination
   tls:
-    enabled: true
-    servicePort: 443
-    containerPort: 8000
+    enabled: false
 
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: "external"
