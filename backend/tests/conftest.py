@@ -81,16 +81,13 @@ async def engine():
     eng = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 
     async with eng.begin() as conn:
-        await conn.execute(
-            text("TRUNCATE TABLE products RESTART IDENTITY CASCADE")
-        )
+        await conn.execute(text("TRUNCATE TABLE products RESTART IDENTITY CASCADE"))
 
     yield eng
 
     async with eng.begin() as conn:
-        await conn.execute(
-            text("TRUNCATE TABLE products RESTART IDENTITY CASCADE")
-        )
+        await conn.execute(text("TRUNCATE TABLE products RESTART IDENTITY CASCADE"))
+        await conn.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE"))
     await eng.dispose()
 
 
@@ -101,9 +98,13 @@ async def client(engine):
     Overrides get_session so every request uses a fresh session from the
     test engine.  The session factory mirrors production:
     expire_on_commit=False.
+
+    Also overrides the auth dependency so write tests don't need a real
+    JWT – the override returns a fixed username.
     """
     from app.core.database import get_session
     from app.main import app
+    from app.modules.auth.dependencies import get_current_username
 
     TestSessionLocal = async_sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
@@ -113,7 +114,11 @@ async def client(engine):
         async with TestSessionLocal() as session:
             yield session
 
+    async def override_get_current_username():
+        return "test-admin"
+
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_username] = override_get_current_username
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

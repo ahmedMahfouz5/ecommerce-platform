@@ -1,9 +1,4 @@
-"""API routes for product management.
-
-WARNING: Write endpoints (POST, PUT, DELETE) are currently unprotected.
-         Authentication will be added in a future milestone.
-         Do not expose these endpoints publicly without authentication.
-"""
+"""API routes for product management."""
 
 import uuid
 
@@ -11,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.modules.auth.dependencies import get_current_username
 from app.modules.products.schemas import (
     ProductCreate,
     ProductListResponse,
@@ -60,11 +56,9 @@ async def get_product(
 async def create_product(
     data: ProductCreate,
     service: ProductService = Depends(get_service),
+    _username: str = Depends(get_current_username),
 ):
-    """Create a new product.
-
-    WARNING: This endpoint is not yet protected by authentication.
-    """
+    """Create a new product."""
     return await service.create_product(data)
 
 
@@ -73,11 +67,9 @@ async def update_product(
     product_id: uuid.UUID,
     data: ProductUpdate,
     service: ProductService = Depends(get_service),
+    _username: str = Depends(get_current_username),
 ):
-    """Update an existing product. Only provided fields are changed.
-
-    WARNING: This endpoint is not yet protected by authentication.
-    """
+    """Update an existing product. Only provided fields are changed."""
     try:
         return await service.update_product(product_id, data)
     except HTTPException:
@@ -88,11 +80,9 @@ async def update_product(
 async def delete_product(
     product_id: uuid.UUID,
     service: ProductService = Depends(get_service),
+    _username: str = Depends(get_current_username),
 ):
-    """Delete a product by ID.
-
-    WARNING: This endpoint is not yet protected by authentication.
-    """
+    """Delete a product by ID."""
     try:
         await service.delete_product(product_id)
     except HTTPException:

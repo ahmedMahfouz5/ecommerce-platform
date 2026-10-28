@@ -1,10 +1,4 @@
-"""API routes for product-image upload management.
-
-WARNING: These endpoints are currently unprotected.
-         Authentication and role-based authorization will be added in a
-         future milestone. Do not expose these endpoints publicly without
-         authentication.
-"""
+"""API routes for product-image upload management."""
 
 import logging
 import uuid
@@ -13,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.modules.auth.dependencies import get_current_username
 from app.modules.products.image_schemas import (
     ImageConfirmationRequest,
     ImageResponse,
@@ -67,13 +62,11 @@ async def request_image_upload_url(
     product_id: uuid.UUID,
     body: ImageUploadUrlRequest,
     session: AsyncSession = Depends(get_session),
+    _username: str = Depends(get_current_username),
 ):
     """Generate a presigned S3 upload URL for a product image.
 
-    WARNING: This endpoint is not yet protected by authentication.
-             Only authorized administrators should be allowed to generate
-             upload URLs.
-
+    Only authorized administrators should use this endpoint.
     The client must declare:
       - content_type: the MIME type (image/jpeg, image/png, image/webp).
       - file_size_bytes: the expected file size (max 10 MB).
@@ -144,10 +137,9 @@ async def confirm_image_upload(
     product_id: uuid.UUID,
     body: ImageConfirmationRequest,
     session: AsyncSession = Depends(get_session),
+    _username: str = Depends(get_current_username),
 ):
     """Confirm that a product image upload has completed and associate it.
-
-    WARNING: This endpoint is not yet protected by authentication.
 
     The client sends the object_key returned by the upload-url endpoint.
     The backend:
