@@ -523,109 +523,11 @@ resource "aws_eks_pod_identity_association" "backend_s3" {
 # =============================================================================
 # kube-prometheus-stack (Prometheus + Grafana)
 #
-# Deploys the full monitoring stack: Prometheus, Alertmanager, Grafana,
-# node-exporter, and kube-state-metrics.  Grafana is exposed internally
-# through Kong at https://grafana.<zone>.
+# NOT deployed here.  The monitoring stack is managed by Argo CD via the
+# "monitoring" Application in apps.yaml.tftpl (rendered from
+# files/apps.yaml.tftpl).  That manifest installs the same Helm chart with
+# inline values, so there is no drift between Terraform and Argo CD.
 # =============================================================================
-locals {
-  grafana_host = "grafana.${var.route53_zone_name}"
-}
-
-resource "helm_release" "kube_prometheus_stack" {
-  name             = "kube-prometheus-stack"
-  repository       = "https://prometheus-community.github.io/helm-charts"
-  chart            = "kube-prometheus-stack"
-  namespace        = "monitoring"
-  create_namespace = true
-  version          = "72.2.0"
-
-  atomic          = true
-  cleanup_on_fail = true
-  timeout         = 900
-
-  values = [yamlencode({
-    # -- Grafana settings ---------------------------------------------------
-    grafana = {
-      enabled = true
-      ingress = {
-        enabled          = true
-        ingressClassName = "kong"
-        hosts            = [local.grafana_host]
-        path             = "/"
-        pathType         = "Prefix"
-      }
-
-      # Default admin credentials (override in production)
-      adminUser     = var.grafana_admin_user
-      adminPassword = var.grafana_admin_password
-
-      # Persist dashboards across restarts
-      persistence = {
-        enabled = true
-        size    = "10Gi"
-      }
-
-      # Sidecar to auto-load ConfigMap dashboards
-      sidecar = {
-        dashboards = {
-          enabled = true
-        }
-      }
-    }
-
-    # -- Prometheus settings ------------------------------------------------
-    prometheus = {
-      enabled = true
-
-      prometheusSpec = {
-        # Scrape metrics from all pods with prometheus.io/scrape annotations
-        podMonitorSelectorNilUsesHelmValues     = false
-        serviceMonitorSelectorNilUsesHelmValues = false
-
-        retention     = "15d"
-        retentionSize = "20GB"
-
-        resources = {
-          requests = {
-            cpu    = "300m"
-            memory = "1Gi"
-          }
-          limits = {
-            cpu    = "1"
-            memory = "3Gi"
-          }
-        }
-
-        storageSpec = {
-          volumeClaimTemplate = {
-            spec = {
-              accessModes      = ["ReadWriteOnce"]
-              storageClassName = "gp3"
-              resources = {
-                requests = {
-                  storage = "30Gi"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    # -- Alertmanager settings ----------------------------------------------
-    alertmanager = {
-      enabled = true
-    }
-
-    # -- Optional: kube-state-metrics & node-exporter are enabled by default
-  })]
-
-  depends_on = [
-    helm_release.kong,
-    helm_release.external_dns,
-    kubernetes_storage_class_v1.ebs_gp3,
-  ]
-}
 
 # =============================================================================
 # Argo CD App-of-Apps bootstrap
@@ -642,8 +544,9 @@ resource "helm_release" "kube_prometheus_stack" {
 # =============================================================================
 locals {
   apps_manifest = templatefile("${path.module}/files/apps.yaml.tftpl", {
-    repo_url        = var.repo_url
-    target_revision = var.target_revision
+    repo_url          = var.repo_url
+    target_revision   = var.target_revision
+    route53_zone_name = var.route53_zone_name
   })
 }
 

@@ -1,6 +1,77 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "92.14.1"
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        grafana:
+          enabled: true
+          ingress:
+            enabled: true
+            ingressClassName: kong
+            hosts:
+              - grafana.${route53_zone_name}
+            path: /
+            pathType: Prefix
+          adminUser: admin
+          adminPassword: admin
+          persistence:
+            enabled: true
+            size: 10Gi
+          sidecar:
+            dashboards:
+              enabled: true
+
+        prometheus:
+          enabled: true
+          prometheusSpec:
+            podMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+            retention: 15d
+            retentionSize: 20GB
+            resources:
+              requests:
+                cpu: 300m
+                memory: 1Gi
+              limits:
+                cpu: "1"
+                memory: 3Gi
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  storageClassName: gp3
+                  resources:
+                    requests:
+                      storage: 30Gi
+
+        alertmanager:
+          enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: postgres
   namespace: argocd
   annotations: { argocd.argoproj.io/sync-wave: "0" }
@@ -13,7 +84,7 @@ spec:
     helm:
       releaseName: postgres
       valueFiles: [values-local.yaml]
-  destination: { server: https://kubernetes.default.svc, namespace: default }
+  destination: { server: https://kubernetes.default.svc, namespace: prod }
   syncPolicy: { automated: { prune: true, selfHeal: true } }
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -28,7 +99,7 @@ spec:
     repoURL: ${repo_url}
     targetRevision: ${target_revision}
     path: migration
-  destination: { server: https://kubernetes.default.svc, namespace: default }
+  destination: { server: https://kubernetes.default.svc, namespace: prod }
   syncPolicy: { automated: { prune: true, selfHeal: true } }
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -46,7 +117,7 @@ spec:
     helm:
       releaseName: backend-prod
       valueFiles: [values-prod.yaml]
-  destination: { server: https://kubernetes.default.svc, namespace: default }
+  destination: { server: https://kubernetes.default.svc, namespace: prod }
   syncPolicy: { automated: { prune: true, selfHeal: true } }
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -64,4 +135,4 @@ spec:
     helm:
       releaseName: frontend-prod
       valueFiles: [values-prod.yaml]
-  destination: { server: https://kubernetes.default.svc, namespace: default }
+  destination: { server: https://kubernetes.default.svc, namespace: prod }

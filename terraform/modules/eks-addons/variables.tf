@@ -82,29 +82,11 @@ variable "target_revision" {
 
 # =============================================================================
 # kube-prometheus-stack (Prometheus + Grafana)
+#
+# The monitoring stack is managed by Argo CD (see files/apps.yaml.tftpl).
+# Grafana credentials are set in the inline Helm values of that Application
+# manifest.  Terraform does not deploy the monitoring chart directly.
 # =============================================================================
-# variable "grafana_subdomain" {
-#   description = "Subdomain for Grafana; final host is <grafana_subdomain>.<route53_zone_name>"
-#   type        = string
-#   default     = "grafana"
-# }
-
-variable "grafana_admin_user" {
-  description = "Grafana admin username"
-  type        = string
-  default     = "admin"
-  sensitive   = true
-}
-
-variable "grafana_admin_password" {
-  description = "Grafana admin password (override in production!)"
-  type        = string
-  default     = "admin"
-  sensitive   = true
-}
-
-
-# ... existing variables ...
 
 # -- E-Commerce Secret --
 variable "database_url" {
