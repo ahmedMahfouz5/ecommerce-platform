@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ProductForm } from "../components/ProductForm";
+import { ImageUploader } from "../components/ImageUploader";
 import type { ProductCreate } from "../types/product";
 import { createProduct } from "../api/products";
 
@@ -11,6 +12,8 @@ export function AdminPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Track the newly created product's ID so we can show the image uploader
+  const [newProductId, setNewProductId] = useState<string | null>(null);
 
   const handleCreate = async (data: ProductCreate) => {
     setError(null);
@@ -19,7 +22,7 @@ export function AdminPage() {
     try {
       const created = await createProduct(data);
       setSuccessMsg(`Product "${created.name}" created successfully.`);
-      navigate(`/products/${created.id}`);
+      setNewProductId(created.id);
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -31,6 +34,11 @@ export function AdminPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleImageUploaded = () => {
+    setSuccessMsg("Image uploaded successfully.");
+    navigate(`/products/${newProductId}`);
   };
 
   return (
@@ -58,10 +66,28 @@ export function AdminPage() {
         </div>
       )}
 
-      <section className="admin-page__create">
-        <h3>Create New Product</h3>
-        <ProductForm onSubmit={handleCreate} submitting={submitting} />
-      </section>
+      {!newProductId ? (
+        <section className="admin-page__create">
+          <h3>Create New Product</h3>
+          <ProductForm onSubmit={handleCreate} submitting={submitting} />
+        </section>
+      ) : (
+        <section className="admin-page__upload-image">
+          <h3>Upload Product Image</h3>
+          <p>Product created — add an image now or skip.</p>
+          <ImageUploader
+            productId={newProductId}
+            onUploaded={handleImageUploaded}
+          />
+          <button
+            className="admin-page__skip-btn"
+            onClick={() => navigate(`/products/${newProductId}`)}
+            style={{ marginTop: "1rem" }}
+          >
+            Skip – view product
+          </button>
+        </section>
+      )}
     </div>
   );
 }
