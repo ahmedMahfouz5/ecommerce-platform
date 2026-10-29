@@ -2,7 +2,7 @@ import type { Product } from "../types/product";
 import { getImageUrl } from "../api/images";
 
 function formatPrice(price: number): string {
-  return `$${price.toFixed(2)}`;
+  return `$${Number(price).toFixed(2)}`;
 }
 
 interface ProductCardProps {
@@ -51,3 +51,4 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
 }
 
 export default ProductCard;
+

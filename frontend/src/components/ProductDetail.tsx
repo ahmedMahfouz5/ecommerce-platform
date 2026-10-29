@@ -4,7 +4,7 @@ import { getImageUrl } from "../api/images";
 import type { Product } from "../types/product";
 
 function formatPrice(price: number): string {
-  return `$${price.toFixed(2)}`;
+  return `$${Number(price).toFixed(2)}`;
 }
 
 interface ProductDetailProps {
@@ -123,3 +123,4 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 }
 
 export default ProductDetail;
+
