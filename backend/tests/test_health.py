@@ -30,14 +30,25 @@ class TestReadiness:
     """GET /api/v1/health/ready"""
 
     @pytest.fixture(autouse=True)
-    def _mock_migrations(self):
-        """Every readiness test gets a passing migration check by default."""
-        with patch(
-            "app.routers.health.check_migration_status",
-            new_callable=AsyncMock,
-        ) as mock:
-            mock.return_value = (True, None, None)
-            yield mock
+    def _mock_deps(self):
+        """Mock migration and S3 checks to pass by default."""
+        with (
+            patch(
+                "app.routers.health.check_migration_status",
+                new_callable=AsyncMock,
+            ) as mock_mig,
+            patch(
+                "app.routers.health.check_s3_connection",
+            ) as mock_s3,
+        ):
+            mock_mig.return_value = (True, None, None)
+            mock_s3.return_value = {
+                "connected": True,
+                "bucket": "test-bucket",
+                "region": "us-east-2",
+                "error": None,
+            }
+            yield
 
     async def test_returns_200_when_all_healthy(self, client: AsyncClient):
         response = await client.get("/api/v1/health/ready")
@@ -46,6 +57,7 @@ class TestReadiness:
         assert data["status"] == "ok"
         assert data["database"] == "connected"
         assert data["migrations"] == "up_to_date"
+        assert data["s3"] == "connected"
 
     async def test_returns_503_when_db_disconnected(self, client: AsyncClient):
         with patch(
@@ -75,7 +87,25 @@ class TestReadiness:
             assert data["status"] == "error"
             assert any("migration: incomplete" in c for c in data["checks"])
 
-    async def test_returns_503_when_both_fail(self, client: AsyncClient):
+    async def test_returns_503_when_s3_disconnected(self, client: AsyncClient):
+        with patch(
+            "app.routers.health.check_s3_connection",
+        ) as mock_s3:
+            mock_s3.return_value = {
+                "connected": False,
+                "bucket": "test-bucket",
+                "region": "us-east-2",
+                "error": "Bucket 'test-bucket' not found",
+            }
+
+            response = await client.get("/api/v1/health/ready")
+
+            assert response.status_code == 503
+            data = response.json()
+            assert data["status"] == "error"
+            assert any("s3:" in c for c in data["checks"])
+
+    async def test_returns_503_when_all_fail(self, client: AsyncClient):
         with (
             patch(
                 "app.routers.health.check_database_connection",
@@ -85,18 +115,28 @@ class TestReadiness:
                 "app.routers.health.check_migration_status",
                 new_callable=AsyncMock,
             ) as mock_mig,
+            patch(
+                "app.routers.health.check_s3_connection",
+            ) as mock_s3,
         ):
             mock_db.return_value = False
             mock_mig.return_value = (False, "abc123", "def456")
+            mock_s3.return_value = {
+                "connected": False,
+                "bucket": "test-bucket",
+                "region": "us-east-2",
+                "error": "S3 unreachable",
+            }
 
             response = await client.get("/api/v1/health/ready")
 
             assert response.status_code == 503
             data = response.json()
             assert data["status"] == "error"
-            assert len(data["checks"]) == 2
+            assert len(data["checks"]) == 3
             assert "database: disconnected" in data["checks"]
             assert any("migration: incomplete" in c for c in data["checks"])
+            assert any("s3:" in c for c in data["checks"])
 
 
 class TestDbConnection:
@@ -158,3 +198,48 @@ class TestDbMigration:
             assert data["migration"] == "incomplete"
             assert data["current_revision"] == "abc123"
             assert data["head_revision"] == "def456"
+
+
+class TestS3:
+    """GET /api/v1/health/s3"""
+
+    @pytest.fixture(autouse=True)
+    def _mock_s3(self):
+        with patch(
+            "app.routers.health.check_s3_connection",
+        ) as mock:
+            mock.return_value = {
+                "connected": True,
+                "bucket": "test-bucket",
+                "region": "us-east-2",
+                "error": None,
+            }
+            yield mock
+
+    async def test_returns_200_when_connected(self, client: AsyncClient):
+        response = await client.get("/api/v1/health/s3")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["s3"] == "connected"
+        assert data["bucket"] == "test-bucket"
+        assert data["region"] == "us-east-2"
+
+    async def test_returns_503_when_disconnected(self, client: AsyncClient):
+        with patch(
+            "app.routers.health.check_s3_connection",
+        ) as mock_s3:
+            mock_s3.return_value = {
+                "connected": False,
+                "bucket": "test-bucket",
+                "region": "us-east-2",
+                "error": "Bucket 'test-bucket' not found",
+            }
+
+            response = await client.get("/api/v1/health/s3")
+
+            assert response.status_code == 503
+            data = response.json()
+            assert data["status"] == "error"
+            assert data["s3"] == "disconnected"
+            assert data["error"] == "Bucket 'test-bucket' not found"

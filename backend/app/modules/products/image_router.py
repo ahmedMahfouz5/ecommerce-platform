@@ -11,6 +11,7 @@ from app.modules.auth.dependencies import require_admin
 from app.modules.products.image_schemas import (
     ImageConfirmationRequest,
     ImageResponse,
+    ImageUrlResponse,
     ImageUploadUrlRequest,
     ImageUploadUrlResponse,
 )
@@ -18,6 +19,7 @@ from app.modules.products.models import Product
 from app.modules.products.repository import ProductRepository
 from app.services.s3 import (
     generate_object_key,
+    generate_presigned_download_url,
     generate_presigned_upload_url,
     head_object,
     validate_image_upload_request,
@@ -48,6 +50,57 @@ async def _get_product_or_404(
             detail=f"Product with id {product_id} not found",
         )
     return product
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/products/{product_id}/image-url
+# ---------------------------------------------------------------------------
+@router.get(
+    "/{product_id}/image-url",
+    response_model=ImageUrlResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_product_image_url(
+    product_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+):
+    """Return a presigned GET URL for the product's current image.
+
+    The client uses this URL to display the image. The URL is short-lived
+    and scoped to the current object key stored in product.image_url.
+
+    Returns 404 if the product has no image associated.
+    """
+    repo = ProductRepository(session)
+    product = await repo.get_by_id(product_id)
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id {product_id} not found",
+        )
+
+    if not product.image_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No image associated with this product",
+        )
+
+    try:
+        download_url = generate_presigned_download_url(product.image_url)
+    except Exception as exc:
+        logger.exception(
+            "Failed to generate presigned GET URL for product %s", product_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate image URL. Please try again later.",
+        )
+
+    return ImageUrlResponse(
+        image_url=download_url,
+        object_key=product.image_url,
+        expires_in_seconds=settings.s3_presigned_url_expiration_seconds,
+    )
 
 
 # ---------------------------------------------------------------------------

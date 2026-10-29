@@ -33,10 +33,26 @@ class ImageUploadUrlResponse(BaseModel):
     )
     object_key: str = Field(
         description="S3 object key assigned to this upload",
-        examples=["products/550e8400-e29b-41d4-a716-446655440000/7c9e6679-7425-40de-944b-e07fc1f90ae7.jpg"],
+        examples=[
+            "products/550e8400-e29b-41d4-a716-446655440000/7c9e6679-7425-40de-944b-e07fc1f90ae7.jpg"
+        ],
     )
     content_type: str = Field(
         description="Expected Content-Type that the upload must use",
+    )
+    expires_in_seconds: int = Field(
+        description="Lifetime of the presigned URL in seconds",
+    )
+
+
+class ImageUrlResponse(BaseModel):
+    """Presigned GET URL for viewing a product image."""
+
+    image_url: str = Field(
+        description="Presigned GET URL for downloading/viewing the image",
+    )
+    object_key: str = Field(
+        description="S3 object key of the image",
     )
     expires_in_seconds: int = Field(
         description="Lifetime of the presigned URL in seconds",
@@ -53,7 +69,9 @@ class ImageConfirmationRequest(BaseModel):
 
     object_key: str = Field(
         description="S3 object key previously returned by the upload-url endpoint",
-        examples=["products/550e8400-e29b-41d4-a716-446655440000/7c9e6679-7425-40de-944b-e07fc1f90ae7.jpg"],
+        examples=[
+            "products/550e8400-e29b-41d4-a716-446655440000/7c9e6679-7425-40de-944b-e07fc1f90ae7.jpg"
+        ],
     )
 
 

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from app.core.database import check_database_connection, check_migration_status
+from app.services.s3 import check_s3_connection
 
 logger = logging.getLogger(__name__)
 
@@ -27,18 +28,18 @@ async def liveness_check():
 
 @router.get("/api/v1/health/ready")
 async def readiness_check():
-    """Aggregate readiness — queries both sub-checks for convenience."""
-    # Check DB
+    """Aggregate readiness — queries all sub-checks for convenience."""
     db_connected = await check_database_connection()
-    # Check migrations
     migrations_ok, current_rev, head_rev = await check_migration_status()
+    s3_status = check_s3_connection()
 
     logger.info(
-        "Readiness probe: db_connected=%s, migrations_ok=%s, current_rev=%s, head_rev=%s",
+        "Readiness probe: db_connected=%s, migrations_ok=%s, current_rev=%s, head_rev=%s, s3_connected=%s",
         db_connected,
         migrations_ok,
         current_rev,
         head_rev,
+        s3_status["connected"],
     )
 
     errors = []
@@ -46,6 +47,8 @@ async def readiness_check():
         errors.append("database: disconnected")
     if not migrations_ok:
         errors.append(f"migration: incomplete (current={current_rev}, head={head_rev})")
+    if not s3_status["connected"]:
+        errors.append(f"s3: {s3_status['error']}")
 
     if errors:
         return JSONResponse(
@@ -53,7 +56,12 @@ async def readiness_check():
             content={"status": "error", "checks": errors},
         )
 
-    return {"status": "ok", "database": "connected", "migrations": "up_to_date"}
+    return {
+        "status": "ok",
+        "database": "connected",
+        "migrations": "up_to_date",
+        "s3": "connected",
+    }
 
 
 @router.get("/api/v1/health/db_connection")
@@ -96,3 +104,40 @@ async def db_migration_check():
         )
 
     return {"status": "ok", "migration": "up_to_date"}
+
+
+@router.get("/api/v1/health/s3")
+async def s3_check():
+    """Dedicated S3 connectivity probe.
+
+    Verifies the S3 client can reach the configured bucket.
+    Logs the result so you can see it in application logs.
+    """
+    result = check_s3_connection()
+
+    logger.info(
+        "S3 probe: connected=%s, bucket=%s, region=%s, error=%s",
+        result["connected"],
+        result["bucket"],
+        result["region"],
+        result["error"],
+    )
+
+    if not result["connected"]:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "s3": "disconnected",
+                "bucket": result["bucket"],
+                "region": result["region"],
+                "error": result["error"],
+            },
+        )
+
+    return {
+        "status": "ok",
+        "s3": "connected",
+        "bucket": result["bucket"],
+        "region": result["region"],
+    }

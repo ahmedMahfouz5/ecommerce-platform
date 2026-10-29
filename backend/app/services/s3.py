@@ -11,6 +11,7 @@ from typing import Optional
 
 import boto3
 from botocore.config import Config as BotoConfig
+from botocore.exceptions import ClientError
 
 from app.config import settings
 
@@ -51,6 +52,48 @@ def _build_s3_client():
 
 # Module-level client – boto3 clients are thread-safe and should be reused.
 s3_client = _build_s3_client()
+
+
+# ── health-check helper ────────────────────────────────────────────────────
+
+
+def check_s3_connection() -> dict:
+    """Verify S3 connectivity and bucket accessibility.
+
+    Returns a dict with keys:
+        connected  – bool
+        bucket     – str  (the configured bucket name)
+        region     – str  (the configured region)
+        error      – str | None  (friendly error message when not connected)
+    """
+    result = {
+        "connected": False,
+        "bucket": settings.s3_assets_bucket,
+        "region": settings.aws_region,
+        "error": None,
+    }
+
+    try:
+        # Head the bucket to confirm it exists and we can reach it
+        s3_client.head_bucket(Bucket=settings.s3_assets_bucket)
+        result["connected"] = True
+    except ClientError as exc:
+        error_code = exc.response.get("Error", {}).get("Code", "Unknown")
+        if error_code == "404":
+            result["error"] = f"Bucket '{settings.s3_assets_bucket}' not found"
+        elif error_code == "403":
+            result["error"] = f"Access denied to bucket '{settings.s3_assets_bucket}'"
+        else:
+            result["error"] = (
+                f"S3 error ({error_code}): {exc.response.get('Error', {}).get('Message', str(exc))}"
+            )
+    except Exception as exc:
+        result["error"] = f"S3 unreachable: {exc}"
+
+    return result
+
+
+# ── presigned URL helpers ──────────────────────────────────────────────────
 
 
 def validate_image_upload_request(
@@ -145,6 +188,47 @@ def generate_presigned_upload_url(
         settings.s3_assets_bucket,
         object_key,
         content_type,
+        expiration,
+    )
+
+    return url
+
+
+def generate_presigned_download_url(
+    object_key: str,
+    expiration: Optional[int] = None,
+) -> str:
+    """Generate a presigned GET URL for downloading/viewing an object.
+
+    Args:
+        object_key: The S3 object key to grant GetObject permission for.
+        expiration: Lifetime of the URL in seconds. Defaults to the configured value.
+
+    Returns:
+        A presigned GET URL as a string.
+
+    Raises:
+        botocore.exceptions.ClientError: If the S3 client cannot generate the URL.
+    """
+    if expiration is None:
+        expiration = settings.s3_presigned_url_expiration_seconds
+
+    params = {
+        "Bucket": settings.s3_assets_bucket,
+        "Key": object_key,
+    }
+
+    url = s3_client.generate_presigned_url(
+        ClientMethod="get_object",
+        Params=params,
+        ExpiresIn=expiration,
+        HttpMethod="GET",
+    )
+
+    logger.info(
+        "Generated presigned GET URL: bucket=%s key=%s expires=%ds",
+        settings.s3_assets_bucket,
+        object_key,
         expiration,
     )
 
