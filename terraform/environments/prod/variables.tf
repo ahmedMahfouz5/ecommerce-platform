@@ -52,7 +52,7 @@ variable "nat_gateway_count" {
 variable "node_instance_types" {
   description = "Instance types for the node group"
   type        = list(string)
-  default     = ["t3.large"]
+  default     = ["t3.medium"]
 }
 
 variable "node_desired_size" {
