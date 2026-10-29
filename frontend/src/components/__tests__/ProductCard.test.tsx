@@ -11,6 +11,7 @@ const product: Product = {
   stock_quantity: 15,
   category: "electronics",
   image_url: null,
+  image_download_url: null,
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-02T00:00:00Z",
 };
@@ -44,10 +45,10 @@ describe("ProductCard", () => {
     expect(screen.getByText("No Image")).toBeInTheDocument();
   });
 
-  it("renders image when image_url is set", () => {
+  it("renders image when image_download_url is set", () => {
     render(
       <ProductCard
-        product={{ ...product, image_url: "https://example.com/img.jpg" }}
+        product={{ ...product, image_download_url: "https://example.com/img.jpg" }}
         onSelect={vi.fn()}
       />,
     );
@@ -72,3 +73,4 @@ describe("ProductCard", () => {
     expect(onSelect).toHaveBeenCalledWith("abc-123");
   });
 });
+

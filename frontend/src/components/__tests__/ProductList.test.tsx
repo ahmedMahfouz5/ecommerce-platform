@@ -12,6 +12,7 @@ const mockProducts: Product[] = [
     stock_quantity: 5,
     category: "cat-a",
     image_url: null,
+    image_download_url: null,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
   },
@@ -23,6 +24,7 @@ const mockProducts: Product[] = [
     stock_quantity: 0,
     category: "cat-b",
     image_url: null,
+    image_download_url: null,
     created_at: "2025-01-02T00:00:00Z",
     updated_at: "2025-01-02T00:00:00Z",
   },
@@ -186,3 +188,4 @@ describe("ProductList", () => {
     expect(onSelect).toHaveBeenCalledWith("1");
   });
 });
+
