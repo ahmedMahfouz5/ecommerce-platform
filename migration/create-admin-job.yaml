@@ -1,0 +1,73 @@
+# =============================================================================
+# Standalone Kubernetes Job — Create Admin User
+#
+# Runs create_admin.py as a one-shot Job to create or update an admin user.
+#
+# Usage:
+#   kubectl apply -f migration/create-admin-job.yaml
+#
+# To change username/password, edit the args below or override via --set.
+# Once the Job succeeds, you can safely delete it.
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: backend-create-admin
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/component: admin-bootstrap
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+        app.kubernetes.io/component: admin-bootstrap
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: create-admin
+          image: ahmedmahfouz0/backend:7343c4a7b1b45544f7c8803e8c9d5cf0f2bf7e4a
+          imagePullPolicy: IfNotPresent
+          command:
+            ["python", "scripts/create_admin.py"]
+          args:
+            # =================================================================
+            # EDIT THESE VALUES before applying
+            # =================================================================
+            - "admin"              # <-- username
+            - "admin"      # <-- password
+            - "--force"            # remove this line if you DON'T want to overwrite existing user
+
+          envFrom:
+            - secretRef:
+                name: ecommerce-secret
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
