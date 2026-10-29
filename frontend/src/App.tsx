@@ -4,8 +4,11 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import ProductList from "./components/ProductList";
 import ProductDetail from "./components/ProductDetail";
 import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { AdminRegisterPage } from "./pages/AdminRegisterPage";
 import { AdminPage } from "./pages/AdminPage";
 import { ProductEditPage } from "./pages/ProductEditPage";
+import { LoginLogoutButton } from "./components/LoginLogoutButton";
 
 function AppLayout() {
   return (
@@ -23,6 +26,10 @@ function AppLayout() {
           <Link to="/admin" className="app__nav-link">
             Admin
           </Link>
+          <Link to="/register" className="app__nav-link">
+            Register
+          </Link>
+          <LoginLogoutButton />
         </nav>
       </header>
 
@@ -32,13 +39,22 @@ function AppLayout() {
           <Route path="/" element={<ProductListRoute />} />
           <Route path="/products/:productId" element={<ProductDetailRoute />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-          {/* Admin (authenticated) */}
+          {/* Admin (authenticated + admin role) */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute requireAdmin>
                 <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/register"
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminRegisterPage />
               </ProtectedRoute>
             }
           />

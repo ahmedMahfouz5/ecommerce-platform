@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ProductForm } from "../components/ProductForm";
 import { ImageUploader } from "../components/ImageUploader";
@@ -46,6 +46,9 @@ export function AdminPage() {
       <div className="admin-page__header">
         <h2>Admin Dashboard</h2>
         <div className="admin-page__actions">
+          <Link to="/admin/register" className="admin-page__nav-btn">
+            Register Admin
+          </Link>
           {isLoggedIn && (
             <button className="admin-page__logout-btn" onClick={() => logout()}>
               Sign Out

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
@@ -21,7 +21,7 @@ export function LoginPage() {
     e.preventDefault();
     clearError();
     try {
-      await login({ username, password });
+      await login(username, password);
       navigate(from, { replace: true });
     } catch {
       // error is set by context
@@ -30,11 +30,11 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <form className="login-form" onSubmit={handleSubmit} noValidate>
+      <form className="auth-form" onSubmit={handleSubmit} noValidate>
         <h2>Sign In</h2>
 
         {error && (
-          <div className="login-form__error" role="alert">
+          <div className="auth-form__error" role="alert">
             {error}
           </div>
         )}
@@ -64,6 +64,11 @@ export function LoginPage() {
         <button type="submit" disabled={loading || !username || !password}>
           {loading ? "Signing in..." : "Sign In"}
         </button>
+
+        <p className="auth-form__footer">
+          Don't have an account?{" "}
+          <Link to="/register">Register here</Link>
+        </p>
       </form>
     </div>
   );

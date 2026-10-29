@@ -62,7 +62,42 @@ body {
   padding: 2rem 1rem;
 }
 
-/* ── Login Page ────────────────────────────────────────── */
+/* ── Header Auth Button ────────────────────────────────── */
+
+.header-auth-btn {
+  padding: 0.4rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: transparent;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.header-auth-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
+}
+
+.header-auth-btn--logout {
+  border-color: rgba(255, 100, 100, 0.7);
+  color: #ff9b9b;
+}
+
+.header-auth-btn--logout:hover {
+  background: rgba(255, 100, 100, 0.15);
+  border-color: #ff9b9b;
+}
+
+/* ── Auth Forms (Login, Register, Admin Register) ──────── */
+
+.register-page {
+  display: flex;
+  justify-content: center;
+  padding-top: 3rem;
+}
 
 .login-page {
   display: flex;
@@ -70,7 +105,7 @@ body {
   padding-top: 3rem;
 }
 
-.login-form {
+.auth-form {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -82,31 +117,37 @@ body {
   gap: 0.75rem;
 }
 
-.login-form h2 {
+.auth-form h2 {
   margin-bottom: 0.5rem;
   color: #1a1a2e;
 }
 
-.login-form label {
+.auth-form__subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.auth-form label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #444;
 }
 
-.login-form input {
+.auth-form input {
   padding: 0.6rem 0.75rem;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 1rem;
 }
 
-.login-form input:focus {
+.auth-form input:focus {
   outline: none;
   border-color: #1a1a2e;
   box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.15);
 }
 
-.login-form button {
+.auth-form button {
   margin-top: 0.5rem;
   padding: 0.65rem;
   background: #1a1a2e;
@@ -118,17 +159,42 @@ body {
   font-weight: 600;
 }
 
-.login-form button:disabled {
+.auth-form button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.login-form__error {
+.auth-form__error {
   background: #fdecea;
   color: #c0392b;
   padding: 0.75rem;
   border-radius: 6px;
   font-size: 0.9rem;
+}
+
+.auth-form__success {
+  background: #eafaf1;
+  color: #27ae60;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.auth-form__footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.auth-form__footer a {
+  color: #1a1a2e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-form__footer a:hover {
+  text-decoration: underline;
 }
 
 /* ── Admin Page ────────────────────────────────────────── */
