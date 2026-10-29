@@ -48,6 +48,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY scripts ./scripts
 
 # Create unprivileged user with numeric UID/GID for runAsNonRoot compliance
 RUN groupadd -r -g 1000 appgroup && useradd -r -M -g appgroup -u 1000 appuser
