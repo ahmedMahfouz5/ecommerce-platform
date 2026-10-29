@@ -496,13 +496,22 @@ resource "aws_iam_role" "backend_s3" {
 }
 
 data "aws_iam_policy_document" "backend_s3" {
-  # Allow PutObject on objects within the bucket (presigned PUT URLs)
+  # Allow GetObject / PutObject on objects within the bucket (presigned URLs)
   statement {
-    actions   = ["s3:PutObject"]
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+    ]
     resources = ["${var.backend_s3_bucket_arn}/*"]
   }
 
-  # Allow HeadBucket for health checks (readiness probe)
+  # Allow HeadObject for confirming uploads
+  statement {
+    actions   = ["s3:HeadObject"]
+    resources = ["${var.backend_s3_bucket_arn}/*"]
+  }
+
+  # Allow ListBucket for health checks (readiness probe)
   statement {
     actions   = ["s3:ListBucket"]
     resources = [var.backend_s3_bucket_arn]
