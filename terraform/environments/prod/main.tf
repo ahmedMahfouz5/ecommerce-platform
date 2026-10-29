@@ -155,6 +155,11 @@ module "s3-assets" {
   env        = var.env
   project    = "ecommerce"
   aws_region = var.aws_region
+
+  cors_allowed_origins = [
+    "https://${var.route53_zone_name}",
+    "https://api.${var.route53_zone_name}",
+  ]
 }
 # =============================================================================
 # ACM Certificate for NLB TLS termination

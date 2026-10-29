@@ -58,3 +58,18 @@ resource "aws_s3_bucket_versioning" "assets" {
     status = "Enabled"
   }
 }
+
+# CORS — allow the frontend to PUT (upload) and GET (view) objects directly.
+# Without this, browser-based presigned URL uploads will fail with a CORS /
+# network error because the S3 endpoint rejects cross-origin requests.
+resource "aws_s3_bucket_cors_configuration" "assets" {
+  bucket = aws_s3_bucket.assets.id
+
+  cors_rule {
+    allowed_origins = var.cors_allowed_origins
+    allowed_methods = ["GET", "PUT", "HEAD"]
+    allowed_headers = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
