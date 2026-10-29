@@ -15,7 +15,7 @@ image:
   # -- Container image repository (REQUIRED)
   repository: ahmedmahfouz0/backend
   # -- Image tag (REQUIRED — set at install/upgrade time, usually git SHA)
-  tag: "d116e26e9ff2fed4b08f7006ca9fa04ed6347db6"
+  tag: "e8bdd8d2a44bb8cd5aa9a2a7e07514107d6345a2"
   # -- Image digest (optional) — when set, overrides tag; e.g. sha256:abc123…
   digest: ""
   # -- Image pull policy
