@@ -7,7 +7,7 @@ from app.modules.auth.models import User
 
 
 class UserRepository:
-    """Async repository for User lookups."""
+    """Async repository for User lookups and persistence."""
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -18,3 +18,9 @@ class UserRepository:
             select(User).where(User.username == username)
         )
         return result.scalar_one_or_none()
+
+    async def add(self, user: User) -> User:
+        """Persist a new user to the database."""
+        self._session.add(user)
+        await self._session.flush()
+        return user
