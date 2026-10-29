@@ -3,8 +3,9 @@ import logging
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.core.database import check_database_connection, check_migration_status
+from app.core.database import check_database_connection, check_migration_status, engine
 from app.services.s3 import check_s3_connection
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -28,40 +29,8 @@ async def liveness_check():
 
 @router.get("/api/v1/health/ready")
 async def readiness_check():
-    """Aggregate readiness — queries all sub-checks for convenience."""
-    db_connected = await check_database_connection()
-    migrations_ok, current_rev, head_rev = await check_migration_status()
-    s3_status = check_s3_connection()
-
-    logger.info(
-        "Readiness probe: db_connected=%s, migrations_ok=%s, current_rev=%s, head_rev=%s, s3_connected=%s",
-        db_connected,
-        migrations_ok,
-        current_rev,
-        head_rev,
-        s3_status["connected"],
-    )
-
-    errors = []
-    if not db_connected:
-        errors.append("database: disconnected")
-    if not migrations_ok:
-        errors.append(f"migration: incomplete (current={current_rev}, head={head_rev})")
-    if not s3_status["connected"]:
-        errors.append(f"s3: {s3_status['error']}")
-
-    if errors:
-        return JSONResponse(
-            status_code=503,
-            content={"status": "error", "checks": errors},
-        )
-
-    return {
-        "status": "ok",
-        "database": "connected",
-        "migrations": "up_to_date",
-        "s3": "connected",
-    }
+    """Readiness probe — checks only that the app can handle requests."""
+    return {"status": "ok"}
 
 
 @router.get("/api/v1/health/db_connection")
@@ -140,4 +109,65 @@ async def s3_check():
         "s3": "connected",
         "bucket": result["bucket"],
         "region": result["region"],
+    }
+
+
+# ── per-table migration checks ───────────────────────────────────────────
+
+# Whitelist of valid table names derived from SQLAlchemy models
+_VALID_TABLES = {"users", "products"}
+
+
+async def _table_exists(table_name: str) -> bool:
+    """Check whether a table exists in the database."""
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text(
+                    "SELECT EXISTS ("
+                    "  SELECT FROM information_schema.tables"
+                    "  WHERE table_name = :table"
+                    ")"
+                ),
+                {"table": table_name},
+            )
+            return bool(result.scalar())
+    except Exception:
+        return False
+
+
+@router.get("/api/v1/health/db_migration/{table}")
+async def table_migration_check(table: str):
+    """Check whether a specific table exists in the database.
+
+    Only whitelisted tables are accepted to prevent information leakage.
+    """
+    if table not in _VALID_TABLES:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "status": "error",
+                "table": table,
+                "message": f"Unknown table. Valid tables: {', '.join(sorted(_VALID_TABLES))}",
+            },
+        )
+
+    exists = await _table_exists(table)
+
+    logger.info("Table probe: table=%s, exists=%s", table, exists)
+
+    if not exists:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "table": table,
+                "message": f"Table '{table}' does not exist in the database",
+            },
+        )
+
+    return {
+        "status": "ok",
+        "table": table,
+        "message": f"Table '{table}' exists",
     }
