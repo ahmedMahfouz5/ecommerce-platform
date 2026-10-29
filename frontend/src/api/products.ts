@@ -5,6 +5,7 @@ export async function fetchProducts(
   page = 1,
   pageSize = 20,
   category?: string,
+  q?: string,
   signal?: AbortSignal,
 ): Promise<ProductListResponse> {
   const params = new URLSearchParams({
@@ -12,6 +13,7 @@ export async function fetchProducts(
     pageSize: String(pageSize),
   });
   if (category) params.set("category", category);
+  if (q && q.trim()) params.set("q", q.trim());
 
   return apiGet<ProductListResponse>(`/products?${params.toString()}`, signal);
 }
@@ -44,4 +46,3 @@ export async function deleteProduct(
 ): Promise<void> {
   return apiDelete(`/products/${id}`, signal);
 }
-

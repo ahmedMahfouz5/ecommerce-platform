@@ -3,7 +3,7 @@
 import uuid
 from math import ceil
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.products.models import Product
@@ -20,12 +20,26 @@ class ProductRepository:
         page: int = 1,
         page_size: int = 20,
         category: str | None = None,
+        q: str | None = None,
     ) -> tuple[list[Product], int]:
-        """Return a paginated list of products and the total count."""
+        """Return a paginated list of products and the total count.
+
+        Optionally filtered by category (exact match) and/or q (case-insensitive
+        substring search on name and description).
+        """
         query = select(Product)
 
         if category:
             query = query.where(Product.category == category)
+
+        if q and q.strip():
+            term = f"%{q.strip()}%"
+            query = query.where(
+                or_(
+                    Product.name.ilike(term),
+                    Product.description.ilike(term),
+                )
+            )
 
         # Count total matching rows
         count_query = select(func.count()).select_from(query.subquery())

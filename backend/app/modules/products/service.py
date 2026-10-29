@@ -26,11 +26,12 @@ class ProductService:
         page: int = 1,
         page_size: int = 20,
         category: str | None = None,
+        q: str | None = None,
     ) -> ProductListResponse:
-        """Return a paginated list of products, optionally filtered by category."""
+        """Return a paginated list of products, optionally filtered."""
         repo = ProductRepository(self.session)
         products, total = await repo.get_all(
-            page=page, page_size=page_size, category=category
+            page=page, page_size=page_size, category=category, q=q,
         )
         return ProductListResponse(
             items=[ProductResponse.model_validate(p) for p in products],

@@ -34,21 +34,12 @@ function ProductList({ onSelectProduct }: ProductListProps) {
         page,
         pageSize,
         category || undefined,
+        search.trim() || undefined,
         controller.signal,
       );
-      // Client-side search filtering (backend doesn't support search yet)
-      let items = data.items;
-      if (search.trim()) {
-        const term = search.toLowerCase();
-        items = items.filter(
-          (p) =>
-            p.name.toLowerCase().includes(term) ||
-            (p.description && p.description.toLowerCase().includes(term)),
-        );
-      }
 
-      setProducts(items);
-      setTotalPages(search.trim() ? 1 : data.total_pages);
+      setProducts(data.items);
+      setTotalPages(data.total_pages);
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(
@@ -144,7 +135,7 @@ function ProductList({ onSelectProduct }: ProductListProps) {
             ))}
           </div>
 
-          {totalPages > 1 && !search.trim() && (
+          {totalPages > 1 && (
             <div className="product-list__pagination">
               <button
                 disabled={page <= 1}

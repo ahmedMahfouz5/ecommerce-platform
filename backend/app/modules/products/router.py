@@ -32,11 +32,15 @@ async def list_products(
         default=20, ge=1, le=100, alias="pageSize", description="Items per page"
     ),
     category: str | None = Query(default=None, description="Filter by category"),
+    q: str | None = Query(
+        default=None,
+        description="Search query (case-insensitive, matches name and description)",
+    ),
     service: ProductService = Depends(get_service),
 ):
-    """List products with optional category filtering and pagination."""
+    """List products with optional category filtering, search, and pagination."""
     return await service.list_products(
-        page=page, page_size=page_size, category=category
+        page=page, page_size=page_size, category=category, q=q,
     )
 
 
