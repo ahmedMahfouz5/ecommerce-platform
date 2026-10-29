@@ -11,7 +11,7 @@ fullnameOverride: ""
 image:
   repository: ahmedmahfouz0/frontend
   # tag is REQUIRED — set it at install/upgrade time to the git SHA
-  tag: "0c01dd8b128f051ba4823cf5cf2592b4404baacb"
+  tag: "4c80fcc9e2c7e752fea92bbecd0ab8ee3e045fbf"
   # digest (optional) — when set, overrides tag; e.g. sha256:abc123…
   digest: ""
   pullPolicy: IfNotPresent
