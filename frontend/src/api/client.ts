@@ -181,7 +181,7 @@ export interface LoginCredentials {
 }
 
 /**
- * Token response from the backend (expected shape once auth is implemented).
+ * Token response from the backend.
  */
 export interface TokenResponse {
   access_token: string;
@@ -191,39 +191,13 @@ export interface TokenResponse {
 
 /**
  * Send login credentials and persist the returned access token.
- *
- * NOTE: The backend does not yet implement authentication endpoints.
- * This function attempts a real login call first, and falls back to a
- * self-issued dev token when the backend returns 404 (not implemented).
- * The dev token is stored with a "dev-" prefix so it is never mistaken
- * for a real server-issued credential.
  */
 export async function login(
   credentials: LoginCredentials,
 ): Promise<TokenResponse> {
-  try {
-    const data = await apiPost<TokenResponse>("/auth/login", credentials);
-    sessionStorage.setItem("access_token", data.access_token);
-    return data;
-  } catch (err: unknown) {
-    // If the auth endpoint doesn't exist (404), issue a dev token so the
-    // UI auth guards work. The backend write endpoints are currently
-    // unprotected anyway.
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      (err as ApiError).status === 404
-    ) {
-      const devToken = `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const tokenResponse: TokenResponse = {
-        access_token: devToken,
-        token_type: "bearer",
-      };
-      sessionStorage.setItem("access_token", devToken);
-      return tokenResponse;
-    }
-    throw err;
-  }
+  const data = await apiPost<TokenResponse>("/auth/login", credentials);
+  sessionStorage.setItem("access_token", data.access_token);
+  return data;
 }
 
 /**
