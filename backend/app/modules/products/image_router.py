@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.modules.auth.dependencies import get_current_username
+from app.modules.auth.dependencies import require_admin
 from app.modules.products.image_schemas import (
     ImageConfirmationRequest,
     ImageResponse,
@@ -62,7 +62,7 @@ async def request_image_upload_url(
     product_id: uuid.UUID,
     body: ImageUploadUrlRequest,
     session: AsyncSession = Depends(get_session),
-    _username: str = Depends(get_current_username),
+    _admin: None = Depends(require_admin),
 ):
     """Generate a presigned S3 upload URL for a product image.
 
@@ -137,7 +137,7 @@ async def confirm_image_upload(
     product_id: uuid.UUID,
     body: ImageConfirmationRequest,
     session: AsyncSession = Depends(get_session),
-    _username: str = Depends(get_current_username),
+    _admin: None = Depends(require_admin),
 ):
     """Confirm that a product image upload has completed and associate it.
 
@@ -149,6 +149,8 @@ async def confirm_image_upload(
 
     If s3:HeadObject permission is not available, S3 existence verification
     is skipped gracefully and the association is still performed.
+
+    Requires admin privileges.
     """
     repo = ProductRepository(session)
     product = await repo.get_by_id(product_id)
@@ -171,9 +173,6 @@ async def confirm_image_upload(
         )
 
     # 2. Optionally verify the object exists in S3.
-    #    This requires s3:HeadObject. If the IAM role doesn't have it, we
-    #    log a warning but still allow the association (the caller is trusted
-    #    after authentication/authorization is added).
     try:
         exists = head_object(body.object_key)
         if not exists:
@@ -187,8 +186,6 @@ async def confirm_image_upload(
     except HTTPException:
         raise
     except Exception as exc:
-        # Could be an AccessDenied error if s3:HeadObject is missing.
-        # Log and continue – the association is still valid.
         logger.warning(
             "Could not verify S3 object existence for key %s: %s",
             body.object_key,

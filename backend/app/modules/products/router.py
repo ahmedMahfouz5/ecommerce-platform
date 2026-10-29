@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.modules.auth.dependencies import get_current_username
+from app.modules.auth.dependencies import require_admin
 from app.modules.products.schemas import (
     ProductCreate,
     ProductListResponse,
@@ -56,9 +56,9 @@ async def get_product(
 async def create_product(
     data: ProductCreate,
     service: ProductService = Depends(get_service),
-    _username: str = Depends(get_current_username),
+    _admin: None = Depends(require_admin),
 ):
-    """Create a new product."""
+    """Create a new product. Requires admin privileges."""
     return await service.create_product(data)
 
 
@@ -67,9 +67,10 @@ async def update_product(
     product_id: uuid.UUID,
     data: ProductUpdate,
     service: ProductService = Depends(get_service),
-    _username: str = Depends(get_current_username),
+    _admin: None = Depends(require_admin),
 ):
-    """Update an existing product. Only provided fields are changed."""
+    """Update an existing product. Only provided fields are changed.
+    Requires admin privileges."""
     try:
         return await service.update_product(product_id, data)
     except HTTPException:
@@ -80,9 +81,9 @@ async def update_product(
 async def delete_product(
     product_id: uuid.UUID,
     service: ProductService = Depends(get_service),
-    _username: str = Depends(get_current_username),
+    _admin: None = Depends(require_admin),
 ):
-    """Delete a product by ID."""
+    """Delete a product by ID. Requires admin privileges."""
     try:
         await service.delete_product(product_id)
     except HTTPException:
