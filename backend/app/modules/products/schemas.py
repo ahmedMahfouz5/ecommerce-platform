@@ -1,10 +1,15 @@
 """Pydantic schemas for product request/response validation."""
 
+import logging
 import uuid
 from datetime import datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
+
+from app.services.s3 import generate_presigned_download_url
+
+logger = logging.getLogger(__name__)
 
 
 class ProductCreate(BaseModel):
@@ -52,10 +57,29 @@ class ProductResponse(BaseModel):
     stock_quantity: int
     category: str
     image_url: str | None
+    image_download_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="after")
+    def populate_download_url(self) -> "ProductResponse":
+        """Generate a presigned download URL from the stored object key.
+
+        If S3 is unreachable we log a warning and leave the field as None.
+        """
+        if self.image_url:
+            try:
+                self.image_download_url = generate_presigned_download_url(
+                    self.image_url
+                )
+            except Exception:
+                logger.warning(
+                    "Failed to generate presigned GET URL for object key %s",
+                    self.image_url,
+                )
+        return self
 
 
 class ProductListResponse(BaseModel):
