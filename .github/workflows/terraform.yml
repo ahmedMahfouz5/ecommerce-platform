@@ -78,18 +78,11 @@ jobs:
 
       - name: Apply (vpc)
         run: terraform apply -target=module.vpc -auto-approve -lock-timeout=5m -no-color
-
-      - name: Apply (iam)
-        run: terraform apply -target=module.iam -auto-approve -lock-timeout=5m -no-color
-
       - name: Apply (eks)
         run: terraform apply -target=module.eks -auto-approve -lock-timeout=5m -no-color
 
-      - name: Apply (ebs)
-        run: terraform apply -target=module.ebs -auto-approve -lock-timeout=5m -no-color
-
-      - name: Apply (eks-addons)
-        run: terraform apply -target=module.eks-addons -auto-approve -lock-timeout=5m -no-color
+      - name: Apply (iam)
+        run: terraform apply -target=module.iam -auto-approve -lock-timeout=5m -no-color
 
       - name: Apply (remaining)
         run: terraform apply -auto-approve -lock-timeout=5m -no-color
