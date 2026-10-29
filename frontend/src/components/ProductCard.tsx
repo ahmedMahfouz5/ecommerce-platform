@@ -25,8 +25,8 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
       aria-label={`View details for ${product.name}`}
     >
       <div className="product-card__image">
-        {product.image_url ? (
-          <img src={product.image_url} alt={product.name} loading="lazy" />
+        {product.image_download_url ? (
+          <img src={product.image_download_url} alt={product.name} loading="lazy" />
         ) : (
           <div className="product-card__image-placeholder" aria-hidden="true">
             No Image
@@ -48,3 +48,4 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
 }
 
 export default ProductCard;
+

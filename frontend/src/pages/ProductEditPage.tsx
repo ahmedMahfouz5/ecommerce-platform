@@ -141,9 +141,9 @@ export function ProductEditPage() {
 
       <section className="product-edit__image-section">
         <h3>Product Image</h3>
-        {product.image_url ? (
+        {product.image_download_url ? (
           <div className="product-edit__current-image">
-            <img src={product.image_url} alt={product.name} />
+            <img src={product.image_download_url} alt={product.name} />
           </div>
         ) : (
           <p className="product-edit__no-image">No image set.</p>
@@ -185,3 +185,4 @@ export function ProductEditPage() {
     </div>
   );
 }
+

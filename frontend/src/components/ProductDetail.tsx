@@ -84,8 +84,8 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 
       <div className="product-detail__layout">
         <div className="product-detail__image">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} />
+          {product.image_download_url ? (
+            <img src={product.image_download_url} alt={product.name} />
           ) : (
             <div className="product-detail__image-placeholder" aria-hidden="true">
               No Image
@@ -120,3 +120,4 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 }
 
 export default ProductDetail;
+
