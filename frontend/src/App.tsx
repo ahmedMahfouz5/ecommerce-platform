@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import ProductList from "./components/ProductList";
@@ -63,14 +63,12 @@ function ProductListRoute() {
 
 function ProductDetailRoute() {
   const navigate = useNavigate();
-  // Derive productId from the path since ProductDetail still uses the prop pattern
-  const pathParts = window.location.pathname.split("/");
-  const productId = pathParts[pathParts.length - 1] ?? "";
+  const { productId } = useParams<{ productId: string }>();
 
   return (
     <ProductDetail
       key={productId}
-      productId={productId}
+      productId={productId!}
       onBack={() => navigate(-1)}
     />
   );

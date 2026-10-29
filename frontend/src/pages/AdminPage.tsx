@@ -38,12 +38,6 @@ export function AdminPage() {
       <div className="admin-page__header">
         <h2>Admin Dashboard</h2>
         <div className="admin-page__actions">
-          <button
-            className="admin-page__nav-btn"
-            onClick={() => navigate("/admin/products/new")}
-          >
-            + New Product
-          </button>
           {isLoggedIn && (
             <button className="admin-page__logout-btn" onClick={() => logout()}>
               Sign Out
