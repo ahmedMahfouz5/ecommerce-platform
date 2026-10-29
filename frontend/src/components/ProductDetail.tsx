@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchProduct } from "../api/products";
-import { getImageUrl } from "../api/images";
 import type { Product } from "../types/product";
 
 function formatPrice(price: number): string {
@@ -77,8 +76,6 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
     );
   }
 
-  const imageUrl = getImageUrl(product.image_url);
-
   return (
     <div className="product-detail">
       <button className="product-detail__back" onClick={onBack}>
@@ -87,8 +84,8 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 
       <div className="product-detail__layout">
         <div className="product-detail__image">
-          {imageUrl ? (
-            <img src={imageUrl} alt={product.name} />
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.name} />
           ) : (
             <div className="product-detail__image-placeholder" aria-hidden="true">
               No Image
@@ -123,4 +120,3 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 }
 
 export default ProductDetail;
-

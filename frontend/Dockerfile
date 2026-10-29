@@ -26,14 +26,10 @@ FROM deps AS build
 
 # Build-time variables consumed by Vite (VITE_* are statically replaced).
 # Supply via --build-arg, e.g.:
-#   docker build --build-arg VITE_IMAGE_BASE_URL=https://cdn.example.com/ ...
+#   docker build --build-arg VITE_API_TARGET=http://backend:8000 ...
 ARG VITE_API_TARGET="http://backend:8000"
-ARG VITE_IMAGE_BASE_URL=""
-
-# Expose ARGs as ENVs so Vite picks them up during `npm run build`.
+# Expose ARG as ENV so Vite picks it up during `npm run build`.
 ENV VITE_API_TARGET=${VITE_API_TARGET}
-ENV VITE_IMAGE_BASE_URL=${VITE_IMAGE_BASE_URL}
-
 COPY . .
 
 RUN npm run build

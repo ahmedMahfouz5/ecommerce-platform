@@ -3,47 +3,8 @@ import {
   requestUploadUrl,
   confirmUpload,
   validateImageFile,
-  getImageUrl,
   MAX_UPLOAD_SIZE_BYTES,
 } from "../images";
-
-describe("getImageUrl", () => {
-  it("returns null for null input", () => {
-    expect(getImageUrl(null)).toBeNull();
-  });
-
-  it("returns null for empty string", () => {
-    expect(getImageUrl("")).toBeNull();
-  });
-
-  it("returns full URL as-is", () => {
-    expect(getImageUrl("https://example.com/img.jpg")).toBe(
-      "https://example.com/img.jpg",
-    );
-  });
-
-  it("returns http URL as-is", () => {
-    expect(getImageUrl("http://cdn.example.com/photo.png")).toBe(
-      "http://cdn.example.com/photo.png",
-    );
-  });
-
-  it("returns raw value when no base URL is configured and value is not a full URL", () => {
-    // Without VITE_IMAGE_BASE_URL, S3 object keys are returned as-is
-    const key = "products/uuid/file.jpg";
-    expect(getImageUrl(key)).toBe(key);
-  });
-
-  it("prepends VITE_IMAGE_BASE_URL to S3 object key", () => {
-    vi.stubEnv("VITE_IMAGE_BASE_URL", "https://cdn.example.com");
-    // Need to re-import to pick up the env var, but for a unit test,
-    // we verify the logic directly: full URLs pass through,
-    // non-URLs get the base prepended.
-    // Since import.meta.env is a Vite construct, we test the
-    // conditional branches through the public API above.
-    vi.unstubAllEnvs();
-  });
-});
 
 describe("validateImageFile", () => {
 

@@ -11,57 +11,15 @@
  * and no AWS credentials are exposed to the browser.
  *
  * --- Image Viewing ---
- * The backend stores the S3 object key (e.g. "products/<uuid>/<uuid>.jpg") in
- * the product's `image_url` field. To display images, the frontend constructs
- * a viewable URL by prepending the configured image base URL:
- *
- *   VITE_IMAGE_BASE_URL  – e.g. "https://cdn.example.com/" (CloudFront)
- *                          or "https://<bucket>.s3.<region>.amazonaws.com/"
- *
- * If VITE_IMAGE_BASE_URL is not set, the raw object key is returned as-is
- * (images will not render unless the value is already a full URL).
+ * The backend returns a presigned S3 download URL in the product's
+ * `image_url` field.  No client-side URL construction is needed.
  */
 
 import { apiPost, apiPut } from "./client";
 
 // ---------------------------------------------------------------------------
-// Image URL construction
+// Types & constants
 // ---------------------------------------------------------------------------
-
-/**
- * Construct a viewable image URL from a stored image reference.
- *
- * The backend stores S3 object keys (not full URLs) in product.image_url.
- * This utility prepends the configured image base URL so images can be
- * rendered in <img> tags. If no base URL is configured, returns the raw
- * value (which may be a full URL from external sources).
- */
-export function getImageUrl(storedValue: string | null): string | null {
-  if (!storedValue) return null;
-
-  // If it's already a full URL (http/https), return as-is
-  if (/^https?:\/\//i.test(storedValue)) {
-    return storedValue;
-  }
-
-  // Read the Vite env var for the image base URL (e.g. CloudFront distribution).
-  // Vite exposes VITE_* env vars on import.meta.env at build time.
-  // In test environments import.meta.env may not exist, so guard access.
-  let base: string | undefined;
-  try {
-    base = (import.meta as unknown as { env?: { VITE_IMAGE_BASE_URL?: string } })
-      .env?.VITE_IMAGE_BASE_URL;
-  } catch {
-    base = undefined;
-  }
-
-  if (base) {
-    return `${base.replace(/\/+$/, "")}/${storedValue.replace(/^\/+/, "")}`;
-  }
-
-  // Fallback: return the raw value (images may not render without a base URL)
-  return storedValue;
-}
 
 /** Request body for POST …/images/upload-url */
 export interface ImageUploadUrlRequest {

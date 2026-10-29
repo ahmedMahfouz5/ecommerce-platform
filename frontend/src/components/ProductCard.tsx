@@ -1,5 +1,4 @@
 import type { Product } from "../types/product";
-import { getImageUrl } from "../api/images";
 
 function formatPrice(price: number): string {
   return `$${Number(price).toFixed(2)}`;
@@ -11,8 +10,6 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onSelect }: ProductCardProps) {
-  const imageUrl = getImageUrl(product.image_url);
-
   return (
     <article
       className="product-card"
@@ -28,8 +25,8 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
       aria-label={`View details for ${product.name}`}
     >
       <div className="product-card__image">
-        {imageUrl ? (
-          <img src={imageUrl} alt={product.name} loading="lazy" />
+        {product.image_url ? (
+          <img src={product.image_url} alt={product.name} loading="lazy" />
         ) : (
           <div className="product-card__image-placeholder" aria-hidden="true">
             No Image
@@ -51,4 +48,3 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
 }
 
 export default ProductCard;
-

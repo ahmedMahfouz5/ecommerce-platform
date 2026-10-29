@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchProduct, updateProduct, deleteProduct } from "../api/products";
-import { getImageUrl } from "../api/images";
 import { ProductForm } from "../components/ProductForm";
 import { ImageUploader } from "../components/ImageUploader";
 import type { ProductUpdate } from "../types/product";
@@ -121,8 +120,6 @@ export function ProductEditPage() {
     );
   }
 
-  const imageUrl = getImageUrl(product.image_url);
-
   return (
     <div className="product-edit">
       <button className="product-edit__back" onClick={() => navigate("/admin")}>
@@ -144,9 +141,9 @@ export function ProductEditPage() {
 
       <section className="product-edit__image-section">
         <h3>Product Image</h3>
-        {imageUrl ? (
+        {product.image_url ? (
           <div className="product-edit__current-image">
-            <img src={imageUrl} alt={product.name} />
+            <img src={product.image_url} alt={product.name} />
           </div>
         ) : (
           <p className="product-edit__no-image">No image set.</p>
