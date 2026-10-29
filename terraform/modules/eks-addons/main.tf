@@ -603,7 +603,7 @@ resource "null_resource" "ecommerce_secret" {
     interpreter = ["/bin/bash", "-c"]
   }
 
-  depends_on = [helm_release.argocd]
+  depends_on = [helm_release.argocd, null_resource.argocd_apps]
 }
 
 # =============================================================================
@@ -648,7 +648,7 @@ resource "null_resource" "kong_routes" {
     EOT
   }
 
-  depends_on = [helm_release.kong]
+  depends_on = [helm_release.kong, null_resource.argocd_apps]
 }
 
 
