@@ -16,27 +16,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release-please:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: write
-      pull-requests: write
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      version: ${{ steps.release.outputs.version }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: googleapis/release-please-action@v5.0.0
-        id: release
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+  # release-please:
+  #   runs-on: ubuntu-24.04
+  #   timeout-minutes: 10
+  #   permissions:
+  #     contents: write
+  #     pull-requests: write
+  #   outputs:
+  #     release_created: ${{ steps.release.outputs.release_created }}
+  #     tag_name: ${{ steps.release.outputs.tag_name }}
+  #     version: ${{ steps.release.outputs.version }}
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #     - uses: googleapis/release-please-action@v5.0.0
+  #       id: release
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         config-file: release-please-config.json
+  #         manifest-file: .release-please-manifest.json
 
   detect-changes:
-    needs: release-please
+    # needs: release-please
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -55,7 +55,7 @@ jobs:
               - 'scripts/smoke-test.sh'
 
   docker-push:
-    needs: [release-please, detect-changes]
+    needs: [detect-changes]
     if: ${{ inputs.force_build || needs.detect-changes.outputs.backend == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
