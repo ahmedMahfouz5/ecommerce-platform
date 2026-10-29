@@ -70,7 +70,7 @@ variable "node_max_size" {
 variable "node_min_size" {
   description = "Minimum number of nodes"
   type        = number
-  default     = 0
+  default     = 1
 }
 
 variable "node_capacity_type" {
