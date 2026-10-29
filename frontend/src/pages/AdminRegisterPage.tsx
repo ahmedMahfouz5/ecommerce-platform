@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { registerAdmin, type RegisterPayload } from "../api/auth";
 
 export function AdminRegisterPage() {
   const { isLoggedIn, isAdmin } = useAuth();
-  const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -137,3 +136,4 @@ export function AdminRegisterPage() {
     </div>
   );
 }
+

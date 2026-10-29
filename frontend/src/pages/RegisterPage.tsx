@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { registerCustomer, type RegisterPayload } from "../api/auth";
 
 export function RegisterPage() {
   const { isLoggedIn } = useAuth();
-  const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -113,4 +112,5 @@ export function RegisterPage() {
     </div>
   );
 }
+
 

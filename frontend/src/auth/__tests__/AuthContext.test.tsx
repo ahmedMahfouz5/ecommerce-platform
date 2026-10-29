@@ -13,7 +13,7 @@ function AuthConsumer() {
       {error && <span data-testid="error">{error}</span>}
       <button
         data-testid="login-btn"
-        onClick={() => login({ username: "admin", password: "pass" })}
+        onClick={() => login("admin", "pass")}
       >
         Login
       </button>
@@ -130,3 +130,4 @@ describe("AuthContext", () => {
     });
   });
 });
+
