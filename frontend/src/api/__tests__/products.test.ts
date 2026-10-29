@@ -67,7 +67,7 @@ describe("fetchProducts", () => {
     vi.stubGlobal("fetch", mock);
 
     const ctrl = new AbortController();
-    await fetchProducts(1, 20, undefined, ctrl.signal);
+    await fetchProducts(1, 20, undefined, undefined, ctrl.signal);
 
     expect(mock.mock.calls[0]?.[1]?.signal).toBe(ctrl.signal);
   });
@@ -164,3 +164,4 @@ describe("deleteProduct", () => {
     expect(mock.mock.calls[0]?.[1]?.method).toBe("DELETE");
   });
 });
+
