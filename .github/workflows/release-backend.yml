@@ -3,13 +3,18 @@ name: Release Backend
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
   workflow_dispatch:
     inputs:
       force_build:
         description: "Build and push even if nothing under backend/ changed"
         type: boolean
         default: false
-
 permissions:
   contents: read
 
