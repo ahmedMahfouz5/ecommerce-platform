@@ -78,6 +78,70 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: trivy-operator
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://aquasecurity.github.io/helm-charts
+      chart: trivy-operator
+      targetRevision: "0.32.1"
+      helm:
+        releaseName: trivy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trivy-operator
+  namespace: argocd
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://aquasecurity.github.io/helm-charts
+      chart: trivy-operator
+      targetRevision: "0.32.1"
+      helm:
+        releaseName: trivy
+        valueFiles:
+          - $values/gitops/trivy-operator/values.yaml
+
+    - repoURL: ${repo_url}
+      targetRevision: ${target_revision}
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+    - repoURL: ${repo_url}
+      targetRevision: ${target_revision}
+      ref: values
+
+    - repoURL: ${repo_url}
+    targetRevision: ${target_revision}
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: postgres
   namespace: argocd
   annotations: { argocd.argoproj.io/sync-wave: "0" }

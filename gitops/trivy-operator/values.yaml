@@ -1,0 +1,67 @@
+# Scan all namespaces
+targetNamespaces: ""
+
+# Exclude Kubernetes system namespaces
+excludeNamespaces: "kube-system,kube-public,kube-node-lease"
+
+# Operator configuration
+operator:
+  replicas: 1
+  logDevMode: false
+
+# Scan job configuration
+scanJobsConcurrentLimit: 3
+scanJobTimeout: 10m
+scanJobTTL: 1h
+scanJobsRetryDelay: 30s
+
+# Security scanners
+vulnerabilityScannerEnabled: true
+sbomGenerationEnabled: true
+configAuditScannerEnabled: true
+rbacAssessmentScannerEnabled: true
+exposedSecretScannerEnabled: true
+
+# Enable later after evaluating node collector requirements
+infraAssessmentScannerEnabled: false
+clusterComplianceEnabled: false
+
+# Keep reports and metrics
+metricsFindingsEnabled: true
+metricsVulnIdEnabled: false
+
+# Prometheus integration
+# Enable only after installing Prometheus Operator
+serviceMonitor:
+  enabled: false
+
+# Trivy scanner configuration
+trivy:
+  mode: Standalone
+
+  severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
+
+  ignoreUnfixed: false
+
+  slow: true
+
+  timeout: "10m"
+
+  pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Scanner job security
+trivyOperator:
+  scanJobAutomountServiceAccountToken: false
+
+  reportRecordFailedChecksOnly: true
+
+  scanJobsInSameNamespace: false
