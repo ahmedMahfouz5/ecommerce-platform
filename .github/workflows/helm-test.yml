@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   lint:
@@ -55,6 +56,81 @@ jobs:
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             rendered.yaml
+
+  trivy-config:
+    name: trivy config (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: postgresql,       chart: helm/postgresql, values: helm/postgresql/values-local.yaml, set: "" }
+          - { name: backend,          chart: helm/backend,  values: helm/backend/values.yaml,          set: "--set image.tag=ci" }
+          - { name: backend-dev,      chart: helm/backend,  values: helm/backend/values-dev.yaml,      set: "--set image.tag=ci" }
+          - { name: backend-staging,  chart: helm/backend,  values: helm/backend/values-staging.yaml,  set: "--set image.tag=ci" }
+          - { name: backend-prod,     chart: helm/backend,  values: helm/backend/values-prod.yaml,     set: "--set image.tag=ci" }
+          - { name: frontend,         chart: helm/frontend, values: helm/frontend/values.yaml,         set: "--set image.tag=ci" }
+          - { name: frontend-dev,     chart: helm/frontend, values: helm/frontend/values-dev.yaml,     set: "--set image.tag=ci" }
+          - { name: frontend-prod,    chart: helm/frontend, values: helm/frontend/values-prod.yaml,    set: "--set image.tag=ci" }
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: azure/setup-helm@v5.0.1
+
+      - name: Helm template
+        run: helm template test ${{ matrix.chart }} -f ${{ matrix.values }} ${{ matrix.set }} > rendered.yaml
+
+      - name: Trivy config scan on rendered manifests
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          scan-type: config
+          scan-ref: rendered.yaml
+          severity: HIGH,CRITICAL
+          exit-code: 0
+          format: some-sarif
+          output: trivy-config-results.sarif
+
+      - name: Upload Trivy config results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-config-results.sarif
+          category: trivy-config-${{ matrix.name }}
+
+  trivy-fs:
+    name: trivy fs (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: postgresql,  chart: helm/postgresql }
+          - { name: backend,     chart: helm/backend }
+          - { name: frontend,    chart: helm/frontend }
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Trivy filesystem scan on chart source
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          scan-type: fs
+          scan-ref: ${{ matrix.chart }}
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          exit-code: 0
+          format: sarif
+          output: trivy-fs-results.sarif
+
+      - name: Upload Trivy fs results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs-results.sarif
+          category: trivy-fs-${{ matrix.name }}
 
   kind-install:
     needs: lint
@@ -184,7 +260,7 @@ jobs:
           echo "===== Frontend deployment ====="
           kubectl describe deployment frontend
           kubectl exec deployment/frontend -- cat /etc/nginx/conf.d/default.conf
-          
+
 
       - name: Debug SSH session
         if: ${{ failure() && inputs.debug_ssh }}
