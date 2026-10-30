@@ -33,7 +33,7 @@ ENV VITE_API_TARGET=${VITE_API_TARGET}
 COPY . .
 
 RUN npm run build
-
+# 2026-10-30 08:51:09 to triger workflow
 
 # ========== dev (docker-compose HMR) ==========
 FROM deps AS dev
