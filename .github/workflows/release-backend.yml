@@ -76,11 +76,38 @@ jobs:
               - 'scripts/smoke-test.sh'
 
   # ---------------------------------------------------------------------------
-  # 3. docker-push: build -> smoke test -> push.
-  #    Runs when backend code changed, a release was just created, or forced.
+  # 3. trivy-fs-scan: filesystem vulnerability, misconfig & secret scan.
+  # ---------------------------------------------------------------------------
+  trivy-fs-scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: backend/
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          format: sarif
+          output: trivy-fs-results.sarif
+
+      - name: Upload Trivy FS results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs-results.sarif
+  # ---------------------------------------------------------------------------
+  # 4. docker-push: build -> Trivy image scan -> smoke test -> push.
   # ---------------------------------------------------------------------------
   docker-push:
-    needs: [release-please, detect-changes]
+    needs: [release-please, detect-changes, trivy-fs-scan]
     if: >-
       ${{
         inputs.force_build ||
@@ -137,6 +164,24 @@ jobs:
           RETRY_DELAY: 2
         run: ./scripts/smoke-test.sh
 
+      - name: Trivy image scan (blocking on CRITICAL,HIGH)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          timeout: 10m
+          format: sarif
+          output: trivy-image-results.sarif
+
+      - name: Upload Trivy image results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image-results.sarif
+
       - name: Push image
         uses: docker/build-push-action@v7
         with:
@@ -150,11 +195,11 @@ jobs:
           sbom: true
 
   # ---------------------------------------------------------------------------
-  # 4. update-helm-values: GitOps step. Writes the new image tag into the repo
+  # 5. update-helm-values: GitOps step. Writes the new image tag into the repo
   #    in a single commit (Helm values + migration job).
   # ---------------------------------------------------------------------------
   update-helm-values:
-    needs: docker-push
+    needs: [docker-push, trivy-fs-scan]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
