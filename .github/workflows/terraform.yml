@@ -50,6 +50,20 @@ jobs:
       - name: Validate
         run: terraform validate
 
+      - name: Trivy Terraform scan
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          scan-type: 'config'
+          scan-ref: 'terraform/environments/prod'
+          format: 'sarif'
+          output: 'trivy-terraform.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'terraform/environments/prod/trivy-terraform.sarif'
+          category: trivy-terraform
       - name: Plan
         run: terraform plan -lock-timeout=5m -no-color
 
