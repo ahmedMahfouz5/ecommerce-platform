@@ -1,0 +1,41 @@
+image:
+  tag: 10.7.0-community
+
+edition: community
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  ingressClassName: kong
+  annotations:
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+  hosts:
+    - sonarqube.${route53_zone_name}
+  path: /
+  pathType: Prefix
+
+persistence:
+  enabled: true
+  storageClassName: gp3
+  size: 10Gi
+
+postgresql:
+  enabled: false
+  postgresqlServer: postgres-postgresql.prod.svc.cluster.local
+  postgresqlDatabase: sonarqube
+  postgresqlUsername: sonarqube
+  postgresqlPassword: sonarqube
+
+resources:
+  requests:
+    cpu: 1
+    memory: 3Gi
+  limits:
+    cpu: "2"
+    memory: 4Gi
+
+prometheusExporter:
+  enabled: true

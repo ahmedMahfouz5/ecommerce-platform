@@ -6,66 +6,18 @@ metadata:
 spec:
   project: default
 
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: "92.14.1"
-    helm:
-      releaseName: kube-prometheus-stack
-      values: |
-        grafana:
-          enabled: true
-          ingress:
-            enabled: true
-            ingressClassName: kong
-            annotations:
-              konghq.com/protocols: "https"
-              konghq.com/https-redirect-status-code: "301"
-            hosts:
-              - grafana.${route53_zone_name}
-            path: /
-            pathType: Prefix
-          adminUser: admin
-          adminPassword: admin
-          persistence:
-            enabled: true
-            size: 10Gi
-          sidecar:
-            dashboards:
-              enabled: true
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: "92.14.1"
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/gitops/monitoring/values.yaml
 
-        prometheus:
-          enabled: true
-          prometheusSpec:
-            podMonitorSelectorNilUsesHelmValues: false
-            serviceMonitorSelectorNilUsesHelmValues: false
-            retention: 15d
-            retentionSize: 20GB
-            resources:
-              requests:
-                cpu: 300m
-                memory: 1Gi
-              limits:
-                cpu: "1"
-                memory: 3Gi
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  accessModes:
-                    - ReadWriteOnce
-                  storageClassName: gp3
-                  resources:
-                    requests:
-                      storage: 2Gi
-
-        alertmanager:
-          enabled: true
-
-        # Operator configuration must be nested properly inside the Helm values string
-        prometheus-operator:
-          enabled: true
-          tls:
-            enabled: false
+    - repoURL: ${repo_url}
+      targetRevision: ${target_revision}
+      ref: values
 
   destination:
     server: https://kubernetes.default.svc
@@ -78,6 +30,50 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: sonarqube
+  namespace: argocd
+
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://SonarSource.github.io/helm-chart-sonarqube
+      chart: sonarqube
+      targetRevision: "10.7.0"
+
+      helm:
+        releaseName: sonarqube
+
+        valueFiles:
+          - $values/gitops/sonarqube/values.yaml
+
+    - repoURL: ${repo_url}
+      targetRevision: ${target_revision}
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sonarqube
+
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+
+    syncOptions:
+      - CreateNamespace=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application

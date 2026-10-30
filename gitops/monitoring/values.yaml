@@ -1,0 +1,52 @@
+grafana:
+  enabled: true
+  ingress:
+    enabled: true
+    ingressClassName: kong
+    annotations:
+      konghq.com/protocols: "https"
+      konghq.com/https-redirect-status-code: "301"
+    hosts:
+      - grafana.${route53_zone_name}
+    path: /
+    pathType: Prefix
+  adminUser: admin
+  adminPassword: admin
+  persistence:
+    enabled: true
+    size: 10Gi
+  sidecar:
+    dashboards:
+      enabled: true
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    retention: 15d
+    retentionSize: 20GB
+    resources:
+      requests:
+        cpu: 300m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 3Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: gp3
+          resources:
+            requests:
+              storage: 2Gi
+
+alertmanager:
+  enabled: true
+
+prometheus-operator:
+  enabled: true
+  tls:
+    enabled: false

@@ -60,6 +60,61 @@ spec:
 
 ---
 # =============================================================================
+# Ingress: Grafana (Monitoring)
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-routes
+  namespace: ${namespace}
+  annotations:
+    konghq.com/strip-path: "false"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/service-upstream: "true"
+spec:
+  ingressClassName: kong
+  rules:
+    - host: grafana.${route53_zone_name}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-prometheus-stack-grafana
+                port:
+                  number: 80
+---
+# =============================================================================
+# Ingress: SonarQube
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sonarqube-routes
+  namespace: ${namespace}
+  annotations:
+    konghq.com/strip-path: "false"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/service-upstream: "true"
+spec:
+  ingressClassName: kong
+  rules:
+    - host: sonarqube.${route53_zone_name}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarqube-sonarqube
+                port:
+                  number: 9000
+
+---
+# =============================================================================
 # KongPlugin: CORS for the API
 # =============================================================================
 apiVersion: configuration.konghq.com/v1
