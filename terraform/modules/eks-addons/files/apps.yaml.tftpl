@@ -18,6 +18,9 @@ spec:
           ingress:
             enabled: true
             ingressClassName: kong
+            annotations:
+              konghq.com/protocols: "https"
+              konghq.com/https-redirect-status-code: "301"
             hosts:
               - grafana.${route53_zone_name}
             path: /
@@ -53,10 +56,16 @@ spec:
                   storageClassName: gp3
                   resources:
                     requests:
-                      storage: 30Gi
+                      storage: 2Gi
 
         alertmanager:
           enabled: true
+
+        # Operator configuration must be nested properly inside the Helm values string
+        prometheus-operator:
+          enabled: true
+          tls:
+            enabled: false
 
   destination:
     server: https://kubernetes.default.svc
@@ -68,6 +77,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
