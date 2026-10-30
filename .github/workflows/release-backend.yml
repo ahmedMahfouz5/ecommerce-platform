@@ -1,6 +1,8 @@
 name: Release Backend
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       force_build:
@@ -15,28 +17,42 @@ concurrency:
   group: release-backend
   cancel-in-progress: false
 
-jobs:
-  # release-please:
-  #   runs-on: ubuntu-24.04
-  #   timeout-minutes: 10
-  #   permissions:
-  #     contents: write
-  #     pull-requests: write
-  #   outputs:
-  #     release_created: ${{ steps.release.outputs.release_created }}
-  #     tag_name: ${{ steps.release.outputs.tag_name }}
-  #     version: ${{ steps.release.outputs.version }}
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #     - uses: googleapis/release-please-action@v5.0.0
-  #       id: release
-  #       with:
-  #         token: ${{ secrets.GITHUB_TOKEN }}
-  #         config-file: release-please-config.json
-  #         manifest-file: .release-please-manifest.json
+env:
+  IMAGE_NAME: ahmedmahfouz0/backend
+  HELM_VALUES_FILE: helm/backend/values.yaml
+  MIGRATION_JOB_FILE: migration/job.yaml
 
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. release-please: opens/updates the Release PR on every push to main and
+  #    creates the tag + GitHub Release when that PR is merged.
+  # ---------------------------------------------------------------------------
+  release-please:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      # NOTE: if release-please-config.json defines a package with
+      # "path": "backend", outputs are prefixed. In that case use:
+      #   steps.release.outputs['backend--release_created']
+      #   steps.release.outputs['backend--version']
+    steps:
+      - uses: googleapis/release-please-action@v5.0.0
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # ---------------------------------------------------------------------------
+  # 2. detect-changes: independent of release-please, so it runs in parallel.
+  # ---------------------------------------------------------------------------
   detect-changes:
-    # needs: release-please
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -54,13 +70,25 @@ jobs:
               - 'backend/**'
               - 'scripts/smoke-test.sh'
 
+  # ---------------------------------------------------------------------------
+  # 3. docker-push: build -> smoke test -> push.
+  #    Runs when backend code changed, a release was just created, or forced.
+  # ---------------------------------------------------------------------------
   docker-push:
-    needs: [detect-changes]
-    if: ${{ inputs.force_build || needs.detect-changes.outputs.backend == 'true' }}
+    needs: [release-please, detect-changes]
+    if: >-
+      ${{
+        inputs.force_build ||
+        needs.detect-changes.outputs.backend == 'true' ||
+        needs.release-please.outputs.release_created == 'true'
+      }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
+    env:
+      IS_RELEASE: ${{ needs.release-please.outputs.release_created == 'true' }}
+      RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
@@ -73,17 +101,17 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker metadata
-        uses: docker/metadata-action@v6
         id: meta
+        uses: docker/metadata-action@v6
         with:
-          images: ahmedmahfouz0/backend
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long,prefix=
-            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.version }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.version }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
-            type=semver,pattern={{major}},value=${{ needs.release-please.outputs.version }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
+            type=semver,pattern={{version}},value=${{ env.RELEASE_VERSION }},enable=${{ env.IS_RELEASE }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.RELEASE_VERSION }},enable=${{ env.IS_RELEASE }}
+            type=semver,pattern={{major}},value=${{ env.RELEASE_VERSION }},enable=${{ env.IS_RELEASE }}
 
-      - name: Build image (no push yet, for smoke test)
+      - name: Build image (local only, for smoke test)
         uses: docker/build-push-action@v7
         with:
           context: backend
@@ -96,7 +124,7 @@ jobs:
 
       - name: Smoke test
         env:
-          IMAGE: ahmedmahfouz0/backend:${{ github.sha }}
+          IMAGE: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           COMPONENT: backend
           PORT: 8000
           HEALTH_ENDPOINT: /api/v1/health
@@ -116,6 +144,10 @@ jobs:
           provenance: mode=max
           sbom: true
 
+  # ---------------------------------------------------------------------------
+  # 4. update-helm-values: GitOps step. Writes the new image tag into the repo
+  #    in a single commit (Helm values + migration job).
+  # ---------------------------------------------------------------------------
   update-helm-values:
     needs: docker-push
     runs-on: ubuntu-24.04
@@ -131,45 +163,37 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
-      - name: Update image tag in Helm values
+      - name: Update image tag in Helm values and migration job
         env:
           IMAGE_TAG: ${{ github.sha }}
-          VALUES_FILE: helm/backend/values.yaml
           BRANCH: ${{ github.ref_name }}
         run: |
-          yq -i '.image.tag = strenv(IMAGE_TAG) | .image.tag style="double"' "$VALUES_FILE"
-          grep -n '^  tag:' "$VALUES_FILE"
+          set -euo pipefail
 
-          if git diff --quiet -- "$VALUES_FILE"; then
+          yq -i '.image.tag = strenv(IMAGE_TAG) | .image.tag style="double"' "$HELM_VALUES_FILE"
+          sed -i -E "s|(image: ${IMAGE_NAME}:).*|\1${IMAGE_TAG}|" "$MIGRATION_JOB_FILE"
+
+          git diff -- "$HELM_VALUES_FILE" "$MIGRATION_JOB_FILE"
+
+          if git diff --quiet -- "$HELM_VALUES_FILE" "$MIGRATION_JOB_FILE"; then
             echo "Tag already ${IMAGE_TAG}; nothing to commit."
             exit 0
           fi
 
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$VALUES_FILE"
+          git add "$HELM_VALUES_FILE" "$MIGRATION_JOB_FILE"
           git commit -m "chore: update backend image tag to ${IMAGE_TAG} [skip ci]"
-          git pull --rebase origin "$BRANCH"
-          git push origin "HEAD:${BRANCH}"
 
-      - name: Update migration image tag in job manifest
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-          JOB_FILE: migration/job.yaml
-          BRANCH: ${{ github.ref_name }}
-        run: |
-          sed -i "s|\(image: ahmedmahfouz0/backend:\).*|\1${IMAGE_TAG}|" "$JOB_FILE"
-          grep 'image:' "$JOB_FILE"
+          # Retry in case another workflow pushed in the meantime
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$BRANCH"
+            if git push origin "HEAD:${BRANCH}"; then
+              exit 0
+            fi
+            echo "Push failed (attempt ${attempt}), retrying..."
+            sleep $((attempt * 3))
+          done
 
-          if git diff --quiet -- "$JOB_FILE"; then
-            echo "Migration job tag already ${IMAGE_TAG}; nothing to commit."
-            exit 0
-          fi
-
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$JOB_FILE"
-          git commit -m "chore: update migration job image tag to ${IMAGE_TAG} [skip ci]"
-          git pull --rebase origin "$BRANCH"
-          git push origin "HEAD:${BRANCH}"
-
+          echo "::error::Could not push image tag update after 3 attempts"
+          exit 1
