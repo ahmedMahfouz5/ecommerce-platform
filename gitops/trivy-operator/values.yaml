@@ -3,6 +3,7 @@ targetNamespaces: "prod,monitoring,kong"
 
 # Exclude Kubernetes system namespaces
 excludeNamespaces: "kube-system,kube-public,kube-node-lease,trivy-system"
+
 # Operator configuration
 operator:
   replicas: 1
@@ -21,38 +22,31 @@ configAuditScannerEnabled: true
 rbacAssessmentScannerEnabled: true
 exposedSecretScannerEnabled: true
 
-# Enable later after evaluating node collector requirements
 infraAssessmentScannerEnabled: false
 clusterComplianceEnabled: false
 
-# Keep reports and metrics
+# Metrics
 metricsFindingsEnabled: true
 metricsVulnIdEnabled: false
 
 # Prometheus integration
-# Enable only after installing Prometheus Operator
 serviceMonitor:
-  enabled: false
+  enabled: true
+  namespace: monitoring
+  interval: 60s
 
 # Trivy scanner configuration
 trivy:
   mode: Standalone
-
   severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
-
   ignoreUnfixed: false
-
   slow: true
-
   timeout: "10m"
-
   pullPolicy: IfNotPresent
-
   resources:
     requests:
       cpu: 100m
       memory: 256Mi
-
     limits:
       cpu: 500m
       memory: 1Gi
@@ -60,7 +54,5 @@ trivy:
 # Scanner job security
 trivyOperator:
   scanJobAutomountServiceAccountToken: false
-
   reportRecordFailedChecksOnly: true
-
   scanJobsInSameNamespace: false
