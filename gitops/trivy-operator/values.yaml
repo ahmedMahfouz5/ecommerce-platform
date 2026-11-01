@@ -1,9 +1,8 @@
 # Scan all namespaces
-targetNamespaces: ""
+targetNamespaces: "prod,monitoring,kong"
 
 # Exclude Kubernetes system namespaces
-excludeNamespaces: "kube-system,kube-public,kube-node-lease"
-
+excludeNamespaces: "kube-system,kube-public,kube-node-lease,trivy-system"
 # Operator configuration
 operator:
   replicas: 1
