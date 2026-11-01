@@ -1,3 +1,73 @@
+# =============================================================================
+# Kong routes for the prod namespace
+#
+# Rules:
+#   - An Ingress can only reference Services in its OWN namespace, so this file
+#     only contains routes for Services that live in ${namespace}
+#     (backend-prod, frontend-prod).
+#   - Grafana (monitoring) and SonarQube (sonarqube) are NOT routed from here.
+#     Their ingresses belong in their own namespaces (set via each Helm chart's
+#     ingress values), otherwise Kong gets duplicate hosts with empty upstreams
+#     and returns "failure to get a peer from the ring-balancer".
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Plugins (must live in the same namespace as the Ingress that uses them)
+# -----------------------------------------------------------------------------
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: cors-plugin
+  namespace: ${namespace}
+plugin: cors
+config:
+  origins:
+    - "https://${route53_zone_name}"
+    - "https://www.${route53_zone_name}"
+  methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+  headers:
+    - Accept
+    - Accept-Version
+    - Content-Length
+    - Content-MD5
+    - Content-Type
+    - Date
+    - Authorization
+  exposed_headers:
+    - X-Auth-Token
+  credentials: true
+  max_age: 3600
+  preflight_continue: false
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rate-limiting-plugin
+  namespace: ${namespace}
+plugin: rate-limiting
+config:
+  minute: 100
+  hour: 1000
+  limit_by: ip
+  policy: local
+---
+# Looser limit for the frontend: a page load fires many asset requests,
+# so the API limit above would cause 429s for normal users.
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: frontend-rate-limiting-plugin
+  namespace: ${namespace}
+plugin: rate-limiting
+config:
+  minute: 600
+  hour: 6000
+  limit_by: ip
+  policy: local
+---
+# -----------------------------------------------------------------------------
+# Ingress: API  (api.<zone> -> backend-prod:8000)
+# -----------------------------------------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -7,8 +77,8 @@ metadata:
     konghq.com/strip-path: "false"
     konghq.com/protocols: "https"
     konghq.com/https-redirect-status-code: "301"
-    konghq.com/plugins: cors-plugin,rate-limiting-plugin
     konghq.com/service-upstream: "true"
+    konghq.com/plugins: cors-plugin,rate-limiting-plugin
 spec:
   ingressClassName: kong
   rules:
@@ -23,6 +93,10 @@ spec:
                 port:
                   number: 8000
 ---
+# -----------------------------------------------------------------------------
+# Ingress: Frontend  (<zone>, www.<zone> -> frontend-prod:8080)
+# No CORS here: the browser loads the frontend as a same-origin page.
+# -----------------------------------------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -32,8 +106,8 @@ metadata:
     konghq.com/strip-path: "false"
     konghq.com/protocols: "https"
     konghq.com/https-redirect-status-code: "301"
-    konghq.com/plugins: cors-plugin,rate-limiting-plugin
     konghq.com/service-upstream: "true"
+    konghq.com/plugins: frontend-rate-limiting-plugin
 spec:
   ingressClassName: kong
   rules:
@@ -57,108 +131,3 @@ spec:
                 name: frontend-prod
                 port:
                   number: 8080
-
----
-# =============================================================================
-# Ingress: Grafana (Monitoring)
-# =============================================================================
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: grafana-routes
-  namespace: ${namespace}
-  annotations:
-    konghq.com/strip-path: "false"
-    konghq.com/protocols: "https"
-    konghq.com/https-redirect-status-code: "301"
-    konghq.com/service-upstream: "true"
-spec:
-  ingressClassName: kong
-  rules:
-    - host: grafana.${route53_zone_name}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: kube-prometheus-stack-grafana
-                port:
-                  number: 80
----
-# =============================================================================
-# Ingress: SonarQube
-# =============================================================================
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: sonarqube-routes
-  namespace: ${namespace}
-  annotations:
-    konghq.com/strip-path: "false"
-    konghq.com/protocols: "https"
-    konghq.com/https-redirect-status-code: "301"
-    konghq.com/service-upstream: "true"
-spec:
-  ingressClassName: kong
-  rules:
-    - host: sonarqube.${route53_zone_name}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: sonarqube-sonarqube
-                port:
-                  number: 9000
-
----
-# =============================================================================
-# KongPlugin: CORS for the API
-# =============================================================================
-apiVersion: configuration.konghq.com/v1
-kind: KongPlugin
-metadata:
-  name: cors-plugin
-  namespace: ${namespace}
-plugin: cors
-config:
-  origins:
-    - "https://${route53_zone_name}"
-    - "https://www.${route53_zone_name}"
-  methods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-  headers:
-    - Accept
-    - Accept-Version
-    - Content-Length
-    - Content-MD5
-    - Content-Type
-    - Date
-    - Authorization
-  exposed_headers:
-    - X-Auth-Token
-  credentials: true
-  max_age: 3600
-  preflight_continue: false
-
----
-# =============================================================================
-# KongPlugin: Rate Limiting for the API
-# =============================================================================
-apiVersion: configuration.konghq.com/v1
-kind: KongPlugin
-metadata:
-  name: rate-limiting-plugin
-  namespace: ${namespace}
-plugin: rate-limiting
-config:
-  minute: 100
-  hour: 1000
-  policy: local
