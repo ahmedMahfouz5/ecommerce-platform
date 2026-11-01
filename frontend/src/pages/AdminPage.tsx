@@ -5,6 +5,9 @@ import { ProductForm } from "../components/ProductForm";
 import { ImageUploader } from "../components/ImageUploader";
 import type { ProductCreate } from "../types/product";
 import { createProduct } from "../api/products";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { LogOut, ShieldPlus, AlertCircle, CheckCircle2, SkipForward, Plus } from "lucide-react";
 
 export function AdminPage() {
   const { logout, isLoggedIn } = useAuth();
@@ -42,54 +45,88 @@ export function AdminPage() {
   };
 
   return (
-    <div className="admin-page">
-      <div className="admin-page__header">
-        <h2>Admin Dashboard</h2>
-        <div className="admin-page__actions">
-          <Link to="/admin/register" className="admin-page__nav-btn">
-            Register Admin
-          </Link>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Admin Dashboard
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Manage products and administrators.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" size="sm" asChild>
+            <Link to="/admin/register">
+              <ShieldPlus className="mr-1.5 h-4 w-4" />
+              Register Admin
+            </Link>
+          </Button>
           {isLoggedIn && (
-            <button className="admin-page__logout-btn" onClick={() => logout()}>
+            <Button variant="outline" size="sm" onClick={() => logout()}>
+              <LogOut className="mr-1.5 h-4 w-4" />
               Sign Out
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
+      {/* Messages */}
       {successMsg && (
-        <div className="admin-page__success" role="status">
+        <div
+          className="flex items-start gap-2 rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           {successMsg}
         </div>
       )}
-
       {error && (
-        <div className="admin-page__error" role="alert">
+        <div
+          className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
       {!newProductId ? (
-        <section className="admin-page__create">
-          <h3>Create New Product</h3>
-          <ProductForm onSubmit={handleCreate} submitting={submitting} />
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              <Plus className="mr-2 inline h-5 w-5" />
+              Create New Product
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProductForm onSubmit={handleCreate} submitting={submitting} />
+          </CardContent>
+        </Card>
       ) : (
-        <section className="admin-page__upload-image">
-          <h3>Upload Product Image</h3>
-          <p>Product created — add an image now or skip.</p>
-          <ImageUploader
-            productId={newProductId}
-            onUploaded={handleImageUploaded}
-          />
-          <button
-            className="admin-page__skip-btn"
-            onClick={() => navigate(`/products/${newProductId}`)}
-            style={{ marginTop: "1rem" }}
-          >
-            Skip – view product
-          </button>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Upload Product Image</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Product created — add an image now or skip.
+            </p>
+            <ImageUploader
+              productId={newProductId}
+              onUploaded={handleImageUploaded}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/products/${newProductId}`)}
+            >
+              <SkipForward className="mr-1.5 h-4 w-4" />
+              Skip – view product
+            </Button>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

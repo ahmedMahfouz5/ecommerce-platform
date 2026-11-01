@@ -1,5 +1,10 @@
 import { useState, type FormEvent } from "react";
 import type { ProductCreate } from "../types/product";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { Save } from "lucide-react";
 
 interface ProductFormProps {
   /** Called with form data on submit. */
@@ -69,10 +74,11 @@ export function ProductForm({
   };
 
   return (
-    <form className="product-form" onSubmit={handleSubmit} noValidate>
-      <div className="product-form__field">
-        <label htmlFor="pf-name">Name *</label>
-        <input
+    <form onSubmit={handleSubmit} noValidate className="flex max-w-xl flex-col gap-4">
+      {/* Name */}
+      <div className="space-y-1.5">
+        <Label htmlFor="pf-name">Name *</Label>
+        <Input
           id="pf-name"
           type="text"
           value={form.name}
@@ -81,15 +87,16 @@ export function ProductForm({
           maxLength={255}
         />
         {validation.name && (
-          <span className="product-form__error" role="alert">
+          <p className="text-sm text-destructive" role="alert">
             {validation.name}
-          </span>
+          </p>
         )}
       </div>
 
-      <div className="product-form__field">
-        <label htmlFor="pf-desc">Description</label>
-        <textarea
+      {/* Description */}
+      <div className="space-y-1.5">
+        <Label htmlFor="pf-desc">Description</Label>
+        <Textarea
           id="pf-desc"
           value={form.description ?? ""}
           onChange={(e) =>
@@ -99,10 +106,11 @@ export function ProductForm({
         />
       </div>
 
-      <div className="product-form__row">
-        <div className="product-form__field">
-          <label htmlFor="pf-price">Price *</label>
-          <input
+      {/* Price + Stock row */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="pf-price">Price *</Label>
+          <Input
             id="pf-price"
             type="number"
             step="0.01"
@@ -112,15 +120,15 @@ export function ProductForm({
             required
           />
           {validation.price && (
-            <span className="product-form__error" role="alert">
+            <p className="text-sm text-destructive" role="alert">
               {validation.price}
-            </span>
+            </p>
           )}
         </div>
 
-        <div className="product-form__field">
-          <label htmlFor="pf-stock">Stock</label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="pf-stock">Stock</Label>
+          <Input
             id="pf-stock"
             type="number"
             min="0"
@@ -130,16 +138,17 @@ export function ProductForm({
             }
           />
           {validation.stock_quantity && (
-            <span className="product-form__error" role="alert">
+            <p className="text-sm text-destructive" role="alert">
               {validation.stock_quantity}
-            </span>
+            </p>
           )}
         </div>
       </div>
 
-      <div className="product-form__field">
-        <label htmlFor="pf-category">Category *</label>
-        <input
+      {/* Category */}
+      <div className="space-y-1.5">
+        <Label htmlFor="pf-category">Category *</Label>
+        <Input
           id="pf-category"
           type="text"
           value={form.category}
@@ -148,15 +157,16 @@ export function ProductForm({
           maxLength={100}
         />
         {validation.category && (
-          <span className="product-form__error" role="alert">
+          <p className="text-sm text-destructive" role="alert">
             {validation.category}
-          </span>
+          </p>
         )}
       </div>
 
-      <button type="submit" disabled={submitting} className="product-form__submit">
+      <Button type="submit" disabled={submitting} className="self-start">
+        <Save className="mr-2 h-4 w-4" />
         {submitting ? "Saving..." : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

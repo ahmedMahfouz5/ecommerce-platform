@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchProducts } from "../api/products";
 import type { Product } from "../types/product";
 import ProductCard from "./ProductCard";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Search, Filter, X, Loader2, AlertCircle, PackageOpen } from "lucide-react";
 
 interface ProductListProps {
   onSelectProduct: (id: string) => void;
@@ -72,60 +75,90 @@ function ProductList({ onSelectProduct }: ProductListProps) {
   };
 
   return (
-    <div className="product-list">
-      <div className="product-list__header">
-        <h2>Products</h2>
-        <div className="product-list__filters">
-          <input
-            type="search"
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="product-list__filter-input"
-            aria-label="Search products"
-          />
-          <input
-            type="text"
-            placeholder="Filter by category..."
-            value={category}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="product-list__filter-input"
-            aria-label="Filter by category"
-          />
+    <div className="space-y-6">
+      {/* Header & Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Products
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 sm:min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-9"
+              aria-label="Search products"
+            />
+          </div>
+          <div className="relative flex-1 sm:min-w-[180px]">
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Filter by category..."
+              value={category}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="pl-9"
+              aria-label="Filter by category"
+            />
+          </div>
           {category && (
-            <button
-              className="product-list__clear-filter"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => handleCategoryChange("")}
             >
+              <X className="mr-1 h-4 w-4" />
               Clear
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
+      {/* Loading */}
       {loading && (
-        <div className="product-list__state" role="status">
-          <p>Loading products...</p>
+        <div
+          className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-card py-16"
+          role="status"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Loading products...</p>
         </div>
       )}
 
+      {/* Error */}
       {error && (
-        <div className="product-list__state product-list__state--error" role="alert">
-          <p>Error: {error}</p>
-          <button onClick={loadProducts}>Retry</button>
+        <div
+          className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 py-16"
+          role="alert"
+        >
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <p className="text-sm font-medium text-destructive">Error: {error}</p>
+          <Button variant="outline" size="sm" onClick={loadProducts}>
+            Retry
+          </Button>
         </div>
       )}
 
+      {/* Empty */}
       {!loading && !error && products.length === 0 && (
-        <div className="product-list__state product-list__state--empty">
-          <p>No products found.</p>
-          {(category || search) && <p>Try a different filter or search term.</p>}
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-16">
+          <PackageOpen className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No products found.</p>
+          {(category || search) && (
+            <p className="text-xs text-muted-foreground">
+              Try a different filter or search term.
+            </p>
+          )}
         </div>
       )}
 
+      {/* Product Grid */}
       {!loading && !error && products.length > 0 && (
         <>
-          <div className="product-grid">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product) => (
               <ProductCard
                 key={product.id}
@@ -135,23 +168,28 @@ function ProductList({ onSelectProduct }: ProductListProps) {
             ))}
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="product-list__pagination">
-              <button
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
                 Previous
-              </button>
-              <span>
+              </Button>
+              <span className="text-sm text-muted-foreground">
                 Page {page} of {totalPages}
               </span>
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
                 Next
-              </button>
+              </Button>
             </div>
           )}
         </>

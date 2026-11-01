@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchProduct } from "../api/products";
 import type { Product } from "../types/product";
+import { Button } from "./ui/button";
+import { Loader2, AlertCircle, ArrowLeft, Calendar } from "lucide-react";
 
 function formatPrice(price: number): string {
   return `$${Number(price).toFixed(2)}`;
@@ -51,68 +53,107 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 
   if (loading) {
     return (
-      <div className="product-detail product-detail--loading" role="status">
-        <p>Loading product...</p>
+      <div
+        className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-20"
+        role="status"
+      >
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading product...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="product-detail product-detail--error" role="alert">
-        <p>Error: {error}</p>
-        <button onClick={onBack}>Back to Products</button>
-        <button onClick={loadProduct}>Retry</button>
+      <div
+        className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 py-20"
+        role="alert"
+      >
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm font-medium text-destructive">Error: {error}</p>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onBack}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Back to Products
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadProduct}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="product-detail product-detail--error">
-        <p>Product not found.</p>
-        <button onClick={onBack}>Back to Products</button>
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-20">
+        <AlertCircle className="h-8 w-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Product not found.</p>
+        <Button variant="outline" size="sm" onClick={onBack}>
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          Back to Products
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="product-detail">
-      <button className="product-detail__back" onClick={onBack}>
-        &larr; Back to Products
-      </button>
+    <div className="rounded-xl border border-border bg-card shadow-sm">
+      <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          Back to Products
+        </Button>
+      </div>
 
-      <div className="product-detail__layout">
-        <div className="product-detail__image">
+      <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
+        {/* Image */}
+        <div className="overflow-hidden rounded-xl bg-muted aspect-square">
           {product.image_download_url ? (
-            <img src={product.image_download_url} alt={product.name} />
+            <img
+              src={product.image_download_url}
+              alt={product.name}
+              className="h-full w-full object-cover"
+            />
           ) : (
-            <div className="product-detail__image-placeholder" aria-hidden="true">
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
               No Image
             </div>
           )}
         </div>
 
-        <div className="product-detail__info">
-          <span className="product-detail__category">{product.category}</span>
-          <h1>{product.name}</h1>
-          <p className="product-detail__price">{formatPrice(product.price)}</p>
-          <p className="product-detail__stock">
+        {/* Info */}
+        <div className="flex flex-col gap-4">
+          <span className="inline-block w-fit text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {product.category}
+          </span>
+          <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+            {product.name}
+          </h1>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+            {formatPrice(product.price)}
+          </p>
+          <p className="text-sm font-medium text-muted-foreground">
             {product.stock_quantity > 0
               ? `${product.stock_quantity} units in stock`
               : "Out of stock"}
           </p>
 
           {product.description && (
-            <div className="product-detail__description">
-              <h3>Description</h3>
-              <p>{product.description}</p>
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Description
+              </h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {product.description}
+              </p>
             </div>
           )}
 
-          <p className="product-detail__meta">
+          <div className="mt-auto flex items-center gap-1.5 border-t border-border pt-4 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" />
             Added {new Date(product.created_at).toLocaleDateString()}
-          </p>
+          </div>
         </div>
       </div>
     </div>
@@ -120,4 +161,3 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
 }
 
 export default ProductDetail;
-

@@ -4,6 +4,16 @@ import { fetchProduct, updateProduct, deleteProduct } from "../api/products";
 import { ProductForm } from "../components/ProductForm";
 import { ImageUploader } from "../components/ImageUploader";
 import type { ProductUpdate } from "../types/product";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ImageIcon,
+  Trash2,
+} from "lucide-react";
 
 export function ProductEditPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -94,95 +104,149 @@ export function ProductEditPage() {
     load(); // refresh to pick up the new image_url
   };
 
+  // Loading
   if (loading) {
     return (
-      <div className="product-edit" role="status">
-        <p>Loading product...</p>
+      <div
+        className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-20"
+        role="status"
+      >
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading product...</p>
       </div>
     );
   }
 
+  // Error (no product)
   if (error && !product) {
     return (
-      <div className="product-edit product-edit--error" role="alert">
-        <p>{error}</p>
-        <button onClick={() => navigate("/admin")}>Back to Admin</button>
+      <div
+        className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 py-20"
+        role="alert"
+      >
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm font-medium text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          Back to Admin
+        </Button>
       </div>
     );
   }
 
+  // Not found
   if (!product) {
     return (
-      <div className="product-edit product-edit--error">
-        <p>Product not found.</p>
-        <button onClick={() => navigate("/admin")}>Back to Admin</button>
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-20">
+        <AlertCircle className="h-8 w-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Product not found.</p>
+        <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          Back to Admin
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="product-edit">
-      <button className="product-edit__back" onClick={() => navigate("/admin")}>
-        &larr; Back to Admin
-      </button>
+    <div className="space-y-6">
+      {/* Back button + title */}
+      <div className="space-y-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
+          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          Back to Admin
+        </Button>
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Edit: {product.name}
+        </h2>
+      </div>
 
-      <h2>Edit: {product.name}</h2>
-
+      {/* Messages */}
       {successMsg && (
-        <div className="product-edit__success" role="status">
+        <div
+          className="flex items-start gap-2 rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           {successMsg}
         </div>
       )}
       {error && (
-        <div className="product-edit__error" role="alert">
+        <div
+          className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
-      <section className="product-edit__image-section">
-        <h3>Product Image</h3>
-        {product.image_download_url ? (
-          <div className="product-edit__current-image">
-            <img src={product.image_download_url} alt={product.name} />
-          </div>
-        ) : (
-          <p className="product-edit__no-image">No image set.</p>
-        )}
-        {productId && (
-          <ImageUploader
-            productId={productId}
-            onUploaded={handleImageUploaded}
+      {/* Image section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            <ImageIcon className="mr-2 inline h-5 w-5" />
+            Product Image
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {product.image_download_url ? (
+            <div className="max-w-xs overflow-hidden rounded-lg border border-border">
+              <img
+                src={product.image_download_url}
+                alt={product.name}
+                className="w-full object-cover"
+              />
+            </div>
+          ) : (
+            <p className="text-sm italic text-muted-foreground">No image set.</p>
+          )}
+          {productId && (
+            <ImageUploader
+              productId={productId}
+              onUploaded={handleImageUploaded}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Edit Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductForm
+            onSubmit={handleUpdate}
+            submitting={updating}
+            submitLabel="Update Product"
+            initial={{
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              stock_quantity: product.stock_quantity,
+              category: product.category,
+            }}
           />
-        )}
-      </section>
+        </CardContent>
+      </Card>
 
-      <section className="product-edit__form-section">
-        <h3>Edit Details</h3>
-        <ProductForm
-          onSubmit={handleUpdate}
-          submitting={updating}
-          submitLabel="Update Product"
-          initial={{
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            stock_quantity: product.stock_quantity,
-            category: product.category,
-          }}
-        />
-      </section>
-
-      <section className="product-edit__danger">
-        <h3>Danger Zone</h3>
-        <button
-          className="product-edit__delete-btn"
-          onClick={handleDelete}
-          disabled={deleting}
-        >
-          {deleting ? "Deleting..." : "Delete Product"}
-        </button>
-      </section>
+      {/* Danger zone */}
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="text-lg text-destructive">Danger Zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {deleting ? "Deleting..." : "Delete Product"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

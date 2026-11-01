@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ? (err as { detail: string }).detail
             : "Login failed";
       setState({ isLoggedIn: false, isAdmin: false, loading: false, error: msg });
-      throw err;
+      
     }
   }, []);
 

@@ -5,6 +5,8 @@ import {
   validateImageFile,
 } from "../api/images";
 import { s3Upload } from "../api/client";
+import { Button } from "./ui/button";
+import { Upload, X, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 interface ImageUploaderProps {
   productId: string;
@@ -92,69 +94,92 @@ export function ImageUploader({ productId, onUploaded }: ImageUploaderProps) {
   };
 
   return (
-    <div className="image-uploader">
+    <div className="max-w-sm space-y-3">
       {step.stage === "idle" && (
-        <label className="image-uploader__label">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border-2 border-dashed border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+          <Upload className="h-4 w-4" />
+          Choose Image
           <input
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={handleFileSelected}
-            className="image-uploader__input"
+            className="sr-only"
           />
-          Choose Image
         </label>
       )}
 
       {step.stage === "validating" && (
-        <p className="image-uploader__status">Validating file...</p>
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Validating file...
+        </p>
       )}
 
       {step.stage === "requesting-url" && (
-        <p className="image-uploader__status">Preparing upload...</p>
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Preparing upload...
+        </p>
       )}
 
       {step.stage === "uploading" && (
-        <div className="image-uploader__progress">
-          <progress value={step.progress} max={100} />
-          <span>{step.progress}%</span>
-          <button
-            type="button"
-            className="image-uploader__cancel-btn"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <progress
+              value={step.progress}
+              max={100}
+              className="h-2 flex-1 rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
+            />
+            <span className="text-sm text-muted-foreground">{step.progress}%</span>
+            <Button type="button" variant="ghost" size="sm" onClick={handleCancel}>
+              <X className="mr-1 h-3.5 w-3.5" />
+              Cancel
+            </Button>
+          </div>
         </div>
       )}
 
       {step.stage === "confirming" && (
-        <p className="image-uploader__status">Finalizing upload...</p>
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Finalizing upload...
+        </p>
       )}
 
       {step.stage === "done" && (
-        <div className="image-uploader__done">
-          <p>Upload complete!</p>
-          <button
+        <div className="flex flex-col gap-2 rounded-md bg-green-50 p-3 dark:bg-green-950">
+          <p className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-300">
+            <CheckCircle2 className="h-4 w-4" />
+            Upload complete!
+          </p>
+          <Button
             type="button"
-            className="image-uploader__upload-another"
+            variant="outline"
+            size="sm"
             onClick={handleReset}
+            className="self-start"
           >
             Upload Another Image
-          </button>
+          </Button>
         </div>
       )}
 
       {step.stage === "error" && (
-        <div className="image-uploader__error" role="alert">
-          <p>{step.message}</p>
-          <button
+        <div className="flex flex-col gap-2 rounded-md bg-destructive/10 p-3" role="alert">
+          <p className="flex items-start gap-2 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            {step.message}
+          </p>
+          <Button
             type="button"
-            className="image-uploader__retry-btn"
+            variant="outline"
+            size="sm"
             onClick={handleReset}
+            className="self-start"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       )}
     </div>

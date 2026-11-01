@@ -144,7 +144,8 @@ describe("ProductList", () => {
     expect(screen.queryByText(/Page/)).not.toBeInTheDocument();
   });
 
-  it("filters by search term client-side", async () => {
+  it("filters by search term via API", async () => {
+    // Return both products on initial fetch
     mockFetchOk({
       items: mockProducts,
       total: 2,
@@ -157,6 +158,15 @@ describe("ProductList", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Alpha")).toBeInTheDocument();
+    });
+
+    // Re-stub fetch to return only Beta when the search triggers a new API call
+    mockFetchOk({
+      items: [mockProducts[1]!], // only Beta
+      total: 1,
+      page: 1,
+      page_size: 12,
+      total_pages: 1,
     });
 
     const searchInput = screen.getByLabelText("Search products");
