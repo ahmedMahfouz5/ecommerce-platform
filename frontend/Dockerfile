@@ -21,8 +21,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 RUN npm ci
+
+USER node
 # ========== build ==========
 FROM deps AS build
+
+USER root
 
 # Build-time variables consumed by Vite (VITE_* are statically replaced).
 # Supply via --build-arg, e.g.:
@@ -30,15 +34,21 @@ FROM deps AS build
 ARG VITE_API_TARGET="http://backend:8000"
 # Expose ARG as ENV so Vite picks it up during `npm run build`.
 ENV VITE_API_TARGET=${VITE_API_TARGET}
-COPY . .
+COPY --chown=node:node . .
 
 RUN npm run build
+
+USER node
 # 2026-10-30 08:51:09 to triger workflow
 
 # ========== dev (docker-compose HMR) ==========
 FROM deps AS dev
 
-COPY . .
+USER root
+
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 5173
 
@@ -71,6 +81,7 @@ RUN echo '# placeholder – config supplied via /etc/nginx/templates/' \
     > /etc/nginx/conf.d/default.conf
 
 # The nginx-unprivileged image already listens on port 8080 as non-root (UID 101).
+USER 101
 EXPOSE 8080
 
 # HEALTHCHECK is only useful for docker-compose; Kubernetes ignores it.
