@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/ahmedMahfouz5/ecommerce-platform/compare/v0.2.0...v0.3.0) (2026-11-01)
+
+
+### Features
+
+* enhance admin and user registration/login pages with new UI components and improved layout ([8beec54](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/8beec548ca33b583681ea2538d9b7262a9acfdd0))
+
+
+### Bug Fixes
+
+* add write permissions for security-events in release-frontend workflow ([a7114f6](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/a7114f6ed54db0b5a06cbff71378fbef7ed2bbdf))
+* adjust user permissions and improve file ownership in Dockerfile ([dc0e9e3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/dc0e9e3018f05975b83f95d1ec9a1c847c29c847))
+* change Trivy exit code to 0 for successful image scans in release-frontend workflow ([dc2c1c5](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/dc2c1c5b7f10e6ffe6a9243c3874af0ae15c97cf))
+* change Trivy exit code to 0 for successful scans in release-frontend workflow ([4b22643](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/4b22643021c6726ea80d19702f972892f2c69011))
+
 ## [0.2.0](https://github.com/ahmedMahfouz5/ecommerce-platform/compare/v0.1.0...v0.2.0) (2026-10-30)
 
 
