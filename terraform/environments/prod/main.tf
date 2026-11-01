@@ -159,6 +159,7 @@ module "s3-assets" {
   cors_allowed_origins = [
     "https://${var.route53_zone_name}",
     "https://api.${var.route53_zone_name}",
+    "https://www.${var.route53_zone_name}",
   ]
 }
 # =============================================================================
