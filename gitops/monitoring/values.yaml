@@ -7,7 +7,7 @@ grafana:
       konghq.com/protocols: "https"
       konghq.com/https-redirect-status-code: "301"
     hosts:
-      - grafana.${route53_zone_name}
+      - grafana.ahmedmahfouz.click
     path: /
     pathType: Prefix
   adminUser: admin
