@@ -13,7 +13,7 @@ ingress:
     konghq.com/protocols: "https"
     konghq.com/https-redirect-status-code: "301"
   hosts:
-    - name: sonarqube.${route53_zone_name}
+    - name: sonarqube.ahmedmahfouz.click
       paths:
         - path: /
           pathType: Prefix
