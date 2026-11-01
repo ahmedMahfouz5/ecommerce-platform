@@ -713,6 +713,9 @@ primary:
     ## on. When true, server will accept connections from any source
     ## (with the correct destination port).
     ##
+    allowedNamespaces:
+      - prod
+      - sonarqube   # Add your SonarQube namespace here
     allowExternal: true
     ## @param primary.networkPolicy.allowExternalEgress Allow the pod to access any range of port and all destinations.
     ##
