@@ -33,19 +33,46 @@ spec:
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
-
 metadata:
-  name: sonarqube
+  name: sonarqube-postgres
   namespace: argocd
-
+  annotations: { argocd.argoproj.io/sync-wave: "0" }
 spec:
   project: default
 
   sources:
+    - repoURL: ${repo_url}
+      targetRevision: ${target_revision}
+      path: helm/postgresql
+      helm:
+        releaseName: sonarqube-postgres
+        valueFiles:
+          - $values/gitops/sonarqube/values.db.yaml
+
+    - repoURL: ${repo_url}
+      targetRevision: ${target_revision}
+      ref: values
+
+  destination: { server: https://kubernetes.default.svc, namespace: sonarqube }
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sonarqube
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "1" }
+spec:
+  project: default
+  sources:
     - repoURL: https://SonarSource.github.io/helm-chart-sonarqube
       chart: sonarqube
       targetRevision: "10.7.0"
-
       helm:
         releaseName: sonarqube
 
@@ -59,12 +86,10 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: sonarqube
-
   syncPolicy:
     automated:
       selfHeal: true
       prune: false
-
     syncOptions:
       - CreateNamespace=true
 
@@ -82,7 +107,6 @@ metadata:
   namespace: argocd
 spec:
   project: default
-
   sources:
     - repoURL: https://aquasecurity.github.io/helm-charts
       chart: trivy-operator
@@ -99,7 +123,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: trivy-system
-
   syncPolicy:
     automated:
       selfHeal: true

@@ -1,0 +1,38 @@
+# =============================================================================
+# PostgreSQL (Bitnami) — dedicated SonarQube database
+#
+# Deployed by the sonarqube-postgres ArgoCD Application into the sonarqube
+# namespace via the helm/postgresql chart. The service is reachable at:
+#   sonarqube-postgres.sonarqube.svc.cluster.local:5432
+# =============================================================================
+
+# -- Keep a predictable service name
+fullnameOverride: sonarqube-postgres
+
+# -- Standalone (no replicas)
+architecture: standalone
+
+# =============================================================================
+# Authentication
+# =============================================================================
+auth:
+  enablePostgresUser: true
+  postgresPassword: "sonarqube"
+  username: "sonarqube"
+  password: "sonarqube"
+  database: "sonarqube"
+
+# =============================================================================
+# Primary configuration
+# =============================================================================
+primary:
+  persistence:
+    size: 1Gi
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
