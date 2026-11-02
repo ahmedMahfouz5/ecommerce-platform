@@ -15,9 +15,8 @@ image:
   # -- Container image repository (REQUIRED)
   repository: ahmedmahfouz0/backend
   # -- Image tag (REQUIRED — set at install/upgrade time, usually git SHA)
-  tag: "2ffc69f848712f6749980742a9dbb84e253fbcb3"
+  tag: "5fa9e744829f95be764f49f4feb907db6800b822"
   pullPolicy: IfNotPresent
-
 config:
   # -- S3 bucket name for product-image assets
   s3AssetsBucket: "ecommerce-staging-us-east-2-assets"
@@ -290,4 +289,3 @@ tests:
     repository: busybox
     tag: "1.36"
     pullPolicy: IfNotPresent
-
