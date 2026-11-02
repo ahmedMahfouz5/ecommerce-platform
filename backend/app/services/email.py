@@ -4,8 +4,8 @@ Uses the standard AWS credential provider chain – no static access keys.
 In EKS, credentials are obtained automatically through EKS Pod Identity.
 In local development, the developer's configured AWS profile/credentials are used.
 
-If SES is not configured (no sender email), the service degrades gracefully
-by logging the email content instead of sending – useful for local dev.
+If SES is not configured (no sender email), the service raises EmailSendError
+so that callers can treat email as a hard dependency where required.
 """
 
 import logging
@@ -18,6 +18,12 @@ from botocore.exceptions import ClientError
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+class EmailSendError(Exception):
+    """Raised when an email cannot be sent via Amazon SES."""
+
+    pass
 
 
 def _build_ses_client():
@@ -58,11 +64,11 @@ class EmailService:
             username: The registered username (for personalisation).
             token: The verification token (URL-safe string).
         """
-        verification_link = (
-            f"{self._frontend_url}/verify-email?token={token}"
-        )
+        verification_link = f"{self._frontend_url}/verify-email?token={token}"
         subject = "Verify your email address"
-        body_html = _render_verification_email(username=username, link=verification_link)
+        body_html = _render_verification_email(
+            username=username, link=verification_link
+        )
 
         await self._send(to=to_email, subject=subject, body_html=body_html)
 
@@ -76,9 +82,7 @@ class EmailService:
             username: The registered username (for personalisation).
             token: The password-reset token (URL-safe string).
         """
-        reset_link = (
-            f"{self._frontend_url}/reset-password?token={token}"
-        )
+        reset_link = f"{self._frontend_url}/reset-password?token={token}"
         subject = "Reset your password"
         body_html = _render_password_reset_email(username=username, link=reset_link)
 
@@ -91,14 +95,15 @@ class EmailService:
             to: Recipient email address.
             subject: Email subject line.
             body_html: HTML body of the email.
+        Raises:
+            EmailSendError: if SES is configured but the send fails.
         """
         if not self.is_configured:
-            logger.info(
-                "SES not configured – logging email instead of sending:\n"
-                "  To: %s\n  Subject: %s\n  Body:\n%s",
-                to, subject, body_html,
+            logger.error(
+                "SES sender email not configured – cannot send email to %s",
+                to,
             )
-            return
+            raise EmailSendError("SES sender email not configured (SES_SENDER_EMAIL)")
 
         try:
             self._client.send_email(
@@ -116,10 +121,13 @@ class EmailService:
             error_code = exc.response.get("Error", {}).get("Code", "Unknown")
             logger.error(
                 "Failed to send email to %s (code=%s): %s",
-                to, error_code, exc,
+                to,
+                error_code,
+                exc,
             )
-            # We don't re-raise – email failures shouldn't break the API flow.
-            # The user can always request a re-send.
+            raise EmailSendError(
+                f"Failed to send email to {to} (code={error_code})"
+            ) from exc
 
 
 # ── health-check helper ────────────────────────────────────────────────────

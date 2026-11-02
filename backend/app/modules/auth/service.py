@@ -24,7 +24,7 @@ from app.modules.auth.schemas import (
     UserResponse,
     VerifyEmailRequest,
 )
-from app.services.email import EmailService
+from app.services.email import EmailService, EmailSendError
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +124,7 @@ class AuthService:
 
         Raises:
             HTTPException 409: username or email already taken.
+            HTTPException 503: verification email could not be sent.
         """
         repo = UserRepository(self.session)
 
@@ -160,12 +161,31 @@ class AuthService:
         await self.session.commit()
         await self.session.refresh(user)
 
-        # Send verification email (non-blocking – failures are logged, not raised)
-        await self.email.send_verification_email(
-            to_email=user.email,
-            username=user.username,
-            token=verification_token,
+        # Send verification email. If this fails, roll back the newly created user
+        # so that registration is atomic: the account should not exist if the
+        # user cannot receive the verification email.
+        try:
+            await self.email.send_verification_email(
+                to_email=user.email,
+                username=user.username,
+                token=verification_token,
+            )
+        except EmailSendError as exc:
+            await self.session.delete(user)
+        await self.session.commit()
+        logger.error(
+            "Registration rolled back for username=%s, email=%s: %s",
+            user.username,
+            user.email,
+            exc,
         )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Registration failed because we could not send the "
+                "verification email. Please try again later."
+            ),
+        ) from exc
 
         logger.info(
             "New user registered: username=%s, email=%s, is_admin=%s",
@@ -192,9 +212,7 @@ class AuthService:
     # POST /verify-email
     # -----------------------------------------------------------------------
 
-    async def verify_email(
-        self, data: VerifyEmailRequest
-    ) -> MessageResponse:
+    async def verify_email(self, data: VerifyEmailRequest) -> MessageResponse:
         """Verify a user's email address using the verification token.
 
         Raises:
@@ -230,7 +248,9 @@ class AuthService:
 
         logger.info("User verified: username=%s", user.username)
 
-        return MessageResponse(message="Email verified successfully. You may now log in.")
+        return MessageResponse(
+            message="Email verified successfully. You may now log in."
+        )
 
     # -----------------------------------------------------------------------
     # POST /resend-verification
@@ -254,7 +274,9 @@ class AuthService:
             )
 
         if user.is_verified:
-            return MessageResponse(message="Account is already verified. You may log in.")
+            return MessageResponse(
+                message="Account is already verified. You may log in."
+            )
 
         verification_token = _generate_token()
         verification_token_expires = datetime.now(timezone.utc) + timedelta(
@@ -286,9 +308,7 @@ class AuthService:
     # POST /forgot-password
     # -----------------------------------------------------------------------
 
-    async def forgot_password(
-        self, data: ForgotPasswordRequest
-    ) -> MessageResponse:
+    async def forgot_password(self, data: ForgotPasswordRequest) -> MessageResponse:
         """Generate a password reset token and send it via email.
 
         Always returns the same success message regardless of whether the
@@ -344,9 +364,7 @@ class AuthService:
     # POST /reset-password
     # -----------------------------------------------------------------------
 
-    async def reset_password(
-        self, data: ResetPasswordRequest
-    ) -> MessageResponse:
+    async def reset_password(self, data: ResetPasswordRequest) -> MessageResponse:
         """Reset the user's password using the reset token.
 
         Raises:
@@ -362,10 +380,7 @@ class AuthService:
             )
 
         now = datetime.now(timezone.utc)
-        if (
-            user.reset_token_expires_at is None
-            or user.reset_token_expires_at < now
-        ):
+        if user.reset_token_expires_at is None or user.reset_token_expires_at < now:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Reset token has expired. Please request a new one.",
@@ -378,7 +393,9 @@ class AuthService:
 
         logger.info("Password reset completed: username=%s", user.username)
 
-        return MessageResponse(message="Password has been reset successfully. You may now log in.")
+        return MessageResponse(
+            message="Password has been reset successfully. You may now log in."
+        )
 
     # -----------------------------------------------------------------------
     # POST /login
