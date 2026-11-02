@@ -99,11 +99,12 @@ class EmailService:
             EmailSendError: if SES is configured but the send fails.
         """
         if not self.is_configured:
-            logger.error(
-                "SES sender email not configured – cannot send email to %s",
+            logger.warning(
+                "SES sender email not configured – skipping email to %s (subject=%r)",
                 to,
+                subject,
             )
-            raise EmailSendError("SES sender email not configured (SES_SENDER_EMAIL)")
+            return
 
         try:
             self._client.send_email(
