@@ -13,7 +13,6 @@ export function AdminRegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -55,14 +54,11 @@ export function AdminRegisterPage() {
 
     try {
       const payload: RegisterPayload = { username, email, password };
-      if (fullName.trim()) payload.full_name = fullName.trim();
-
       await registerAdmin(payload);
       setSuccess(true);
       setUsername("");
       setEmail("");
       setPassword("");
-      setFullName("");
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -133,20 +129,6 @@ export function AdminRegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="admin-reg-fullname" className="text-sm font-medium">
-                Full Name <span className="text-muted-foreground">(optional)</span>
-              </label>
-              <Input
-                id="admin-reg-fullname"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
                 disabled={loading}
               />
             </div>

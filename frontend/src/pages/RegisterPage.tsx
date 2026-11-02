@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { Navigate } from "react-router-dom";
 import { registerCustomer, type RegisterPayload } from "../api/auth";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -14,7 +13,6 @@ export function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -31,8 +29,6 @@ export function RegisterPage() {
 
     try {
       const payload: RegisterPayload = { username, email, password };
-      if (fullName.trim()) payload.full_name = fullName.trim();
-
       await registerCustomer(payload);
       setSuccess(true);
     } catch (err: unknown) {
@@ -108,20 +104,6 @@ export function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="reg-fullname" className="text-sm font-medium">
-                Full Name <span className="text-muted-foreground">(optional)</span>
-              </label>
-              <Input
-                id="reg-fullname"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
                 disabled={loading}
               />
             </div>
