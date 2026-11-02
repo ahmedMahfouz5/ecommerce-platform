@@ -116,6 +116,18 @@ export async function apiPut<T>(
   );
 }
 
+export async function apiPatch<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  return apiRequest<T>(
+    path,
+    { method: "PATCH", body: JSON.stringify(body) },
+    signal,
+  );
+}
+
 export async function apiDelete(
   path: string,
   signal?: AbortSignal,

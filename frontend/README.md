@@ -1,0 +1,204 @@
+# E-Commerce Platform Frontend
+
+A **React + TypeScript + Vite** single-page application for the e-commerce platform. It provides customer-facing product browsing, authentication flows, and an admin dashboard for product and user management.
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Project Structure](#project-structure)
+3. [Tech Stack](#tech-stack)
+4. [Available Scripts](#available-scripts)
+5. [Environment Variables](#environment-variables)
+6. [Authentication](#authentication)
+7. [Routing](#routing)
+8. [API Client](#api-client)
+9. [Pages & Features](#pages--features)
+10. [Running the Application](#running-the-application)
+11. [Building for Production](#building-for-production)
+12. [Testing](#testing)
+
+---
+
+## Overview
+
+The frontend communicates with the FastAPI backend over REST. It uses session storage to persist the JWT access token and an admin flag. Admin-only routes are protected by the `ProtectedRoute` component.
+
+---
+
+## Project Structure
+
+```text
+frontend/
+├── src/
+│   ├── api/              # API client and endpoint modules
+│   │   ├── auth.ts       # Auth API calls
+│   │   ├── users.ts      # Admin user management API calls
+│   │   ├── products.ts   # Product API calls
+│   │   ├── images.ts     # Image upload API calls
+│   │   └── client.ts     # Centralized fetch wrapper
+│   ├── auth/             # Authentication context & protected routes
+│   │   ├── AuthContext.tsx
+│   │   └── ProtectedRoute.tsx
+│   ├── components/       # Reusable UI components
+│   ├── pages/            # Route-level page components
+│   ├── lib/              # Utility functions
+│   ├── types/            # Shared TypeScript types
+│   └── main.tsx          # Application entry point
+├── public/               # Static assets
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── tailwind.config.js
+```
+
+---
+
+## Tech Stack
+
+- **Framework:** React 18
+- **Language:** TypeScript
+- **Bundler:** Vite
+- **Styling:** Tailwind CSS
+- **Routing:** React Router DOM
+- **UI Components:** shadcn/ui-inspired custom components
+- **Icons:** Lucide React
+
+---
+
+## Available Scripts
+
+| Command              | Description                          |
+|----------------------|--------------------------------------|
+| `npm install`        | Install dependencies                 |
+| `npm run dev`        | Start the Vite dev server            |
+| `npm run build`      | Type-check and build for production  |
+| `npm run preview`    | Preview the production build locally   |
+| `npm run test`       | Run the Vitest test suite              |
+
+---
+
+## Environment Variables
+
+The frontend uses a relative API base path by default, so no environment variables are required for local development when using the Vite proxy.
+
+| Variable             | Description                                         |
+|----------------------|-----------------------------------------------------|
+| `VITE_API_BASE_URL`  | Optional override for the backend API base URL        |
+
+If you need to point to a different backend, create a `.env` file:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
+
+---
+
+## Authentication
+
+- The `AuthContext` manages login state.
+- The JWT token and admin flag are stored in `sessionStorage`.
+- The `ProtectedRoute` component blocks unauthenticated or non-admin users.
+- Admins see extra routes and actions; regular customers can browse products and manage their account.
+
+---
+
+## Routing
+
+| Route                       | Access      | Description                              |
+|-----------------------------|-------------|------------------------------------------|
+| `/`                         | Public      | Product listing                          |
+| `/products/:productId`       | Public      | Product detail                           |
+| `/login`                    | Public      | Login page                               |
+| `/register`                 | Public      | Customer registration                    |
+| `/verify-email`             | Public      | Email verification page                  |
+| `/resend-verification`      | Public      | Resend verification email                |
+| `/forgot-password`          | Public      | Request password reset                   |
+| `/reset-password`           | Public      | Reset password                           |
+| `/admin`                    | Admin       | Admin dashboard (create products)        |
+| `/admin/register`           | Admin       | Register another admin                   |
+| `/admin/products/:productId`| Admin       | Edit a product                           |
+| `/admin/users`              | Admin       | User management dashboard                |
+
+---
+
+## API Client
+
+`src/api/client.ts` is the central HTTP client. It:
+
+- Sends requests to `/api/v1`
+- Attaches the `Authorization: Bearer <token>` header automatically
+- Parses JSON error bodies and throws typed `ApiError`
+- Provides helpers: `apiGet`, `apiPost`, `apiPut`, `apiPatch`, `apiDelete`
+
+---
+
+## Pages & Features
+
+### Public
+
+- **ProductList** — browse products
+- **ProductDetail** — view product details
+- **LoginPage** — authenticate
+- **RegisterPage** — create customer account
+- **VerifyEmailPage** — verify email from link
+- **ResendVerificationPage** — request a new verification email
+- **ForgotPasswordPage** / **ResetPasswordPage** — password reset flow
+
+### Admin
+
+- **AdminPage** — create new products, navigate to user dashboard or admin registration
+- **AdminRegisterPage** — register additional admins
+- **ProductEditPage** — edit existing products
+- **UsersDashboardPage** — list all users, toggle `is_admin` / `is_active` / `is_verified`, and delete users
+
+---
+
+## Running the Application
+
+### Locally
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dev server starts at `http://localhost:5173` by default.
+
+### With Docker
+
+```bash
+docker build -t ecommerce-frontend .
+docker run -p 80:80 ecommerce-frontend
+```
+
+The production image uses nginx to serve the built SPA and proxy `/api` requests to the backend.
+
+---
+
+## Building for Production
+
+```bash
+npm run build
+```
+
+The compiled output is placed in `frontend/dist`.
+
+---
+
+## Testing
+
+```bash
+npm run test
+```
+
+Tests are written with Vitest and React Testing Library.
+
+---
+
+## Backend Dependency
+
+This frontend expects the backend to expose the API at `/api/v1`. Make sure the backend is running and reachable. In development, Vite proxies `/api` to the backend; see `vite.config.ts` for details.

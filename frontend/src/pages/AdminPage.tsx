@@ -7,7 +7,7 @@ import type { ProductCreate } from "../types/product";
 import { createProduct } from "../api/products";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { LogOut, ShieldPlus, AlertCircle, CheckCircle2, SkipForward, Plus } from "lucide-react";
+import { LogOut, ShieldPlus, AlertCircle, CheckCircle2, SkipForward, Plus, Users } from "lucide-react";
 
 export function AdminPage() {
   const { logout, isLoggedIn } = useAuth();
@@ -61,6 +61,12 @@ export function AdminPage() {
             <Link to="/admin/register">
               <ShieldPlus className="mr-1.5 h-4 w-4" />
               Register Admin
+            </Link>
+          </Button>
+          <Button variant="secondary" size="sm" asChild>
+            <Link to="/admin/users">
+              <Users className="mr-1.5 h-4 w-4" />
+              Users Dashboard
             </Link>
           </Button>
           {isLoggedIn && (

@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { AdminRegisterPage } from "./pages/AdminRegisterPage";
 import { AdminPage } from "./pages/AdminPage";
+import { UsersDashboardPage } from "./pages/UsersDashboardPage";
 import { ProductEditPage } from "./pages/ProductEditPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { ResendVerificationPage } from "./pages/ResendVerificationPage";
@@ -84,6 +85,14 @@ function AppLayout() {
             element={
               <ProtectedRoute requireAdmin>
                 <ProductEditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute requireAdmin>
+                <UsersDashboardPage />
               </ProtectedRoute>
             }
           />
