@@ -13,6 +13,7 @@ concurrency:
 permissions:
   id-token: write
   contents: read
+  security-events: write
 
 env:
   TF_VERSION: "1.10.5"
