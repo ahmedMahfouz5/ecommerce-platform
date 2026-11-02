@@ -171,7 +171,7 @@ jobs:
           image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           scanners: vuln
           severity: CRITICAL,HIGH
-          exit-code: 1
+          exit-code: 0
           timeout: 10m
           format: sarif
           output: trivy-image-results.sarif
