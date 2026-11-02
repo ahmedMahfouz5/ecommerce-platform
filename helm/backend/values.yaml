@@ -25,6 +25,8 @@ config:
   s3PresignedUrlExpirationSeconds: "300"
   # -- Verified SES sender email. Empty means email sending is disabled.
   sesSenderEmail: ""
+  # -- Public URL of the frontend (used for email links)
+  frontendUrl: "http://localhost:5173"
   # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
   extraEnv: {}
   #   FEATURE_NEW_CHECKOUT: "false"
@@ -288,3 +290,4 @@ tests:
     repository: busybox
     tag: "1.36"
     pullPolicy: IfNotPresent
+

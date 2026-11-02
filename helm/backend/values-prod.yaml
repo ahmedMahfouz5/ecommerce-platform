@@ -24,6 +24,8 @@ config:
   forwardedAllowIps: "*"
   # Verified SES sender email for transactional emails
   sesSenderEmail: "no-reply@ahmedmahfouz.click"
+  # Public URL of the frontend (used for email links)
+  frontendUrl: "https://ahmedmahfouz.click"
 
 # Ingress: disabled — routing is handled by Kong Gateway via its
 # internal Kubernetes Service discovery. Kong routes by hostname/path
