@@ -212,7 +212,7 @@ resource "aws_acm_certificate_validation" "nlb" {
 # SES Module
 # =============================================================================
 module "ses" {
-  source       = "./modules/ses"
+  source       = "../../modules/ses"
   domain_name  = "ahmedmahfouz.click"
   sender_email = "no-reply@ahmedmahfouz.click"
 
