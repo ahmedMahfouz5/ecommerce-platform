@@ -64,8 +64,26 @@ class UserResponse(BaseModel):
     is_admin: bool
     is_verified: bool = False
     verified_at: datetime | None = None
+    is_active: bool = True
+    created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdateRequest(BaseModel):
+    """Fields an admin can update for any user."""
+
+    username: str | None = Field(default=None, min_length=1, max_length=150)
+    email: str | None = Field(default=None, max_length=320)
+    is_admin: bool | None = None
+    is_active: bool | None = None
+    is_verified: bool | None = None
+
+
+class UserListResponse(BaseModel):
+    """Response for the admin user list endpoint."""
+
+    users: list[UserResponse]
 
 
 class RegisterResponse(BaseModel):

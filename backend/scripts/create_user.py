@@ -22,6 +22,7 @@ import argparse
 import asyncio
 import os
 import sys
+from datetime import datetime, timezone
 
 # Ensure the backend package is importable when run from project root.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -39,9 +40,7 @@ async def _create_or_update_user(
 ) -> None:
     """Create a user, or update an existing one if --force."""
     async with async_session_factory() as session:
-        result = await session.execute(
-            select(User).where(User.username == username)
-        )
+        result = await session.execute(select(User).where(User.username == username))
         user = result.scalar_one_or_none()
 
         role = "admin" if is_admin else "customer"
@@ -58,8 +57,12 @@ async def _create_or_update_user(
             user.hashed_password = hash_password(password)
             user.is_admin = is_admin
             user.is_active = True
+            user.is_verified = True
+            user.verified_at = datetime.now(timezone.utc)
             await session.commit()
-            print(f"User '{username}' updated (password reset, is_admin={is_admin}).")
+            print(
+                f"User '{username}' updated (password reset, is_admin={is_admin}, verified=True)."
+            )
 
         else:
             user = User(
@@ -67,10 +70,12 @@ async def _create_or_update_user(
                 hashed_password=hash_password(password),
                 is_active=True,
                 is_admin=is_admin,
+                is_verified=True,
+                verified_at=datetime.now(timezone.utc),
             )
             session.add(user)
             await session.commit()
-            print(f"{role.capitalize()} user '{username}' created.")
+            print(f"{role.capitalize()} user '{username}' created (verified=True).")
 
 
 def main() -> None:
