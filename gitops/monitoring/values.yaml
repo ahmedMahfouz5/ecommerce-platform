@@ -18,6 +18,10 @@ grafana:
   sidecar:
     dashboards:
       enabled: true
+      # Automatically search all namespaces for ConfigMaps with the label 'grafana_dashboard: "1"'
+      searchNamespace: ALL
+      label: grafana_dashboard
+      labelValue: "1"
 
 prometheus:
   enabled: true

@@ -1,41 +1,43 @@
-# Scan all namespaces
-targetNamespaces: "prod,monitoring,kong"
+# =====================================================================
+# Trivy Operator Helm Values
+# =====================================================================
 
-# Exclude Kubernetes system namespaces
+# Scan scope and target namespaces
+targetNamespaces: "prod,monitoring,kong"
 excludeNamespaces: "kube-system,kube-public,kube-node-lease,trivy-system"
 
-# Operator configuration
+# Operator core configuration
 operator:
   replicas: 1
   logDevMode: false
 
-# Scan job configuration
+# Scan job execution & lifecycle limits
 scanJobsConcurrentLimit: 3
 scanJobTimeout: 10m
 scanJobTTL: 1h
 scanJobsRetryDelay: 30s
 
-# Security scanners
+# Security scanners enabled
 vulnerabilityScannerEnabled: true
 sbomGenerationEnabled: true
 configAuditScannerEnabled: true
 rbacAssessmentScannerEnabled: true
 exposedSecretScannerEnabled: true
 
+# Disabled scanners (kept explicit for clarity)
 infraAssessmentScannerEnabled: false
 clusterComplianceEnabled: false
 
-# Metrics
+# Metrics & Prometheus Integration
 metricsFindingsEnabled: true
-metricsVulnIdEnabled: false
+metricsVulnIdEnabled: true # Enabled to populate detailed CVE-level Grafana dashboards
 
-# Prometheus integration
 serviceMonitor:
   enabled: true
-  namespace: monitoring
-  interval: 60s
+  namespace: monitoring # Must match your Prometheus deployment namespace
+  interval: 30s         # Optimized scrape interval for timely metric updates
 
-# Trivy scanner configuration
+# Trivy scanner container configurations
 trivy:
   mode: Standalone
   severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
@@ -51,7 +53,7 @@ trivy:
       cpu: 500m
       memory: 1Gi
 
-# Scanner job security
+# Scanner job security & reporting behaviors
 trivyOperator:
   scanJobAutomountServiceAccountToken: false
   reportRecordFailedChecksOnly: true

@@ -107,6 +107,7 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   sources:
     - repoURL: https://aquasecurity.github.io/helm-charts
       chart: trivy-operator
@@ -123,12 +124,14 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: trivy-system
+
   syncPolicy:
     automated:
-      selfHeal: true
       prune: false
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
