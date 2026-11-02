@@ -209,6 +209,27 @@ resource "aws_acm_certificate_validation" "nlb" {
 }
 
 # =============================================================================
+# SES Module
+# =============================================================================
+module "ses" {
+  source       = "./modules/ses"
+  domain_name  = "ahmedmahfouz.click"
+  sender_email = "no-reply@ahmedmahfouz.click"
+
+  # Existing EKS backend Pod Identity role
+  backend_pod_identity_role_name = "prod-demo-backend-s3"
+
+  # Set true ONLY if your domain DNS is managed by Route53.
+  create_dns_records = false
+
+  tags = {
+    Environment = var.env
+    Project     = "ecommerce"
+    ManagedBy   = "terraform"
+  }
+}
+
+# =============================================================================
 # Route 53 records managed via Terraform (static records)
 #
 # The dynamic per-service records (api.<domain>, frontend.<domain>) are
