@@ -19,6 +19,27 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_email(self, email: str) -> User | None:
+        """Return a user by email (case-insensitive), or None."""
+        result = await self._session.execute(
+            select(User).where(User.email == email)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_verification_token(self, token: str) -> User | None:
+        """Return a user by their verification token, or None."""
+        result = await self._session.execute(
+            select(User).where(User.verification_token == token)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_reset_token(self, token: str) -> User | None:
+        """Return a user by their password reset token, or None."""
+        result = await self._session.execute(
+            select(User).where(User.reset_token == token)
+        )
+        return result.scalar_one_or_none()
+
     async def add(self, user: User) -> User:
         """Persist a new user to the database."""
         self._session.add(user)

@@ -82,6 +82,7 @@ async def engine():
 
     async with eng.begin() as conn:
         await conn.execute(text("TRUNCATE TABLE products RESTART IDENTITY CASCADE"))
+        await conn.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE"))
 
     yield eng
 

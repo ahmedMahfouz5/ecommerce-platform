@@ -19,9 +19,26 @@ class User(Base):
     username: Mapped[str] = mapped_column(
         String(150), unique=True, nullable=False, index=True
     )
+    email: Mapped[str | None] = mapped_column(
+        String(320), unique=True, nullable=True, index=True
+    )
     hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    verification_token: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
+    verification_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    reset_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    reset_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
