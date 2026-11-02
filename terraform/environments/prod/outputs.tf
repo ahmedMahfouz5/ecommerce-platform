@@ -103,3 +103,31 @@ output "backend_s3_role_arn" {
   value       = module.eks-addons.backend_s3_role_arn
 }
 
+
+# =============================================================================
+# CloudFront outputs
+# =============================================================================
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID"
+  value       = module.cloudfront.distribution_id
+}
+
+output "cloudfront_distribution_domain_name" {
+  description = "CloudFront distribution domain name"
+  value       = module.cloudfront.distribution_domain_name
+}
+
+output "cloudfront_custom_domain" {
+  description = "Custom domain alias for the CloudFront distribution"
+  value       = "cdn.${var.route53_zone_name}"
+}
+
+output "cloudfront_origin_access_control_id" {
+  description = "Origin Access Control ID used by CloudFront"
+  value       = module.cloudfront.origin_access_control_id
+}
+
+output "cloudfront_cache_policy_id" {
+  description = "CloudFront cache policy ID"
+  value       = module.cloudfront.cache_policy_id
+}

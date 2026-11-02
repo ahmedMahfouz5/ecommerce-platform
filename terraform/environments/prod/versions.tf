@@ -19,3 +19,17 @@ terraform {
     }
   }
 }
+
+# CloudFront requires TLS certificates to be created in us-east-1.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = {
+      Environment = var.env
+      Project     = "ecommerce-platform"
+      ManagedBy   = "terraform"
+    }
+  }
+}

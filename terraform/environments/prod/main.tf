@@ -244,3 +244,83 @@ module "ses" {
 # create the record manually or let external-dns handle it.
 # =============================================================================
 
+
+# =============================================================================
+# ACM Certificate for CloudFront (must be in us-east-1)
+# =============================================================================
+resource "aws_acm_certificate" "cloudfront" {
+  provider = aws.us_east_1
+
+  domain_name       = "cdn.${var.route53_zone_name}"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "${var.env}-cloudfront-cert"
+  }
+}
+
+resource "aws_route53_record" "cloudfront_acm_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.cloudfront.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = aws_route53_zone.main.zone_id
+}
+
+resource "aws_acm_certificate_validation" "cloudfront" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.cloudfront.arn
+  validation_record_fqdns = [for record in aws_route53_record.cloudfront_acm_validation : record.fqdn]
+}
+
+# =============================================================================
+# CloudFront Distribution for S3 assets
+# =============================================================================
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  env                                 = var.env
+  project                             = "ecommerce"
+  origin_bucket_name                  = module.s3-assets.bucket_name
+  origin_bucket_arn                   = module.s3-assets.bucket_arn
+  origin_bucket_regional_domain_name  = module.s3-assets.bucket_regional_domain_name
+  certificate_arn                     = aws_acm_certificate_validation.cloudfront.certificate_arn
+  aliases                             = ["cdn.${var.route53_zone_name}"]
+
+  # Cache images aggressively; the backend can invalidate on update/delete.
+  default_ttl = 86400
+  max_ttl     = 31536000
+  min_ttl     = 1
+
+  invalidation_items = ["/products/*", "/*.jpg", "/*.png", "/*.jpeg", "/*.gif", "/*.webp"]
+
+  depends_on = [module.s3-assets, aws_acm_certificate_validation.cloudfront]
+}
+
+# =============================================================================
+# Route 53 alias for the CDN custom domain
+# =============================================================================
+resource "aws_route53_record" "cdn" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "cdn.${var.route53_zone_name}"
+  type    = "A"
+
+  alias {
+    name                   = module.cloudfront.distribution_domain_name
+    zone_id                = module.cloudfront.distribution_hosted_zone_id
+    evaluate_target_health = false
+  }
+}
