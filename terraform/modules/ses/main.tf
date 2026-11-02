@@ -31,8 +31,8 @@ resource "aws_sesv2_configuration_set" "main" {
 # --------------------------------------------------
 
 resource "aws_sesv2_email_identity" "sender" {
-  email_identity          = var.sender_email
-  configuration_set_name  = aws_sesv2_configuration_set.main.configuration_set_name
+  email_identity         = var.sender_email
+  configuration_set_name = aws_sesv2_configuration_set.main.configuration_set_name
 
   tags = var.tags
 }
@@ -48,8 +48,8 @@ resource "aws_route53_record" "dkim" {
 
   name = "${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}._domainkey.${var.domain_name}"
 
-  type    = "CNAME"
-  ttl     = 600
+  type = "CNAME"
+  ttl  = 600
 
   records = [
     "${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}.dkim.amazonses.com"
@@ -76,7 +76,13 @@ resource "aws_iam_policy" "ses_send_email" {
           "ses:SendRawEmail"
         ]
 
-        Resource = aws_sesv2_email_identity.domain.arn
+        Resource = "*"
+
+        Condition = {
+          StringEquals = {
+            "ses:FromAddress" = var.sender_email
+          }
+        }
       }
     ]
   })
