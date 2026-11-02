@@ -172,20 +172,20 @@ class AuthService:
             )
         except EmailSendError as exc:
             await self.session.delete(user)
-        await self.session.commit()
-        logger.error(
-            "Registration rolled back for username=%s, email=%s: %s",
-            user.username,
-            user.email,
-            exc,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "Registration failed because we could not send the "
-                "verification email. Please try again later."
-            ),
-        ) from exc
+            await self.session.commit()
+            logger.error(
+                "Registration rolled back for username=%s, email=%s: %s",
+                user.username,
+                user.email,
+                exc,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "Registration failed because we could not send the "
+                    "verification email. Please try again later."
+                ),
+            ) from exc
 
         logger.info(
             "New user registered: username=%s, email=%s, is_admin=%s",
