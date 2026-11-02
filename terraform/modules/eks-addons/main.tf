@@ -528,27 +528,6 @@ resource "aws_iam_role_policy_attachment" "backend_s3" {
   role       = aws_iam_role.backend_s3.name
 }
 
-# SES permissions for the backend to send emails
-data "aws_iam_policy_document" "backend_ses" {
-  statement {
-    actions = [
-      "ses:SendEmail",
-      "ses:SendRawEmail",
-    ]
-    resources = ["arn:aws:ses:us-east-2:557797815982:identity/ahmedmahfouz.click"]
-  }
-}
-
-resource "aws_iam_policy" "backend_ses" {
-  name   = "${var.cluster_name}-backend-ses"
-  policy = data.aws_iam_policy_document.backend_ses.json
-}
-
-resource "aws_iam_role_policy_attachment" "backend_ses" {
-  policy_arn = aws_iam_policy.backend_ses.arn
-  role       = aws_iam_role.backend_s3.name
-}
-
 resource "aws_eks_pod_identity_association" "backend_s3" {
   cluster_name    = var.cluster_name
   namespace       = var.backend_namespace

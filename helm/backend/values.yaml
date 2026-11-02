@@ -16,6 +16,17 @@ image:
   repository: ahmedmahfouz0/backend
   # -- Image tag (REQUIRED — set at install/upgrade time, usually git SHA)
   tag: "2ffc69f848712f6749980742a9dbb84e253fbcb3"
+
+config:
+  # -- S3 bucket name for product-image assets
+  s3AssetsBucket: "ecommerce-staging-us-east-2-assets"
+  # -- Presigned URL lifetime in seconds
+  s3PresignedUrlExpirationSeconds: "300"
+  # -- Verified SES sender email. Empty means email sending is disabled.
+  sesSenderEmail: ""
+  # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
+  extraEnv: {}
+  #   FEATURE_NEW_CHECKOUT: "false"
   # -- Image digest (optional) — when set, overrides tag; e.g. sha256:abc123…
   digest: ""
   # -- Image pull policy

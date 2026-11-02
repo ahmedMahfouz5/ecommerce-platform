@@ -22,6 +22,8 @@ config:
   # In production, limit forwarded-allow-ips to Kong's pod CIDR/cluster.
   # Kong sits in front and forwards requests, so trust the cluster CIDR.
   forwardedAllowIps: "*"
+  # Verified SES sender email for transactional emails
+  sesSenderEmail: "no-reply@ahmedmahfouz.click"
 
 # Ingress: disabled — routing is handled by Kong Gateway via its
 # internal Kubernetes Service discovery. Kong routes by hostname/path
@@ -81,5 +83,4 @@ serviceMonitor:
 # Graceful shutdown
 terminationGracePeriodSeconds: 60
 preStopSleepSeconds: 15
-
 

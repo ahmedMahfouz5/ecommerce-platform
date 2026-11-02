@@ -13,6 +13,8 @@ data:
   AWS_REGION: {{ .Values.config.awsRegion | quote }}
   S3_ASSETS_BUCKET: {{ .Values.config.s3AssetsBucket | quote }}
   S3_PRESIGNED_URL_EXPIRATION_SECONDS: {{ .Values.config.s3PresignedUrlExpirationSeconds | quote }}
+  SES_SENDER_EMAIL: {{ .Values.config.sesSenderEmail | quote }}
   {{- range $key, $val := .Values.config.extraEnv }}
   {{ $key }}: {{ $val | quote }}
   {{- end }}
+

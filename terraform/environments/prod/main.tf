@@ -219,8 +219,9 @@ module "ses" {
   # Existing EKS backend Pod Identity role
   backend_pod_identity_role_name = module.eks-addons.backend_s3_role_name
 
-  # Set true ONLY if your domain DNS is managed by Route53.
-  create_dns_records = false
+  # DNS is managed by Route53 in this same configuration
+  create_dns_records = true
+  zone_id            = aws_route53_zone.main.zone_id
 
   tags = {
     Environment = var.env
