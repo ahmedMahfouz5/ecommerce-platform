@@ -29,7 +29,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: create-admin
-          image: ahmedmahfouz0/backend:f34212bbfa2b029040d929c10f4c11db68454f48
+          image: ahmedmahfouz0/backend:5fa9e744829f95be764f49f4feb907db6800b822
           imagePullPolicy: IfNotPresent
           command:
             ["python", "scripts/create_admin.py"]
