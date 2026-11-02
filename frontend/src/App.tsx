@@ -9,6 +9,10 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { AdminRegisterPage } from "./pages/AdminRegisterPage";
 import { AdminPage } from "./pages/AdminPage";
 import { ProductEditPage } from "./pages/ProductEditPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { ResendVerificationPage } from "./pages/ResendVerificationPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { LoginLogoutButton } from "./components/LoginLogoutButton";
 import { Button } from "./components/ui/button";
 
@@ -53,6 +57,10 @@ function AppLayout() {
           <Route path="/products/:productId" element={<ProductDetailRoute />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/resend-verification" element={<ResendVerificationPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Admin (authenticated + admin role) */}
           <Route

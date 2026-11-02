@@ -91,6 +91,15 @@ export function LoginPage() {
               <LogIn className="mr-2 h-4 w-4" />
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </form>
         </CardContent>
         <CardFooter className="justify-center">

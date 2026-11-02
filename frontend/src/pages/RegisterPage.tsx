@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { Navigate } from "react-router-dom";
 import { registerCustomer, type RegisterPayload } from "../api/auth";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
-import { UserPlus, AlertCircle } from "lucide-react";
+import { UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function RegisterPage() {
   const { isLoggedIn } = useAuth();
@@ -16,6 +17,7 @@ export function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   if (isLoggedIn) {
     return <Navigate to="/" replace />;
@@ -24,20 +26,15 @@ export function RegisterPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(false);
     setLoading(true);
 
     try {
       const payload: RegisterPayload = { username, email, password };
       if (fullName.trim()) payload.full_name = fullName.trim();
 
-      const data = await registerCustomer(payload);
-
-      // Auto-login: persist token from registration response
-        sessionStorage.setItem("access_token", data.access_token);
-        sessionStorage.setItem("is_admin", String(!!data.is_admin));
-
-      // Force a full page reload so AuthProvider picks up the new token
-      window.location.href = "/";
+      await registerCustomer(payload);
+      setSuccess(true);
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -46,6 +43,7 @@ export function RegisterPage() {
             ? (err as { detail: string }).detail
             : "Registration failed";
       setError(msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -61,6 +59,19 @@ export function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            {success && (
+              <div
+                className="flex items-start gap-2 rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300"
+                role="status"
+              >
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Registration successful! Please check your email to verify
+                  your account before signing in.
+                </span>
+              </div>
+            )}
+
             {error && (
               <div
                 className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
@@ -133,7 +144,7 @@ export function RegisterPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || !username || !email || !password}
+              disabled={loading || !username || !email || !password || success}
             >
               {loading ? (
                 "Creating account..."
@@ -146,11 +157,20 @@ export function RegisterPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center">
+        <CardFooter className="flex-col justify-center gap-2">
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="font-medium text-primary hover:underline">
               Sign in
+            </Link>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Didn't receive a verification email?{" "}
+            <Link
+              to="/resend-verification"
+              className="font-medium text-primary hover:underline"
+            >
+              Resend it
             </Link>
           </p>
         </CardFooter>
