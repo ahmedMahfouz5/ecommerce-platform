@@ -32,6 +32,7 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-2}
       S3_ASSETS_BUCKET: ${S3_ASSETS_BUCKET:-ecommerce-staging-us-east-2-assets}
       S3_PRESIGNED_URL_EXPIRATION_SECONDS: ${S3_PRESIGNED_URL_EXPIRATION_SECONDS:-300}
+      CDN_ASSETS_DOMAIN: ${CDN_ASSETS_DOMAIN:-cdn.ahmedmahfouz.click}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
