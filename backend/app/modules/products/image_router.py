@@ -1,12 +1,10 @@
 """API routes for product-image upload management."""
 
 import logging
-import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_session
+from app.config import settings
 from app.modules.auth.dependencies import require_admin
 from app.modules.products.image_schemas import (
     ImageConfirmationRequest,
@@ -15,8 +13,7 @@ from app.modules.products.image_schemas import (
     ImageUploadUrlRequest,
     ImageUploadUrlResponse,
 )
-from app.modules.products.models import Product
-from app.modules.products.repository import ProductRepository
+from app.modules.products.service import ProductService
 from app.services.s3 import (
     generate_object_key,
     generate_presigned_upload_url,
@@ -24,7 +21,6 @@ from app.services.s3 import (
     head_object,
     validate_image_upload_request,
 )
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,98 +30,51 @@ router = APIRouter(
 )
 
 
-# ---------------------------------------------------------------------------
-# Dependency: get a Product by ID or 404
-# ---------------------------------------------------------------------------
-async def _get_product_or_404(
-    product_id: uuid.UUID,
-    session: AsyncSession = Depends(get_session),
-) -> Product:
-    """Fetch a product by ID or raise HTTP 404."""
-    repo = ProductRepository(session)
-    product = await repo.get_by_id(product_id)
-    if product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-    return product
+def get_service() -> ProductService:
+    return ProductService()
 
 
-# ---------------------------------------------------------------------------
-# GET /api/v1/products/{product_id}/image-url
-# ---------------------------------------------------------------------------
 @router.get(
     "/{product_id}/image-url",
     response_model=ImageUrlResponse,
     status_code=status.HTTP_200_OK,
 )
 async def get_product_image_url(
-    product_id: uuid.UUID,
-    session: AsyncSession = Depends(get_session),
+    product_id: str,
+    service: ProductService = Depends(get_service),
 ):
-    """Return the public CDN URL for the product's current image.
+    """Return the public CDN URL(s) for the product's current images."""
+    product = await service._get_product_or_404(product_id)
 
-    The client uses this URL to display the image. The URL points to the
-    CloudFront distribution backed by the configured CDN domain and is
-    scoped to the current object key stored in product.image_url.
-
-    Returns 404 if the product has no image associated.
-    """
-    repo = ProductRepository(session)
-    product = await repo.get_by_id(product_id)
-    if product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-
-    if not product.image_url:
+    if not product.image:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No image associated with this product",
         )
 
-    download_url = get_cdn_url(product.image_url)
+    download_urls = [get_cdn_url(key) for key in product.image if key]
 
     return ImageUrlResponse(
-        image_url=download_url,
-        object_key=product.image_url,
+        image_url=download_urls[0] if download_urls else None,
+        image_urls=download_urls,
+        object_key=product.image[0] if product.image else None,
+        object_keys=product.image,
         expires_in_seconds=settings.s3_presigned_url_expiration_seconds,
     )
 
 
-# ---------------------------------------------------------------------------
-# POST /api/v1/products/{product_id}/images/upload-url
-# ---------------------------------------------------------------------------
 @router.post(
     "/{product_id}/images/upload-url",
     response_model=ImageUploadUrlResponse,
     status_code=status.HTTP_200_OK,
 )
 async def request_image_upload_url(
-    product_id: uuid.UUID,
+    product_id: str,
     body: ImageUploadUrlRequest,
-    session: AsyncSession = Depends(get_session),
+    service: ProductService = Depends(get_service),
     _admin: None = Depends(require_admin),
 ):
-    """Generate a presigned S3 upload URL for a product image.
-
-    Only authorized administrators should use this endpoint.
-    The client must declare:
-      - content_type: the MIME type (image/jpeg, image/png, image/webp).
-      - file_size_bytes: the expected file size (max 10 MB).
-
-    The backend validates the request, generates a cryptographically random
-    object key, and returns a short-lived presigned PUT URL scoped to that
-    key and content type.
-
-    The presigned URL does NOT enforce the declared file size at the S3
-    level (a standard PutObject presigned URL does not support content-length
-    restrictions).  For strict size enforcement, a presigned POST with
-    content-length-range conditions would be required.
-    """
-    # 1. Validate the requested content type and file size.
+    """Generate a presigned S3 upload URL for a product image."""
     try:
         extension = validate_image_upload_request(
             content_type=body.content_type,
@@ -137,25 +86,16 @@ async def request_image_upload_url(
             detail=str(exc),
         )
 
-    # 2. Verify the product exists.
-    repo = ProductRepository(session)
-    product = await repo.get_by_id(product_id)
-    if product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
+    await service._get_product_or_404(product_id)
 
-    # 3. Generate a server-controlled object key.
     object_key = generate_object_key(product_id, extension)
 
-    # 4. Generate the presigned URL.
     try:
         upload_url = generate_presigned_upload_url(
             object_key=object_key,
             content_type=body.content_type,
         )
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to generate presigned URL for product %s", product_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -170,43 +110,20 @@ async def request_image_upload_url(
     )
 
 
-# ---------------------------------------------------------------------------
-# PUT /api/v1/products/{product_id}/images/confirm
-# ---------------------------------------------------------------------------
 @router.put(
     "/{product_id}/images/confirm",
     response_model=ImageResponse,
     status_code=status.HTTP_200_OK,
 )
 async def confirm_image_upload(
-    product_id: uuid.UUID,
+    product_id: str,
     body: ImageConfirmationRequest,
-    session: AsyncSession = Depends(get_session),
+    service: ProductService = Depends(get_service),
     _admin: None = Depends(require_admin),
 ):
-    """Confirm that a product image upload has completed and associate it.
+    """Confirm that a product image upload has completed and associate it."""
+    product = await service._get_product_or_404(product_id)
 
-    The client sends the object_key returned by the upload-url endpoint.
-    The backend:
-      1. Validates that the object_key belongs to this product.
-      2. Optionally verifies the object exists in S3.
-      3. Updates the product's image_url field with the object key.
-
-    If s3:HeadObject permission is not available, S3 existence verification
-    is skipped gracefully and the association is still performed.
-
-    Requires admin privileges.
-    """
-    repo = ProductRepository(session)
-    product = await repo.get_by_id(product_id)
-    if product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-
-    # 1. Validate that the object key belongs to this product.
-    #    The key must start with "products/{product_id}/"
     expected_prefix = f"products/{product_id}/"
     if not body.object_key.startswith(expected_prefix):
         raise HTTPException(
@@ -217,7 +134,6 @@ async def confirm_image_upload(
             ),
         )
 
-    # 2. Optionally verify the object exists in S3.
     try:
         exists = head_object(body.object_key)
         if not exists:
@@ -237,10 +153,18 @@ async def confirm_image_upload(
             exc,
         )
 
-    # 3. Update the product's image_url with the object key.
-    product.image_url = body.object_key
-    await repo.update(product)
-    await session.commit()
+    if not product.image:
+        product.image = []
+    if body.object_key not in product.image:
+        product.image.append(body.object_key)
+
+    repo = service._repo or await service._get_repo()
+    updated = await repo.update(product_id, {"image": product.image})
+    if updated is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id {product_id} not found",
+        )
 
     logger.info(
         "Associated image %s with product %s",
@@ -251,5 +175,5 @@ async def confirm_image_upload(
     return ImageResponse(
         product_id=product.id,
         object_key=body.object_key,
-        updated_at=product.updated_at,
+        updated_at=updated.updated_at,
     )

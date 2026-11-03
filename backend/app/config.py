@@ -4,10 +4,13 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # Database
+    # PostgreSQL Database (users)
     database_url: str = (
         "postgresql+asyncpg://postgres:change-me-in-production@db:5432/ecommerce"
     )
+
+    # MongoDB Database (products)
+    mongodb_url: str = "mongodb://mongo:27017/ecommerce"
 
     # Security
     secret_key: str = "change-me-to-a-random-secret-key"

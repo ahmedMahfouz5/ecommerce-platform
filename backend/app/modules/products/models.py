@@ -1,39 +1,61 @@
-"""SQLAlchemy model for the Product entity."""
+"""Pydantic models for the Product entity stored in MongoDB."""
 
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal
 
-from sqlalchemy import DateTime, Integer, Numeric, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
-
-from app.models import Base
+from pydantic import BaseModel, Field, field_validator
 
 
-class Product(Base):
-    __tablename__ = "products"
+class Product(BaseModel):
+    """Product document model for MongoDB."""
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True,
-        default=uuid.uuid4,
-    )
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, default=None)
-    price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
-    stock_quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    category: Mapped[str] = mapped_column(String(100), nullable=False)
-    image_url: Mapped[str | None] = mapped_column(String(500), default=None)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False,
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False,
-    )
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str
+    price: float
+    categories: list[str]
+    image: list[str]
+    rating: int = Field(ge=1, le=5)
+    amount: int = Field(ge=0)
+    shop_category: str
+    unit_of_measure: str
+    oldPrice: float | None = None
+    sizes: list[str] | None = None
+    colors: list[str] | None = None
+    authors: list[str] | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def __repr__(self) -> str:
-        return f"<Product(id={self.id}, name={self.name!r}, price={self.price})>"
+    @field_validator("categories", mode="before")
+    @classmethod
+    def ensure_list_categories(cls, value):
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value]
+        return value
+
+    @field_validator("image", mode="before")
+    @classmethod
+    def ensure_list_image(cls, value):
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value]
+        return value
+
+    def to_doc(self) -> dict:
+        """Serialize to a MongoDB document, mapping ``id`` to ``_id``."""
+        doc = self.model_dump()
+        doc["_id"] = doc.pop("id")
+        return doc
+
+    @classmethod
+    def from_doc(cls, doc: dict | None) -> "Product | None":
+        """Deserialize a MongoDB document back to a Product model."""
+        if doc is None:
+            return None
+        data = dict(doc)
+        if "_id" in data:
+            data["id"] = str(data.pop("_id"))
+        return cls(**data)

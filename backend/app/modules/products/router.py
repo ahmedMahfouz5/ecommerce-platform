@@ -1,11 +1,7 @@
 """API routes for product management."""
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_session
 from app.modules.auth.dependencies import require_admin
 from app.modules.products.schemas import (
     ProductCreate,
@@ -21,8 +17,8 @@ router = APIRouter(
 )
 
 
-def get_service(session: AsyncSession = Depends(get_session)) -> ProductService:
-    return ProductService(session)
+def get_service() -> ProductService:
+    return ProductService()
 
 
 @router.get("", response_model=ProductListResponse)
@@ -34,7 +30,7 @@ async def list_products(
     category: str | None = Query(default=None, description="Filter by category"),
     q: str | None = Query(
         default=None,
-        description="Search query (case-insensitive, matches name and description)",
+        description="Search query (case-insensitive, matches title and description)",
     ),
     service: ProductService = Depends(get_service),
 ):
@@ -46,7 +42,7 @@ async def list_products(
 
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(
-    product_id: uuid.UUID,
+    product_id: str,
     service: ProductService = Depends(get_service),
 ):
     """Get a single product by ID."""
@@ -68,7 +64,7 @@ async def create_product(
 
 @router.put("/{product_id}", response_model=ProductResponse)
 async def update_product(
-    product_id: uuid.UUID,
+    product_id: str,
     data: ProductUpdate,
     service: ProductService = Depends(get_service),
     _admin: None = Depends(require_admin),
@@ -83,7 +79,7 @@ async def update_product(
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(
-    product_id: uuid.UUID,
+    product_id: str,
     service: ProductService = Depends(get_service),
     _admin: None = Depends(require_admin),
 ):

@@ -72,6 +72,7 @@ secrets:
   secretKeys:
     databaseUrl: "DATABASE_URL"
     secretKey: "SECRET_KEY"
+    mongodbUrl: "MONGODB_URL"
   # -- Secret values (only used when secrets.create is true).
   #    NEVER commit real values here — set them at deploy time.
   db:

@@ -127,7 +127,7 @@ def validate_image_upload_request(
     return ALLOWED_IMAGE_CONTENT_TYPES[content_type]
 
 
-def generate_object_key(product_id: uuid.UUID, extension: str) -> str:
+def generate_object_key(product_id: str, extension: str) -> str:
     """Generate a secure, unpredictable object key for a product image.
 
     Uses a UUID4 for the filename to guarantee uniqueness and avoid collisions

@@ -2,10 +2,11 @@ import logging
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.core.database import check_database_connection, check_migration_status, engine
+from app.core.mongodb import check_mongodb_connection
 from app.services.s3 import check_s3_connection
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ async def readiness_check():
 
 @router.get("/api/v1/health/db_connection")
 async def db_connection_check():
-    """Dedicated database-connectivity probe."""
+    """Dedicated PostgreSQL-connectivity probe."""
     db_connected = await check_database_connection()
 
     logger.info("DB connection probe: connected=%s", db_connected)
@@ -47,6 +48,22 @@ async def db_connection_check():
         )
 
     return {"status": "ok", "database": "connected"}
+
+
+@router.get("/api/v1/health/mongodb")
+async def mongodb_connection_check():
+    """Dedicated MongoDB-connectivity probe."""
+    mongodb_connected = await check_mongodb_connection()
+
+    logger.info("MongoDB connection probe: connected=%s", mongodb_connected)
+
+    if not mongodb_connected:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "mongodb": "disconnected"},
+        )
+
+    return {"status": "ok", "mongodb": "connected"}
 
 
 @router.get("/api/v1/health/db_migration")

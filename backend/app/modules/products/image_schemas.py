@@ -1,17 +1,12 @@
 """Pydantic schemas for product-image upload requests and responses."""
 
-import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 
 class ImageUploadUrlRequest(BaseModel):
-    """Client requests a presigned upload URL.
-
-    The client must declare the intended content type and file size so the
-    backend can validate the proposed upload before generating a URL.
-    """
+    """Client requests a presigned upload URL."""
 
     content_type: str = Field(
         description="MIME type of the image to upload (e.g. image/jpeg)",
@@ -29,13 +24,9 @@ class ImageUploadUrlResponse(BaseModel):
 
     upload_url: str = Field(
         description="Presigned PUT URL for uploading directly to S3",
-        examples=["https://bucket.s3.amazonaws.com/products/..."],
     )
     object_key: str = Field(
         description="S3 object key assigned to this upload",
-        examples=[
-            "products/550e8400-e29b-41d4-a716-446655440000/7c9e6679-7425-40de-944b-e07fc1f90ae7.jpg"
-        ],
     )
     content_type: str = Field(
         description="Expected Content-Type that the upload must use",
@@ -46,13 +37,21 @@ class ImageUploadUrlResponse(BaseModel):
 
 
 class ImageUrlResponse(BaseModel):
-    """Public CDN URL for viewing a product image."""
+    """Public CDN URL(s) for viewing a product's images."""
 
-    image_url: str = Field(
-        description="Public CDN URL for downloading/viewing the image",
+    image_url: str | None = Field(
+        description="Primary public CDN URL for downloading/viewing the image",
     )
-    object_key: str = Field(
-        description="S3 object key of the image",
+    image_urls: list[str] = Field(
+        default_factory=list,
+        description="All public CDN URLs associated with the product",
+    )
+    object_key: str | None = Field(
+        description="Primary S3 object key of the image",
+    )
+    object_keys: list[str] = Field(
+        default_factory=list,
+        description="All S3 object keys associated with the product",
     )
     expires_in_seconds: int = Field(
         description="Lifetime of the presigned URL in seconds",
@@ -60,25 +59,17 @@ class ImageUrlResponse(BaseModel):
 
 
 class ImageConfirmationRequest(BaseModel):
-    """Request to confirm that an image upload completed successfully.
-
-    The client sends the object_key that was previously returned by the
-    upload-url endpoint. The backend validates that this key was generated
-    through the authorized workflow.
-    """
+    """Request to confirm that an image upload completed successfully."""
 
     object_key: str = Field(
         description="S3 object key previously returned by the upload-url endpoint",
-        examples=[
-            "products/550e8400-e29b-41d4-a716-446655440000/7c9e6679-7425-40de-944b-e07fc1f90ae7.jpg"
-        ],
     )
 
 
 class ImageResponse(BaseModel):
     """Response containing image metadata after confirmation."""
 
-    product_id: uuid.UUID
+    product_id: str
     object_key: str
     content_type: str | None = None
     updated_at: datetime
