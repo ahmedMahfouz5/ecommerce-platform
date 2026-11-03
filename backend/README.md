@@ -8,9 +8,7 @@ A modular **FastAPI** backend for an e-commerce platform. It provides user authe
 
 1. [Overview](#overview)
 2. [Project Structure](#project-structure)
-3. [Database Schema](#database-schema)
-   - [`users`](#users)
-   - [`products`](#products)
+3. [Database Architecture](#database-architecture)
 4. [Authentication & Authorization](#authentication--authorization)
 5. [API Routes](#api-routes)
    - [Health](#health)
@@ -29,11 +27,12 @@ A modular **FastAPI** backend for an e-commerce platform. It provides user authe
 ## Overview
 
 - **Framework:** FastAPI (async)
-- **Database:** PostgreSQL with SQLAlchemy 2.0 + Alembic migrations
+- **User Database:** PostgreSQL with SQLAlchemy 2.0 + Alembic migrations
+- **Product Database:** MongoDB (motor async driver)
 - **Auth:** JWT access tokens (bearer scheme), bcrypt password hashing
 - **File Storage:** AWS S3 presigned URLs for product image uploads; public CloudFront CDN URLs for image viewing
 - **Email:** AWS SES (required; registration fails if SES is not configured or the send fails)
-- **Containerized:** Dockerfile included
+- **Containerized:** Dockerfile + docker-compose included
 
 ---
 
@@ -41,32 +40,32 @@ A modular **FastAPI** backend for an e-commerce platform. It provides user authe
 
 ```text
 backend/
-├── alembic/                # Database migrations
+├── alembic/                # PostgreSQL migrations (users)
 ├── app/
 │   ├── config.py           # Pydantic settings
 │   ├── core/
-│   │   └── database.py       # SQLAlchemy engine & session
+│   │   ├── database.py       # PostgreSQL engine & session
+│   │   └── mongodb.py        # MongoDB async client
 │   ├── modules/
-│   │   ├── auth/             # Authentication module
-│   │   │   ├── admin_router.py   # Admin user management routes
-│   │   │   ├── router.py         # Public auth routes
-│   │   │   ├── service.py        # Auth business logic
-│   │   │   ├── repository.py     # User data access
-│   │   │   ├── models.py         # User SQLAlchemy model
-│   │   │   ├── schemas.py        # Pydantic request/response models
-│   │   │   └── dependencies.py # JWT & admin guards
-│   │   └── products/         # Product & image modules
+│   │   ├── auth/             # Authentication module (PostgreSQL)
+│   │   └── products/         # Product catalog module (MongoDB)
 │   ├── routers/              # Extra routers (health)
-│   └── services/             # Email service (SES)
-├── scripts/                 # CLI management scripts
+│   └── services/             # Email (SES) + S3 helpers
+├── scripts/                 # CLI management & seed scripts
 ├── tests/                   # Pytest test suite
+├── docker-compose.yml
 ├── Dockerfile
 └── requirements.txt
 ```
 
 ---
 
-## Database Schema
+## Database Architecture
+
+| Entity  | Database   | Notes                                            |
+|---------|-----------|--------------------------------------------------|
+| `users` | PostgreSQL| SQLAlchemy model, Alembic-managed                |
+| `products`| MongoDB  | Pydantic model, stored in `products` collection  |
 
 ### `users`
 
@@ -81,14 +80,37 @@ backend/
 | `is_verified`                 | Boolean   | Email verified? Required for login         |
 | `verified_at`                 | DateTime  | When the email was verified                |
 | `verification_token`          | String    | URL-safe token sent by email               |
-| `verification_token_expires_at`| DateTime | Expiry for verification token             |
+| `verification_token_expires_at`| DateTime | Expiry for verification token            |
 | `reset_token`                 | String    | Password reset token                       |
 | `reset_token_expires_at`      | DateTime  | Expiry for reset token                     |
 | `created_at` / `updated_at`   | DateTime  | Auto-managed timestamps                    |
 
 ### `products`
 
-See the products module for full schema details. Includes product details, price, stock, and related image records.
+Products are stored as documents in MongoDB. Each product has the following fields:
+
+| Field              | Type          | Required | Description / Example                          |
+|--------------------|---------------|----------|--------------------------------------------------|
+| `id`               | string        | yes      | Unique product identifier                        |
+| `title`            | string        | yes      | Product name                                     |
+| `description`      | string        | yes      | Detailed product text                            |
+| `price`            | number        | yes      | Current price in USD                             |
+| `categories`       | string[]      | yes      | Taxonomy tags, e.g. `["dairy", "milk"]`          |
+| `image`            | string[]      | yes      | S3 object keys for product images                |
+| `rating`           | integer       | yes      | Product rating, `1` to `5`                     |
+| `amount`           | integer       | yes      | Current stock quantity                         |
+| `shop_category`    | string        | yes      | Top-level section, e.g. `grocery`, `clothing`  |
+| `unit_of_measure`  | string        | yes      | Unit of sale, e.g. `kg`, `liter`, `pc(s)`      |
+| `oldPrice`         | number        | no       | Original price before discount (sale flag)       |
+| `sizes`            | string[]      | no       | Available garment sizes                        |
+| `colors`           | string[]      | no       | Color variants                                   |
+| `authors`          | string[]      | no       | Book authors (for `shop_category = "books"`)     |
+| `created_at`       | datetime      | yes      | Auto-managed                                     |
+| `updated_at`       | datetime      | yes      | Auto-managed                                     |
+
+- If `oldPrice` is present, the product is flagged as being on sale.
+- Size/color requests are matched against the optional `sizes` and `colors` arrays.
+- Prices are formatted cleanly and stock is reported via `amount`.
 
 ---
 
@@ -108,9 +130,15 @@ Base path: `/api/v1`
 
 ### Health
 
-| Method | Path     | Description                  |
-|--------|----------|------------------------------|
-| `GET`  | `/health`| Health & migration status    |
+| Method | Path                        | Description                          |
+|--------|-----------------------------|--------------------------------------|
+| `GET`  | `/health`                   | Basic health check                   |
+| `GET`  | `/health/live`              | Liveness probe                         |
+| `GET`  | `/health/ready`             | Readiness probe                        |
+| `GET`  | `/health/db_connection`     | PostgreSQL connectivity                |
+| `GET`  | `/health/mongodb`           | MongoDB connectivity                   |
+| `GET`  | `/health/db_migration`      | Alembic migration status               |
+| `GET`  | `/health/s3`                | S3 connectivity                        |
 
 ### Authentication
 
@@ -137,16 +165,6 @@ All under `/api/v1/admin/users`. Requires admin JWT.
 | `PATCH`  | `/{user_id}`   | Update a user (role, status, verified) |
 | `DELETE` | `/{user_id}`   | Delete a user                        |
 
-Example request body for `PATCH /api/v1/admin/users/{user_id}`:
-
-```json
-{
-  "is_admin": true,
-  "is_active": true,
-  "is_verified": true
-}
-```
-
 ### Products
 
 Under `/api/v1/products`.
@@ -161,15 +179,15 @@ Under `/api/v1/products`.
 
 ### Product Images
 
-Under `/api/v1/products/{product_id}/images`.
+Under `/api/v1/products/{product_id}`.
 
-| Method | Path                 | Auth  | Description                                  |
-|--------|----------------------|-------|----------------------------------------------|
-| `GET`  | `/image-url`         | None  | Get the public CloudFront CDN URL for viewing |
-| `POST` | `/upload-url`        | Admin | Get a presigned S3 upload URL                |
-| `PUT`  | `/confirm`           | Admin | Confirm image upload for a product           |
+| Method | Path                        | Auth  | Description                                  |
+|--------|-----------------------------|-------|----------------------------------------------|
+| `GET`  | `/image-url`                | None  | Get public CloudFront CDN URL(s)            |
+| `POST` | `/images/upload-url`        | Admin | Get a presigned S3 upload URL                |
+| `PUT`  | `/images/confirm`           | Admin | Confirm image upload for a product           |
 
-The backend stores only the S3 object key (e.g. `products/<uuid>/<uuid>.webp`) in the product record. Public image URLs are built at runtime from the configured `CDN_ASSETS_DOMAIN` and the stored object key.
+The backend stores S3 object keys in the `image` array. Public image URLs are built at runtime from the configured `CDN_ASSETS_DOMAIN`.
 
 ---
 
@@ -177,9 +195,18 @@ The backend stores only the S3 object key (e.g. `products/<uuid>/<uuid>.webp`) i
 
 Located in `backend/scripts/`.
 
+### `seed_products.py`
+
+Seed MongoDB with products from a JSON file. The file can either contain a top-level `products` array or be a raw array of products.
+
+```bash
+python -m scripts.seed_products /path/to/products.json
+python -m scripts.seed_products --clear /path/to/products.json
+```
+
 ### `create_admin.py`
 
-Create or update an admin user. Marked as verified automatically.
+Create or update an admin user in PostgreSQL. Marked as verified automatically.
 
 ```bash
 python scripts/create_admin.py <username> <password> [--force]
@@ -187,7 +214,7 @@ python scripts/create_admin.py <username> <password> [--force]
 
 ### `create_user.py`
 
-Create or update a user (admin or customer). Marked as verified automatically.
+Create or update a user (admin or customer) in PostgreSQL. Marked as verified automatically.
 
 ```bash
 python scripts/create_user.py <username> <password> [--admin] [--force]
@@ -213,27 +240,41 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
   -d '{"username":"admin","password":"admin"}'
 ```
 
-### List Users (Admin)
+### Create Product (Admin)
 
 ```bash
-curl http://localhost:8000/api/v1/admin/users \
-  -H "Authorization: Bearer <token>"
-```
-
-### Update User (Admin)
-
-```bash
-curl -X PATCH http://localhost:8000/api/v1/admin/users/<user_id> \
+curl -X POST http://localhost:8000/api/v1/products \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"is_admin": true, "is_active": true, "is_verified": true}'
+  -d '{
+    "title": "Apples",
+    "description": "Fresh red apples.",
+    "price": 1.6,
+    "categories": ["fruits-and-vegetables", "fruits"],
+    "image": [],
+    "unit_of_measure": "kg",
+    "amount": 30,
+    "rating": 4,
+    "shop_category": "grocery"
+  }'
 ```
 
-### Delete User (Admin)
+### Request Image Upload URL (Admin)
 
 ```bash
-curl -X DELETE http://localhost:8000/api/v1/admin/users/<user_id> \
-  -H "Authorization: Bearer <token>"
+curl -X POST http://localhost:8000/api/v1/products/1/images/upload-url \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"content_type": "image/png", "file_size_bytes": 524288}'
+```
+
+### Confirm Image Upload (Admin)
+
+```bash
+curl -X PUT http://localhost:8000/api/v1/products/1/images/confirm \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"object_key": "products/1/abc123.png"}'
 ```
 
 ---
@@ -243,8 +284,11 @@ curl -X DELETE http://localhost:8000/api/v1/admin/users/<user_id> \
 Create a `.env` file or export these variables.
 
 ```bash
-# Database
+# PostgreSQL (users)
 DATABASE_URL=postgresql+asyncpg://user:password@db:5432/ecommerce
+
+# MongoDB (products)
+MONGODB_URL=mongodb://mongo:27017/ecommerce
 
 # JWT
 SECRET_KEY=your-secret-key-change-me
@@ -273,6 +317,15 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 
 ## Running the Application
 
+### With Docker Compose
+
+```bash
+cd backend
+docker compose up --build
+```
+
+This starts PostgreSQL, MongoDB, and the backend.
+
 ### Locally
 
 ```bash
@@ -283,14 +336,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### With Docker
-
-```bash
-docker build -t ecommerce-backend .
-docker run --env-file .env -p 8000:8000 ecommerce-backend
-```
-
-### Database Migrations
+### Database Migrations (PostgreSQL only)
 
 ```bash
 # Create a new migration (after model changes)
@@ -298,6 +344,12 @@ alembic revision --autogenerate -m "description"
 
 # Apply migrations
 alembic upgrade head
+```
+
+### Seeding Products
+
+```bash
+python -m scripts.seed_products /path/to/products.json
 ```
 
 ---
