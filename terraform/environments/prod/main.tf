@@ -292,13 +292,13 @@ resource "aws_acm_certificate_validation" "cloudfront" {
 module "cloudfront" {
   source = "../../modules/cloudfront"
 
-  env                                 = var.env
-  project                             = "ecommerce"
-  origin_bucket_name                  = module.s3-assets.bucket_name
-  origin_bucket_arn                   = module.s3-assets.bucket_arn
-  origin_bucket_regional_domain_name  = module.s3-assets.bucket_regional_domain_name
-  certificate_arn                     = aws_acm_certificate_validation.cloudfront.certificate_arn
-  aliases                             = ["cdn.${var.route53_zone_name}"]
+  env                                = var.env
+  project                            = "ecommerce"
+  origin_bucket_name                 = module.s3-assets.bucket_name
+  origin_bucket_arn                  = module.s3-assets.bucket_arn
+  origin_bucket_regional_domain_name = module.s3-assets.bucket_regional_domain_name
+  certificate_arn                    = aws_acm_certificate_validation.cloudfront.certificate_arn
+  aliases                            = ["cdn.${var.route53_zone_name}"]
 
   # Cache images aggressively; the backend can invalidate on update/delete.
   default_ttl = 86400

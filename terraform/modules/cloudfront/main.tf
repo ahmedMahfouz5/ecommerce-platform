@@ -101,11 +101,11 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    allowed_methods  = var.allowed_methods
-    cached_methods   = var.cached_methods
-    target_origin_id = "S3-${var.origin_bucket_name}"
-    cache_policy_id  = aws_cloudfront_cache_policy.assets.id
-    compress         = var.compress
+    allowed_methods        = var.allowed_methods
+    cached_methods         = var.cached_methods
+    target_origin_id       = "S3-${var.origin_bucket_name}"
+    cache_policy_id        = aws_cloudfront_cache_policy.assets.id
+    compress               = var.compress
     viewer_protocol_policy = "redirect-to-https"
   }
 
