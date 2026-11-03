@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.services.s3 import generate_presigned_download_url
+from app.services.s3 import get_cdn_url
 
 logger = logging.getLogger(__name__)
 
@@ -65,20 +65,14 @@ class ProductResponse(BaseModel):
 
     @model_validator(mode="after")
     def populate_download_url(self) -> "ProductResponse":
-        """Generate a presigned download URL from the stored object key.
+        """Generate a public CDN URL from the stored S3 object key.
 
-        If S3 is unreachable we log a warning and leave the field as None.
+        The database stores only the object key (e.g. "products/<uuid>/<uuid>.webp");
+        this validator turns it into a cache-friendly CloudFront URL using the
+        configured CDN domain.
         """
         if self.image_url:
-            try:
-                self.image_download_url = generate_presigned_download_url(
-                    self.image_url
-                )
-            except Exception:
-                logger.warning(
-                    "Failed to generate presigned GET URL for object key %s",
-                    self.image_url,
-                )
+            self.image_download_url = get_cdn_url(self.image_url)
         return self
 
 

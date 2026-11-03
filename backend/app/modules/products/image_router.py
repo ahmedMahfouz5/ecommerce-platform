@@ -19,8 +19,8 @@ from app.modules.products.models import Product
 from app.modules.products.repository import ProductRepository
 from app.services.s3 import (
     generate_object_key,
-    generate_presigned_download_url,
     generate_presigned_upload_url,
+    get_cdn_url,
     head_object,
     validate_image_upload_request,
 )
@@ -64,10 +64,11 @@ async def get_product_image_url(
     product_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
 ):
-    """Return a presigned GET URL for the product's current image.
+    """Return the public CDN URL for the product's current image.
 
-    The client uses this URL to display the image. The URL is short-lived
-    and scoped to the current object key stored in product.image_url.
+    The client uses this URL to display the image. The URL points to the
+    CloudFront distribution backed by the configured CDN domain and is
+    scoped to the current object key stored in product.image_url.
 
     Returns 404 if the product has no image associated.
     """
@@ -85,16 +86,7 @@ async def get_product_image_url(
             detail="No image associated with this product",
         )
 
-    try:
-        download_url = generate_presigned_download_url(product.image_url)
-    except Exception as exc:
-        logger.exception(
-            "Failed to generate presigned GET URL for product %s", product_id
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate image URL. Please try again later.",
-        )
+    download_url = get_cdn_url(product.image_url)
 
     return ImageUrlResponse(
         image_url=download_url,

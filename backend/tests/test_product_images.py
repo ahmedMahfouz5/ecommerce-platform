@@ -10,6 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
+
 pytestmark = pytest.mark.asyncio
 
 # ---------------------------------------------------------------------------
@@ -289,6 +291,59 @@ class TestConfirmImageUpload:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/v1/products/{product_id}/image-url
+# ---------------------------------------------------------------------------
+
+class TestGetProductImageUrl:
+    """GET /api/v1/products/{product_id}/image-url"""
+
+    async def test_returns_cdn_url_for_product_image(self, client: AsyncClient):
+        """The endpoint returns a public CloudFront CDN URL, not a presigned S3 URL."""
+        product = await _create_product(client)
+        object_key = f"products/{product['id']}/some-uuid.webp"
+
+        # Associate an image first
+        with patch("app.modules.products.image_router.head_object", return_value=True):
+        resp = await client.put(
+                f"/api/v1/products/{product['id']}/images/confirm",
+                json={"object_key": object_key},
+        )
+        assert resp.status_code == 200
+        resp = await client.get(f"/api/v1/products/{product['id']}/image-url")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["object_key"] == object_key
+        assert data["image_url"] == f"https://{settings.cdn_assets_domain}/{object_key}"
+        assert "s3.amazonaws.com" not in data["image_url"]
+        assert ".webp" in data["image_url"]
+
+    async def test_returns_404_when_no_image(self, client: AsyncClient):
+        """Requesting image URL for a product without an image returns 404."""
+        product = await _create_product(client)
+
+        resp = await client.get(f"/api/v1/products/{product['id']}/image-url")
+        assert resp.status_code == 404
+
+    async def test_product_response_includes_cdn_url(self, client: AsyncClient):
+        """ProductResponse.image_download_url uses the CDN, not a presigned URL."""
+        product = await _create_product(client)
+        object_key = f"products/{product['id']}/some-uuid.webp"
+
+        with patch("app.modules.products.image_router.head_object", return_value=True):
+            await client.put(
+                f"/api/v1/products/{product['id']}/images/confirm",
+                json={"object_key": object_key},
+            )
+
+        resp = await client.get(f"/api/v1/products/{product['id']}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["image_url"] == object_key
+        assert data["image_download_url"] == f"https://{settings.cdn_assets_domain}/{object_key}"
+        assert "s3.amazonaws.com" not in data["image_download_url"]
+
+
+# ---------------------------------------------------------------------------
 # Existing product CRUD is unaffected
 # ---------------------------------------------------------------------------
 
@@ -339,3 +394,4 @@ class TestProductCrudUnaffected:
         assert resp.status_code == 200
         data = resp.json()
         assert set(data.keys()) == {"items", "total", "page", "page_size", "total_pages"}
+

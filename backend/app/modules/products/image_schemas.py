@@ -46,10 +46,10 @@ class ImageUploadUrlResponse(BaseModel):
 
 
 class ImageUrlResponse(BaseModel):
-    """Presigned GET URL for viewing a product image."""
+    """Public CDN URL for viewing a product image."""
 
     image_url: str = Field(
-        description="Presigned GET URL for downloading/viewing the image",
+        description="Public CDN URL for downloading/viewing the image",
     )
     object_key: str = Field(
         description="S3 object key of the image",

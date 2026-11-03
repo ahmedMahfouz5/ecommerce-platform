@@ -31,7 +31,7 @@ A modular **FastAPI** backend for an e-commerce platform. It provides user authe
 - **Framework:** FastAPI (async)
 - **Database:** PostgreSQL with SQLAlchemy 2.0 + Alembic migrations
 - **Auth:** JWT access tokens (bearer scheme), bcrypt password hashing
-- **File Storage:** AWS S3 presigned URLs for product images
+- **File Storage:** AWS S3 presigned URLs for product image uploads; public CloudFront CDN URLs for image viewing
 - **Email:** AWS SES (required; registration fails if SES is not configured or the send fails)
 - **Containerized:** Dockerfile included
 
@@ -161,12 +161,15 @@ Under `/api/v1/products`.
 
 ### Product Images
 
-Under `/api/v1/products/images`.
+Under `/api/v1/products/{product_id}/images`.
 
-| Method | Path                 | Auth  | Description                       |
-|--------|----------------------|-------|-----------------------------------|
-| `POST` | `/upload-url`        | Admin | Get a presigned S3 upload URL     |
-| `POST` | `/confirm`           | Admin | Confirm image upload for a product  |
+| Method | Path                 | Auth  | Description                                  |
+|--------|----------------------|-------|----------------------------------------------|
+| `GET`  | `/image-url`         | None  | Get the public CloudFront CDN URL for viewing |
+| `POST` | `/upload-url`        | Admin | Get a presigned S3 upload URL                |
+| `PUT`  | `/confirm`           | Admin | Confirm image upload for a product           |
+
+The backend stores only the S3 object key (e.g. `products/<uuid>/<uuid>.webp`) in the product record. Public image URLs are built at runtime from the configured `CDN_ASSETS_DOMAIN` and the stored object key.
 
 ---
 
@@ -253,7 +256,11 @@ AWS_REGION=us-east-1
 SES_SENDER_EMAIL=noreply@example.com
 
 # AWS / S3
-S3_BUCKET_NAME=your-bucket
+S3_ASSETS_BUCKET=your-bucket
+S3_PRESIGNED_URL_EXPIRATION_SECONDS=300
+
+# Public CloudFront CDN domain used for product images
+CDN_ASSETS_DOMAIN=cdn.yourdomain.com
 
 # Frontend URL (used in verification & password reset emails)
 FRONTEND_URL=http://localhost:5173

@@ -198,18 +198,7 @@ def generate_presigned_download_url(
     object_key: str,
     expiration: Optional[int] = None,
 ) -> str:
-    """Generate a presigned GET URL for downloading/viewing an object.
-
-    Args:
-        object_key: The S3 object key to grant GetObject permission for.
-        expiration: Lifetime of the URL in seconds. Defaults to the configured value.
-
-    Returns:
-        A presigned GET URL as a string.
-
-    Raises:
-        botocore.exceptions.ClientError: If the S3 client cannot generate the URL.
-    """
+    """Generate a presigned GET URL for downloading/viewing an object."""
     if expiration is None:
         expiration = settings.s3_presigned_url_expiration_seconds
 
@@ -235,11 +224,22 @@ def generate_presigned_download_url(
     return url
 
 
+# ── public CDN URL helper ──────────────────────────────────────────────────
+def get_cdn_url(object_key: str) -> str:
+    """Return a public, cache-friendly CDN URL for an S3 object key.
+
+    The backend stores only the object key (e.g. "products/{id}/{uuid}.webp").
+    This helper builds the corresponding CloudFront URL using the configured
+    custom CDN domain so the frontend never needs to touch S3 directly.
+    """
+    domain = settings.cdn_assets_domain.rstrip("/")
+    return f"https://{domain}/{object_key.lstrip('/')}"
+
+
 def head_object(object_key: str) -> bool:
     """Check whether an object with the given key exists in the bucket.
 
     Requires s3:HeadObject permission on the object.
-
     Returns:
         True if the object exists, False otherwise.
     """

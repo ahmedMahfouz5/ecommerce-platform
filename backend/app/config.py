@@ -5,7 +5,9 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:change-me-in-production@db:5432/ecommerce"
+    database_url: str = (
+        "postgresql+asyncpg://postgres:change-me-in-production@db:5432/ecommerce"
+    )
 
     # Security
     secret_key: str = "change-me-to-a-random-secret-key"
@@ -23,9 +25,12 @@ class Settings(BaseSettings):
     aws_region: str = "us-east-2"
     s3_assets_bucket: str = "ecommerce-staging-us-east-2-assets"
     s3_presigned_url_expiration_seconds: int = 300  # 5 minutes
+    cdn_assets_domain: str = "cdn.ahmedmahfouz.click"  # CloudFront CDN custom domain
 
     # AWS / SES
-    ses_sender_email: str = ""  # e.g. "noreply@example.com" – empty means SES is disabled
+    ses_sender_email: str = (
+        ""  # e.g. "noreply@example.com" – empty means SES is disabled
+    )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
