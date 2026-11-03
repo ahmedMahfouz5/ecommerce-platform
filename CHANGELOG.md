@@ -1,5 +1,73 @@
 # Changelog
 
+## [0.3.0](https://github.com/ahmedMahfouz5/ecommerce-platform/compare/v0.2.0...v0.3.0) (2026-11-03)
+
+
+### Features
+
+* add authentication features including email verification, password reset, and resend verification functionality ([02680fc](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/02680fc8bb87c45528d82c51d086b7ad0eccaf24))
+* add CDN_ASSETS_DOMAIN environment variable to backend and production configurations ([addf63b](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/addf63b6155ef98caefd6d8b1994b63bbbb3c81d))
+* add CloudFront distribution module with ACM certificate and Route 53 integration ([4345d85](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/4345d85819b9e498902fdc4c252cae8f5522712d))
+* add example environment configuration file for PostgreSQL and AWS settings ([4a8b39e](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/4a8b39e23823c091030da39da108632b28e6672d))
+* add frontend URL configuration to backend values and configmap ([02ff5a6](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/02ff5a6198af37b7ce79bd28b375134870a96048))
+* add initial README.md with project overview, structure, and API documentation ([a71291b](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/a71291bd370b546671a31f28a1ac82c19779d59c))
+* add PostgreSQL configuration for SonarQube and update ArgoCD application manifest ([100cd80](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/100cd80f9f5201c3522573e2a5a62468b095c58e))
+* add SES sender email configuration and update DNS record management ([449c506](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/449c50696bcca5c0fe82a55934d20e288a67d9d6))
+* add Users Dashboard page and user management API calls ([1388e66](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/1388e66399beb1f1cf920aeb8000ddbcd225c6cf))
+* **auth:** implement email verification and password reset functionality ([62ff0b3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/62ff0b3520d54f042daad94f425e5920fd95cc12))
+* enforce email configuration for user registration and improve error handling ([456c89c](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/456c89c240a420f38adf332cf3170605aad8eed1))
+* enhance admin and user registration/login pages with new UI components and improved layout ([8beec54](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/8beec548ca33b583681ea2538d9b7262a9acfdd0))
+* enhance Grafana dashboard configuration and update Trivy operator settings ([11cf78b](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/11cf78bc1025950b2a90c0aa58dd28ef0797baa7))
+* implement admin user management endpoints and update user schemas ([ee507c8](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/ee507c861dbd53e9ddc672e702d2fe1e9e7a63e0))
+* implement public CloudFront CDN URLs for product images and update related endpoints ([7a5f165](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/7a5f165ededf1f50eaa309448f827c7b45e1451d))
+* import uuid module for user ID handling ([5fa9e74](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/5fa9e744829f95be764f49f4feb907db6800b822))
+* **ses:** add SES module with email identity, configuration set, and IAM policies ([8e862cb](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/8e862cb4cfd68ad375d27cc948d153c2cbf18a7e))
+* update README and API types to reflect CloudFront CDN usage for product images; add CDN_ASSETS_DOMAIN to configuration ([132f222](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/132f222fe54afb1d7efe0e13031a0b5b591b733a))
+
+
+### Bug Fixes
+
+* add allowedNamespaces for primary configuration in values.yaml ([4608809](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/460880939010e020e0238e9c4cb24d1de293130b))
+* add CORS and rate limiting plugins for API and frontend ingress ([c44b022](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/c44b022ee4f5d8e3655fa2a5defe192c7a555291))
+* add security-events permission for Terraform workflow ([fa5605b](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/fa5605b70e0a969bc8401af53a2f85e5425d2890))
+* add write permissions for security-events in release-frontend workflow ([a7114f6](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/a7114f6ed54db0b5a06cbff71378fbef7ed2bbdf))
+* add www subdomain to CORS allowed origins in S3 assets module ([c411a64](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/c411a64c6a6b070cf84e5488bde08454761cacd9))
+* adjust user permissions and improve file ownership in Dockerfile ([dc0e9e3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/dc0e9e3018f05975b83f95d1ec9a1c847c29c847))
+* change Trivy exit code to 0 for successful image scans in release-frontend workflow ([dc2c1c5](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/dc2c1c5b7f10e6ffe6a9243c3874af0ae15c97cf))
+* change Trivy exit code to 0 for successful scans ([a178562](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/a178562a637390e9f2198f1ad1c36e8628990d19))
+* change Trivy exit code to 0 for successful scans in release-frontend workflow ([4b22643](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/4b22643021c6726ea80d19702f972892f2c69011))
+* correct AWS provider version constraint in SES module ([287b8af](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/287b8af1a106fde8dabed31da1c807ab1a3e5b9f))
+* correct indentation for SonarQube ingress host configuration in values.yaml ([6a04310](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/6a04310c5882a12c5d29c27c960a06a9bf60da39))
+* enable EKS access policies for Terraform user ([ce649d3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/ce649d356bb41a7e74ea5d5c57cd000bd5444ff5))
+* ensure newline at end of file in values.yaml ([1bb55f1](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/1bb55f1a1d808501c3847c062110d23b8a71c8c0))
+* ensure proper error handling and rollback for user registration email failures ([2ffc69f](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/2ffc69f848712f6749980742a9dbb84e253fbcb3))
+* format CloudFront module configuration for consistency ([6623db4](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/6623db4d1ae317bc93eaf6b1e6e43fcf8a96402c))
+* improve logging and handling for unconfigured SES sender email ([c88a276](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/c88a276a2eb0968c595c2f8dd6dbde077ccc96fc))
+* update backend image tag in create-admin-job.yaml ([956f36f](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/956f36fbbe7448d9354bd7bbd158f7be59cbcc34))
+* update CodeQL SARIF action to v4 and add security-events permission ([33a466d](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/33a466d3bafa57cea6967a1a20bf452aba076e68))
+* update CodeQL SARIF upload action to version 4 ([07bec5e](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/07bec5e621eed1e8ff2ecd01f2022d8f763c16aa))
+* update desired node size to 2 in Terraform configuration ([35bd9fe](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/35bd9fe197b8fd6345d67a240af97c9bcb155a18))
+* update Grafana ingress host to use specific domain ([f69e90e](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/f69e90eddbdfd8d8b1a9aff2ee6d3fd33b53a185))
+* update IAM policy to allow SES sending from specified email address ([e1babac](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/e1babacfdc5e21e50eb3b251cee4780e75a54e44))
+* update KMS alias name for EKS secrets encryption key ([dddfa91](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/dddfa91f8719f7d02fe6b2728a7068b50bfff186))
+* update max node size to match desired capacity in terraform configuration ([71198c3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/71198c39bf476f570c5cfca11f2fd14e9da5b62d))
+* update SES module source path to correct relative location ([27085d3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/27085d30006f5ae0089b7999cb512f8292f9a7eb))
+* update SES module to use backend Pod Identity role from eks-addons module ([dc9401c](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/dc9401c8389d90d1ef52e42bf2176d47eae967c5))
+* update SonarQube backend service name to use kong-proxy ([29d5c2f](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/29d5c2f86764d6ab7d627b9d63eeda8c53e1dc5f))
+* update SonarQube backend service name to use sonarqube-sonarqube ([eee0b17](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/eee0b1737ffa531f4ef3c9ddb81ab668ef9af01d))
+* update SonarQube chart targetRevision to 10.8.0 ([237045f](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/237045fdf617d38dd93fde914980a690ff09c3a7))
+* update SonarQube ingress host to use specific domain ([5ffc3b7](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/5ffc3b7177543d75e10b006b26ca5a6bf625f29f))
+* update targetNamespaces and excludeNamespaces in values.yaml ([4289bd3](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/4289bd3086789eb56ccbed0e818a90650f64a3e8))
+* update Trivy action version to 0.35.0 ([6b69e52](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/6b69e52bf40b7a79fe9bf729ef578a2aecd4d859))
+* update Trivy action version to 0.35.0 and change exit code to 0 ([bb98fd1](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/bb98fd1a4bde8da263235fc7a896fc7c94f4c475))
+* update Trivy action version to 0.35.0 for Terraform scan ([8d4dcfa](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/8d4dcfa058efb781bf81467f7696e8c681349b92))
+* update Trivy operator configuration for metrics and service monitor ([5947b98](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/5947b98b159f5bf952e35e37a0521e3f63f69836))
+
+
+### Code Refactoring
+
+* remove full name field from registration forms ([7884639](https://github.com/ahmedMahfouz5/ecommerce-platform/commit/788463937950aac5a97e63291565fe9ba9c41e68))
+
 ## [0.2.0](https://github.com/ahmedMahfouz5/ecommerce-platform/compare/v0.1.0...v0.2.0) (2026-10-30)
 
 
