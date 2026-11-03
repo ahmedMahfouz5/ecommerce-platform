@@ -1,0 +1,46 @@
+# =============================================================================
+# MongoDB (Bitnami) — local/CI overrides
+#
+# Applied on top of helm/mongodb/values.yaml at install time:
+#   helm upgrade --install mongodb helm/mongodb -f helm/mongodb/values-local.yaml --wait
+# =============================================================================
+
+# -- Keep a stable service name
+fullnameOverride: mongodb
+
+# -- Standalone (no replicas) for local/CI; production uses MongoDB Atlas
+architecture: standalone
+
+# =============================================================================
+# Authentication
+#
+# Pulls credentials from the existing "ecommerce-secret" secret.
+# Required secret keys:
+#   mongodb-root-password   -> root password
+#   mongodb-passwords       -> comma-separated custom user password(s)
+# =============================================================================
+auth:
+  enabled: true
+  rootUser: root
+  rootPassword: ""
+  username: "ecommerce"
+  password: ""
+  database: "ecommerce"
+  existingSecret: "ecommerce-secret"
+
+# =============================================================================
+# Persistence
+# =============================================================================
+persistence:
+  size: 1Gi
+
+# =============================================================================
+# Resources
+# =============================================================================
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
