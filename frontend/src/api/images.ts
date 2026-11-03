@@ -11,8 +11,8 @@
  * and no AWS credentials are exposed to the browser.
  *
  * --- Image Viewing ---
- * The backend returns a presigned S3 download URL in the product's
- * `image_url` field.  No client-side URL construction is needed.
+ * The backend returns a public CloudFront CDN URL in the product's
+ * `image_download_url` field.  No client-side URL construction is needed.
  */
 
 import { apiPost, apiPut } from "./client";

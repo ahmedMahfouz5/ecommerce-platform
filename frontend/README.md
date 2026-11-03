@@ -94,6 +94,10 @@ If you need to point to a different backend, create a `.env` file:
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
+### Product Images
+
+Product images are served through a CloudFront CDN. The frontend uses the `image_download_url` field returned by the backend, which contains a public URL like `https://cdn.yourdomain.com/products/<id>/<filename>.webp`. No client-side URL construction is required.
+
 ---
 
 ## Authentication
@@ -119,7 +123,7 @@ VITE_API_BASE_URL=http://localhost:8000/api/v1
 | `/reset-password`           | Public      | Reset password                           |
 | `/admin`                    | Admin       | Admin dashboard (create products)        |
 | `/admin/register`           | Admin       | Register another admin                   |
-| `/admin/products/:productId`| Admin       | Edit a product                           |
+| `/admin/products/:productId`| Admin       | Edit a product (including image upload)  |
 | `/admin/users`              | Admin       | User management dashboard                |
 
 ---

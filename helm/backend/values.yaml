@@ -22,6 +22,8 @@ config:
   s3AssetsBucket: "ecommerce-staging-us-east-2-assets"
   # -- Presigned URL lifetime in seconds
   s3PresignedUrlExpirationSeconds: "300"
+  # -- Public CloudFront CDN domain for product images
+  cdnAssetsDomain: "cdn.ahmedmahfouz.click"
   # -- Verified SES sender email. Empty means email sending is disabled.
   sesSenderEmail: ""
   # -- Public URL of the frontend (used for email links)
@@ -99,6 +101,8 @@ config:
   s3AssetsBucket: "ecommerce-staging-us-east-2-assets"
   # -- Presigned URL lifetime in seconds
   s3PresignedUrlExpirationSeconds: "300"
+  # -- Public CloudFront CDN domain for product images
+  cdnAssetsDomain: "cdn.ahmedmahfouz.click"
   # -- Arbitrary extra env vars (name/value pairs) added to the ConfigMap
   extraEnv: {}
   #   FEATURE_NEW_CHECKOUT: "false"
