@@ -1,9 +1,12 @@
 """Async MongoDB client for product data."""
 
+import logging
+
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from app.config import settings
 
+logger = logging.getLogger(__name__)
 _mongo_client: AsyncIOMotorClient | None = None
 
 
@@ -29,5 +32,6 @@ async def check_mongodb_connection() -> bool:
         db = await get_mongodb()
         await db.command("ping")
         return True
-    except Exception:
+    except Exception as exc:
+        logger.exception("MongoDB health check failed: %s", exc)
         return False
