@@ -506,6 +506,10 @@ resource "null_resource" "kong_routes" {
       set -euo pipefail
       kubectl wait --for=condition=available deployment/kong-kong \
         -n kong --timeout=600s
+      
+      # Ensure the target namespace exists
+      kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
+
       kubectl apply -f - <<'MANIFEST'
       ${local.kong_routes_manifest}
       MANIFEST
@@ -524,4 +528,3 @@ resource "null_resource" "kong_routes" {
 
   depends_on = [helm_release.kong]
 }
-
