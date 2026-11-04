@@ -15,7 +15,7 @@ image:
   # -- Container image repository (REQUIRED)
   repository: ahmedmahfouz0/backend
   # -- Image tag (REQUIRED — set at install/upgrade time, usually git SHA)
-  tag: "a19654229b6e8e1ab85efe3d0154e9c5a45549a1"
+  tag: "2a8cf058e9e3616a8b1b6bebf61465fd196dc94e"
   pullPolicy: IfNotPresent
 config:
   # -- S3 bucket name for product-image assets
