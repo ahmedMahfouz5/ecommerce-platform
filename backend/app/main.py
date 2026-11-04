@@ -7,11 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.core.mongodb import close_mongodb, get_mongodb
 from app.modules.auth.admin_router import router as admin_users_router
 from app.modules.auth.router import router as auth_router
-from app.modules.products.router import router as products_router
 from app.modules.products.image_router import router as image_router
+from app.modules.products.router import router as products_router
 from app.routers import health
+from app.seed import seed_products_if_empty
 
 
 class _CustomEncoder(json.JSONEncoder):
@@ -53,6 +55,22 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.on_event("startup")
+    async def _seed_on_startup() -> None:
+        """Seed products if the MongoDB collection is empty."""
+        try:
+            db = await get_mongodb()
+            await seed_products_if_empty(db)
+        except Exception as exc:  # noqa: BLE001
+            # Do not block app startup if seeding fails.
+            import logging
+
+            logging.getLogger(__name__).warning("Startup seeding failed: %s", exc)
+
+    @app.on_event("shutdown")
+    async def _close_mongodb_client() -> None:
+        await close_mongodb()
 
     # Register routers
     app.include_router(health.router)
