@@ -3,6 +3,28 @@ import { fetchProducts, fetchProduct, createProduct, updateProduct, deleteProduc
 
 const BASE = "/api/v1/products";
 
+const mockProduct = (overrides = {}) => ({
+  id: "abc",
+  title: "Widget",
+  description: "A useful widget",
+  price: 19.99,
+  categories: ["tools"],
+  image: [],
+  rating: 4,
+  amount: 10,
+  shop_category: "grocery",
+  unit_of_measure: "pc(s)",
+  oldPrice: null,
+  sizes: null,
+  colors: null,
+  authors: null,
+  image_download_url: null,
+  on_sale: false,
+  created_at: "2025-01-01T00:00:00Z",
+  updated_at: "2025-01-02T00:00:00Z",
+  ...overrides,
+});
+
 describe("fetchProducts", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -85,7 +107,7 @@ describe("fetchProduct", () => {
     const mock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: () => Promise.resolve({ id: "abc", name: "Widget" }),
+      json: () => Promise.resolve(mockProduct()),
     });
     vi.stubGlobal("fetch", mock);
 
@@ -115,20 +137,25 @@ describe("createProduct", () => {
     const mock = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
-      json: () => Promise.resolve({ id: "new", name: "Created" }),
+      json: () => Promise.resolve(mockProduct({ id: "new", title: "Created" })),
     });
     vi.stubGlobal("fetch", mock);
 
     await createProduct({
-      name: "Test",
+      title: "Test",
+      description: "A test",
       price: 9.99,
-      stock_quantity: 5,
-      category: "books",
+      categories: ["books"],
+      image: [],
+      rating: 3,
+      amount: 5,
+      shop_category: "grocery",
+      unit_of_measure: "pc(s)",
     });
 
     expect(mock.mock.calls[0]?.[1]?.method).toBe("POST");
     const body = JSON.parse(mock.mock.calls[0]?.[1]?.body as string);
-    expect(body.name).toBe("Test");
+    expect(body.title).toBe("Test");
     expect(body.price).toBe(9.99);
   });
 });
@@ -138,15 +165,15 @@ describe("updateProduct", () => {
     const mock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: () => Promise.resolve({ id: "abc", name: "Updated" }),
+      json: () => Promise.resolve(mockProduct({ title: "Updated" })),
     });
     vi.stubGlobal("fetch", mock);
 
-    await updateProduct("abc", { name: "Updated" });
+    await updateProduct("abc", { title: "Updated" });
 
     expect(mock.mock.calls[0]?.[1]?.method).toBe("PUT");
     const body = JSON.parse(mock.mock.calls[0]?.[1]?.body as string);
-    expect(body.name).toBe("Updated");
+    expect(body.title).toBe("Updated");
     expect(body.price).toBeUndefined();
   });
 });
@@ -164,4 +191,3 @@ describe("deleteProduct", () => {
     expect(mock.mock.calls[0]?.[1]?.method).toBe("DELETE");
   });
 });
-

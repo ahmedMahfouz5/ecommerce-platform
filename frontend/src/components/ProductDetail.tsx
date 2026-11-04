@@ -97,6 +97,10 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
     );
   }
 
+  const firstImage = product.image_download_url?.[0] ?? null;
+  const firstCategory =
+    product.categories[0] ?? product.shop_category;
+
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm">
       <div className="px-4 pt-4 sm:px-6 sm:pt-6">
@@ -109,10 +113,10 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
       <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
         {/* Image */}
         <div className="overflow-hidden rounded-xl bg-muted aspect-square">
-          {product.image_download_url ? (
+          {firstImage ? (
             <img
-              src={product.image_download_url}
-              alt={product.name}
+              src={firstImage}
+              alt={product.title}
               className="h-full w-full object-cover"
             />
           ) : (
@@ -125,17 +129,22 @@ function ProductDetail({ productId, onBack }: ProductDetailProps) {
         {/* Info */}
         <div className="flex flex-col gap-4">
           <span className="inline-block w-fit text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {product.category}
+            {firstCategory}
           </span>
           <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">
-            {product.name}
+            {product.title}
           </h1>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">
             {formatPrice(product.price)}
           </p>
+          {product.on_sale && product.oldPrice != null && (
+            <p className="text-lg text-muted-foreground line-through">
+              {formatPrice(product.oldPrice)}
+            </p>
+          )}
           <p className="text-sm font-medium text-muted-foreground">
-            {product.stock_quantity > 0
-              ? `${product.stock_quantity} units in stock`
+            {product.amount > 0
+              ? `${product.amount} units in stock`
               : "Out of stock"}
           </p>
 

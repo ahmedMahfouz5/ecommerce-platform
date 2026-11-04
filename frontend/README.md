@@ -96,7 +96,7 @@ VITE_API_BASE_URL=http://localhost:8000/api/v1
 
 ### Product Images
 
-Product images are served through a CloudFront CDN. The frontend uses the `image_download_url` field returned by the backend, which contains a public URL like `https://cdn.yourdomain.com/products/<id>/<filename>.webp`. No client-side URL construction is required.
+Product images are served through a CloudFront CDN. The frontend uses the `image_download_url` array returned by the backend, which contains public URLs like `https://cdn.yourdomain.com/products/<id>/<filename>.webp`. No client-side URL construction is required.
 
 ---
 

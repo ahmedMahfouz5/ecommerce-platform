@@ -18,12 +18,15 @@ interface ProductFormProps {
 }
 
 const EMPTY: ProductCreate = {
-  name: "",
+  title: "",
   description: "",
   price: 0,
-  stock_quantity: 0,
-  category: "",
-  image_url: null,
+  categories: [],
+  image: [],
+  rating: 1,
+  amount: 0,
+  shop_category: "",
+  unit_of_measure: "",
 };
 
 export function ProductForm({
@@ -38,7 +41,7 @@ export function ProductForm({
   });
   const [validation, setValidation] = useState<Record<string, string>>({});
 
-  const set = (field: keyof ProductCreate, value: string | number | null) => {
+  const set = (field: keyof ProductCreate, value: string | number | string[] | null) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     // Clear field-level error on change
     if (validation[field]) {
@@ -50,13 +53,23 @@ export function ProductForm({
     }
   };
 
+  const parseNumber = (value: string): number =>
+    value === "" ? 0 : Number(value);
+
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!form.name.trim()) errors.name = "Name is required.";
-    if (!form.category.trim()) errors.category = "Category is required.";
+    if (!form.title.trim()) errors.title = "Title is required.";
+    if (!form.shop_category.trim())
+      errors.shop_category = "Shop category is required.";
+    if (!form.unit_of_measure.trim())
+      errors.unit_of_measure = "Unit of measure is required.";
     if (form.price <= 0) errors.price = "Price must be greater than 0.";
-    if ((form.stock_quantity ?? 0) < 0)
-      errors.stock_quantity = "Stock cannot be negative.";
+    if (form.amount < 0) errors.amount = "Stock amount cannot be negative.";
+    if (form.rating < 1 || form.rating > 5)
+      errors.rating = "Rating must be between 1 and 5.";
+    if (form.categories.length === 0 || !form.categories[0]?.trim()) {
+      errors.categories = "At least one category is required.";
+    }
     setValidation(errors);
     return Object.keys(errors).length === 0;
   };
@@ -65,30 +78,33 @@ export function ProductForm({
     e.preventDefault();
     if (!validate()) return;
 
-    // Round price to 2 decimal places
     const rounded: ProductCreate = {
       ...form,
       price: Math.round(form.price * 100) / 100,
+      oldPrice:
+        form.oldPrice != null && form.oldPrice > 0
+          ? Math.round(form.oldPrice * 100) / 100
+          : null,
     };
     await onSubmit(rounded);
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex max-w-xl flex-col gap-4">
-      {/* Name */}
+      {/* Title */}
       <div className="space-y-1.5">
-        <Label htmlFor="pf-name">Name *</Label>
+        <Label htmlFor="pf-title">Title *</Label>
         <Input
-          id="pf-name"
+          id="pf-title"
           type="text"
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
+          value={form.title}
+          onChange={(e) => set("title", e.target.value)}
           required
           maxLength={255}
         />
-        {validation.name && (
+        {validation.title && (
           <p className="text-sm text-destructive" role="alert">
-            {validation.name}
+            {validation.title}
           </p>
         )}
       </div>
@@ -106,7 +122,7 @@ export function ProductForm({
         />
       </div>
 
-      {/* Price + Stock row */}
+      {/* Price + Amount row */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="pf-price">Price *</Label>
@@ -116,7 +132,7 @@ export function ProductForm({
             step="0.01"
             min="0.01"
             value={form.price || ""}
-            onChange={(e) => set("price", parseFloat(e.target.value) || 0)}
+            onChange={(e) => set("price", parseNumber(e.target.value))}
             required
           />
           {validation.price && (
@@ -127,38 +143,102 @@ export function ProductForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="pf-stock">Stock</Label>
+          <Label htmlFor="pf-amount">Stock Amount</Label>
           <Input
-            id="pf-stock"
+            id="pf-amount"
             type="number"
             min="0"
-            value={form.stock_quantity}
-            onChange={(e) =>
-              set("stock_quantity", parseInt(e.target.value, 10) || 0)
-            }
+            value={form.amount}
+            onChange={(e) => set("amount", parseInt(e.target.value, 10) || 0)}
           />
-          {validation.stock_quantity && (
+          {validation.amount && (
             <p className="text-sm text-destructive" role="alert">
-              {validation.stock_quantity}
+              {validation.amount}
             </p>
           )}
         </div>
       </div>
 
-      {/* Category */}
+      {/* Categories */}
       <div className="space-y-1.5">
-        <Label htmlFor="pf-category">Category *</Label>
+        <Label htmlFor="pf-categories">Categories *</Label>
         <Input
-          id="pf-category"
+          id="pf-categories"
           type="text"
-          value={form.category}
-          onChange={(e) => set("category", e.target.value)}
+          value={form.categories.join(", ")}
+          onChange={(e) =>
+            set(
+              "categories",
+              e.target.value.split(",").map((c) => c.trim()).filter(Boolean),
+            )
+          }
           required
-          maxLength={100}
+          placeholder="e.g. fruits, apples"
         />
-        {validation.category && (
+        {validation.categories && (
           <p className="text-sm text-destructive" role="alert">
-            {validation.category}
+            {validation.categories}
+          </p>
+        )}
+      </div>
+
+      {/* Shop category + Unit of measure row */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="pf-shop-category">Shop Category *</Label>
+          <Input
+            id="pf-shop-category"
+            type="text"
+            value={form.shop_category}
+            onChange={(e) => set("shop_category", e.target.value)}
+            required
+            maxLength={100}
+            placeholder="e.g. grocery"
+          />
+          {validation.shop_category && (
+            <p className="text-sm text-destructive" role="alert">
+              {validation.shop_category}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="pf-uom">Unit of Measure *</Label>
+          <Input
+            id="pf-uom"
+            type="text"
+            value={form.unit_of_measure}
+            onChange={(e) => set("unit_of_measure", e.target.value)}
+            required
+            maxLength={50}
+            placeholder="e.g. kg"
+          />
+          {validation.unit_of_measure && (
+            <p className="text-sm text-destructive" role="alert">
+              {validation.unit_of_measure}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Rating */}
+      <div className="space-y-1.5">
+        <Label htmlFor="pf-rating">Rating *</Label>
+        <Input
+          id="pf-rating"
+          type="number"
+          min="1"
+          max="5"
+          step="1"
+          value={form.rating}
+          onChange={(e) =>
+            set("rating", Math.min(5, Math.max(1, parseInt(e.target.value, 10) || 1)))
+          }
+          required
+        />
+        {validation.rating && (
+          <p className="text-sm text-destructive" role="alert">
+            {validation.rating}
           </p>
         )}
       </div>
@@ -170,3 +250,4 @@ export function ProductForm({
     </form>
   );
 }
+

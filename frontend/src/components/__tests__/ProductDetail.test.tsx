@@ -5,13 +5,21 @@ import type { Product } from "../../types/product";
 
 const mockProduct: Product = {
   id: "abc",
-  name: "Detail Widget",
+  title: "Detail Widget",
   description: "Full description",
   price: 49.99,
-  stock_quantity: 10,
-  category: "tools",
-  image_url: null,
+  categories: ["tools"],
+  image: [],
+  rating: 4,
+  amount: 10,
+  shop_category: "grocery",
+  unit_of_measure: "pc(s)",
+  oldPrice: null,
+  sizes: null,
+  colors: null,
+  authors: null,
   image_download_url: null,
+  on_sale: false,
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-02T00:00:00Z",
 };
@@ -86,4 +94,3 @@ describe("ProductDetail", () => {
     });
   });
 });
-

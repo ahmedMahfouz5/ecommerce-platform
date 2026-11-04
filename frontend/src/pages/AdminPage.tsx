@@ -24,7 +24,7 @@ export function AdminPage() {
     setSubmitting(true);
     try {
       const created = await createProduct(data);
-      setSuccessMsg(`Product "${created.name}" created successfully.`);
+      setSuccessMsg(`Product "${created.title}" created successfully.`);
       setNewProductId(created.id);
     } catch (err: unknown) {
       setError(
@@ -137,3 +137,4 @@ export function AdminPage() {
     </div>
   );
 }
+

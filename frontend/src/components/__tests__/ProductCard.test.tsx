@@ -5,19 +5,27 @@ import type { Product } from "../../types/product";
 
 const product: Product = {
   id: "abc-123",
-  name: "Test Widget",
+  title: "Test Widget",
   description: "A useful widget",
   price: 29.99,
-  stock_quantity: 15,
-  category: "electronics",
-  image_url: null,
+  categories: ["electronics"],
+  image: [],
+  rating: 4,
+  amount: 15,
+  shop_category: "grocery",
+  unit_of_measure: "pc(s)",
+  oldPrice: null,
+  sizes: null,
+  colors: null,
+  authors: null,
   image_download_url: null,
+  on_sale: false,
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-02T00:00:00Z",
 };
 
 describe("ProductCard", () => {
-  it("renders product name, price, and category", () => {
+  it("renders product title, price, and category", () => {
     render(<ProductCard product={product} onSelect={vi.fn()} />);
 
     expect(screen.getByText("Test Widget")).toBeInTheDocument();
@@ -25,22 +33,22 @@ describe("ProductCard", () => {
     expect(screen.getByText("electronics")).toBeInTheDocument();
   });
 
-  it("shows stock quantity", () => {
+  it("shows stock amount", () => {
     render(<ProductCard product={product} onSelect={vi.fn()} />);
     expect(screen.getByText("15 in stock")).toBeInTheDocument();
   });
 
-  it('shows "Out of stock" when stock is 0', () => {
+  it('shows "Out of stock" when amount is 0', () => {
     render(
       <ProductCard
-        product={{ ...product, stock_quantity: 0 }}
+        product={{ ...product, amount: 0 }}
         onSelect={vi.fn()}
       />,
     );
     expect(screen.getByText("Out of stock")).toBeInTheDocument();
   });
 
-  it("shows placeholder when no image_url", () => {
+  it("shows placeholder when no image", () => {
     render(<ProductCard product={product} onSelect={vi.fn()} />);
     expect(screen.getByText("No Image")).toBeInTheDocument();
   });
@@ -48,7 +56,7 @@ describe("ProductCard", () => {
   it("renders image when image_download_url is set", () => {
     render(
       <ProductCard
-        product={{ ...product, image_download_url: "https://example.com/img.jpg" }}
+        product={{ ...product, image_download_url: ["https://example.com/img.jpg"] }}
         onSelect={vi.fn()}
       />,
     );
@@ -73,4 +81,3 @@ describe("ProductCard", () => {
     expect(onSelect).toHaveBeenCalledWith("abc-123");
   });
 });
-

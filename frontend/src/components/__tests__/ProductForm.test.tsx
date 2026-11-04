@@ -3,13 +3,16 @@ import { render, screen, fireEvent, waitFor } from "../../test/test-utils";
 import { ProductForm } from "../ProductForm";
 
 describe("ProductForm", () => {
-  it("renders all fields", () => {
+  it("renders all required fields", () => {
     render(<ProductForm onSubmit={vi.fn()} />);
-    expect(screen.getByLabelText("Name *")).toBeInTheDocument();
+    expect(screen.getByLabelText("Title *")).toBeInTheDocument();
     expect(screen.getByLabelText("Description")).toBeInTheDocument();
     expect(screen.getByLabelText("Price *")).toBeInTheDocument();
-    expect(screen.getByLabelText("Stock")).toBeInTheDocument();
-    expect(screen.getByLabelText("Category *")).toBeInTheDocument();
+    expect(screen.getByLabelText("Stock Amount")).toBeInTheDocument();
+    expect(screen.getByLabelText("Categories *")).toBeInTheDocument();
+    expect(screen.getByLabelText("Shop Category *")).toBeInTheDocument();
+    expect(screen.getByLabelText("Unit of Measure *")).toBeInTheDocument();
+    expect(screen.getByLabelText("Rating *")).toBeInTheDocument();
   });
 
   it("shows validation errors on empty submit", async () => {
@@ -19,8 +22,8 @@ describe("ProductForm", () => {
     fireEvent.click(screen.getByText("Create Product"));
 
     await waitFor(() => {
-      expect(screen.getByText("Name is required.")).toBeInTheDocument();
-      expect(screen.getByText("Category is required.")).toBeInTheDocument();
+      expect(screen.getByText("Title is required.")).toBeInTheDocument();
+      expect(screen.getByText("At least one category is required.")).toBeInTheDocument();
       expect(screen.getByText("Price must be greater than 0.")).toBeInTheDocument();
     });
     expect(onSubmit).not.toHaveBeenCalled();
@@ -30,17 +33,26 @@ describe("ProductForm", () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<ProductForm onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText("Name *"), {
+    fireEvent.change(screen.getByLabelText("Title *"), {
       target: { value: "New Product" },
     });
     fireEvent.change(screen.getByLabelText("Price *"), {
       target: { value: "19.99" },
     });
-    fireEvent.change(screen.getByLabelText("Category *"), {
-      target: { value: "books" },
+    fireEvent.change(screen.getByLabelText("Categories *"), {
+      target: { value: "books, fiction" },
     });
-    fireEvent.change(screen.getByLabelText("Stock"), {
+    fireEvent.change(screen.getByLabelText("Shop Category *"), {
+      target: { value: "grocery" },
+    });
+    fireEvent.change(screen.getByLabelText("Unit of Measure *"), {
+      target: { value: "pc(s)" },
+    });
+    fireEvent.change(screen.getByLabelText("Stock Amount"), {
       target: { value: "5" },
+    });
+    fireEvent.change(screen.getByLabelText("Rating *"), {
+      target: { value: "4" },
     });
 
     fireEvent.click(screen.getByText("Create Product"));
@@ -49,10 +61,11 @@ describe("ProductForm", () => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
     const data = onSubmit.mock.calls[0]?.[0];
-    expect(data.name).toBe("New Product");
+    expect(data.title).toBe("New Product");
     expect(data.price).toBe(19.99);
-    expect(data.category).toBe("books");
-    expect(data.stock_quantity).toBe(5);
+    expect(data.categories).toEqual(["books", "fiction"]);
+    expect(data.amount).toBe(5);
+    expect(data.rating).toBe(4);
   });
 
   it("disables submit button when submitting", () => {
@@ -69,10 +82,10 @@ describe("ProductForm", () => {
     render(
       <ProductForm
         onSubmit={vi.fn()}
-        initial={{ name: "Existing", category: "cat", price: 5.0 }}
+        initial={{ title: "Existing", categories: ["cat"], price: 5.0 }}
       />,
     );
-    expect(screen.getByLabelText("Name *")).toHaveValue("Existing");
-    expect(screen.getByLabelText("Category *")).toHaveValue("cat");
+    expect(screen.getByLabelText("Title *")).toHaveValue("Existing");
+    expect(screen.getByLabelText("Categories *")).toHaveValue("cat");
   });
 });

@@ -11,7 +11,7 @@
  * and no AWS credentials are exposed to the browser.
  *
  * --- Image Viewing ---
- * The backend returns a public CloudFront CDN URL in the product's
+ * The backend returns a public CloudFront CDN URL array in the product's
  * `image_download_url` field.  No client-side URL construction is needed.
  */
 
@@ -105,3 +105,4 @@ export async function confirmUpload(
     signal,
   );
 }
+

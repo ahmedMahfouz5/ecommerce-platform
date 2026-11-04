@@ -148,6 +148,8 @@ export function ProductEditPage() {
     );
   }
 
+  const firstImage = product.image_download_url?.[0] ?? null;
+
   return (
     <div className="space-y-6">
       {/* Back button + title */}
@@ -157,7 +159,7 @@ export function ProductEditPage() {
           Back to Admin
         </Button>
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Edit: {product.name}
+          Edit: {product.title}
         </h2>
       </div>
 
@@ -190,11 +192,11 @@ export function ProductEditPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {product.image_download_url ? (
+          {firstImage ? (
             <div className="max-w-xs overflow-hidden rounded-lg border border-border">
               <img
-                src={product.image_download_url}
-                alt={product.name}
+                src={firstImage}
+                alt={product.title}
                 className="w-full object-cover"
               />
             </div>
@@ -221,11 +223,15 @@ export function ProductEditPage() {
             submitting={updating}
             submitLabel="Update Product"
             initial={{
-              name: product.name,
+              title: product.title,
               description: product.description,
               price: product.price,
-              stock_quantity: product.stock_quantity,
-              category: product.category,
+              amount: product.amount,
+              categories: product.categories,
+              rating: product.rating,
+              shop_category: product.shop_category,
+              unit_of_measure: product.unit_of_measure,
+              oldPrice: product.oldPrice,
             }}
           />
         </CardContent>
@@ -250,3 +256,4 @@ export function ProductEditPage() {
     </div>
   );
 }
+
