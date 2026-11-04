@@ -145,3 +145,10 @@ variable "postgres_password" {
   default     = "password"
 }
 
+variable "mongodb_password" {
+  description = "MongoDB root and custom user password shared with the mongodb chart"
+  type        = string
+  sensitive   = true
+  default     = "password"
+}
+

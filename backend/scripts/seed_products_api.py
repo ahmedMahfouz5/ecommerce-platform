@@ -24,17 +24,13 @@ Environment (used when args are not provided):
 from __future__ import annotations
 
 import argparse
-import asyncio
 import json
 import os
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from urllib.parse import urljoin
-
-import httpx
-
-from app.config import settings
-
 
 DEFAULT_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 DEFAULT_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
@@ -58,7 +54,6 @@ def to_s3_object_key(image_path: str) -> str:
 def normalize_product(product: dict) -> dict:
     """Return a product dict ready for the create-product API."""
     normalized: dict = {
-        "id": product.get("id"),
         "title": product["title"],
         "description": product["description"],
         "price": product["price"],
@@ -83,45 +78,57 @@ def normalize_product(product: dict) -> dict:
     return normalized
 
 
-async def login(client: httpx.AsyncClient, base_url: str, username: str, password: str) -> str:
-    url = urljoin(base_url, "/api/v1/auth/login")
-    response = await client.post(
+def http_post_json(
+    url: str, payload: dict, headers: dict | None = None
+) -> tuple[int, dict | str]:
+    """POST JSON to a URL and return (status, parsed_body_or_text)."""
+    data = json.dumps(payload).encode("utf-8")
+    request_headers = {"Content-Type": "application/json"}
+    if headers:
+        request_headers.update(headers)
+
+    req = urllib.request.Request(
         url,
-        json={"username": username, "password": password},
+        data=data,
+        headers=request_headers,
+        method="POST",
     )
-    response.raise_for_status()
-    data = response.json()
-    token = data.get("access_token")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            body = response.read().decode("utf-8")
+            try:
+                return response.status, json.loads(body)
+            except json.JSONDecodeError:
+                return response.status, body
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8") if hasattr(exc, "read") else ""
+        try:
+            return exc.code, json.loads(body)
+        except json.JSONDecodeError:
+            return exc.code, body
+
+
+def login(base_url: str, username: str, password: str) -> str:
+    url = urljoin(base_url, "/api/v1/auth/login")
+    status, body = http_post_json(url, {"username": username, "password": password})
+    if status != 200 or not isinstance(body, dict):
+        raise RuntimeError(f"Login failed ({status}): {body}")
+    token = body.get("access_token")
     if not token:
-        raise ValueError(f"Login response did not include access_token: {data}")
+        raise RuntimeError(f"Login response did not include access_token: {body}")
     return str(token)
 
 
-async def create_product(
-    client: httpx.AsyncClient,
-    base_url: str,
-    token: str,
-    product: dict,
-) -> tuple[bool, dict]:
+def create_product(base_url: str, token: str, product: dict) -> tuple[bool, dict | str]:
     url = urljoin(base_url, "/api/v1/products")
     headers = {"Authorization": f"Bearer {token}"}
-    response = await client.post(url, json=product, headers=headers)
-    try:
-        response.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        return False, {
-            "status": exc.response.status_code,
-            "body": exc.response.text,
-        }
-    return True, response.json()
+    status, body = http_post_json(url, product, headers=headers)
+    if status == 201:
+        return True, body if isinstance(body, dict) else {}
+    return False, body if isinstance(body, (dict, str)) else str(body)
 
 
-async def run(
-    file_path: Path,
-    base_url: str,
-    username: str,
-    password: str,
-) -> int:
+def run(file_path: Path, base_url: str, username: str, password: str) -> int:
     raw = file_path.read_text(encoding="utf-8")
     data = json.loads(raw)
 
@@ -130,7 +137,10 @@ async def run(
     elif isinstance(data, list):
         products = data
     else:
-        print("JSON file must contain a 'products' array or a raw list of products.", file=sys.stderr)
+        print(
+            "JSON file must contain a 'products' array or a raw list of products.",
+            file=sys.stderr,
+        )
         return 1
 
     if not products:
@@ -139,39 +149,36 @@ async def run(
 
     print(f"Seeding {len(products)} products via {base_url}")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        try:
-            token = await login(client, base_url, username, password)
-            print(f"Authenticated as {username}.")
-        except httpx.HTTPStatusError as exc:
-            print(f"Login failed: {exc.response.status_code} {exc.response.text}", file=sys.stderr)
-            return 1
-        except Exception as exc:  # noqa: BLE001
-            print(f"Login failed: {exc}", file=sys.stderr)
-            return 1
+    try:
+        token = login(base_url, username, password)
+        print(f"Authenticated as {username}.")
+    except RuntimeError as exc:
+        print(f"Login failed: {exc}", file=sys.stderr)
+        return 1
 
-        success_count = 0
-        for index, raw_product in enumerate(products, start=1):
-            product = normalize_product(raw_product)
-            title = product["title"]
+    success_count = 0
+    for index, raw_product in enumerate(products, start=1):
+        product = normalize_product(raw_product)
+        title = product["title"]
 
-            ok, result = await create_product(client, base_url, token, product)
-            if ok:
-                success_count += 1
-                print(f"[{index}/{len(products)}] Created: {title} (id={result.get('id')})")
-            else:
-                print(
-                    f"[{index}/{len(products)}] Failed: {title} "
-                    f"(HTTP {result['status']}: {result['body']})",
-                    file=sys.stderr,
-                )
+        ok, result = create_product(base_url, token, product)
+        if ok:
+            success_count += 1
+            print(f"[{index}/{len(products)}] Created: {title} (id={result.get('id')})")
+        else:
+            print(
+                f"[{index}/{len(products)}] Failed: {title} (HTTP result: {result})",
+                file=sys.stderr,
+            )
 
     print(f"Done. {success_count}/{len(products)} products created.")
     return 0 if success_count == len(products) else 1
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Seed products via the create-product API")
+    parser = argparse.ArgumentParser(
+        description="Seed products via the create-product API"
+    )
     parser.add_argument("file", type=Path, help="Path to the products JSON file")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Backend base URL")
     parser.add_argument("--username", default=DEFAULT_USERNAME, help="Admin username")
@@ -181,8 +188,7 @@ def main() -> int:
     if not args.file.exists():
         print(f"File not found: {args.file}", file=sys.stderr)
         return 1
-
-    return asyncio.run(run(args.file, args.base_url, args.username, args.password))
+    return run(args.file, args.base_url, args.username, args.password)
 
 
 if __name__ == "__main__":

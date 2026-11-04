@@ -12,6 +12,7 @@ locals {
     database_url      = var.database_url
     secret_key        = var.secret_key
     postgres_password = var.postgres_password
+    mongodb_password  = var.mongodb_password
   })
 }
 
