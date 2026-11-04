@@ -10,9 +10,9 @@ locals {
   ecommerce_secret_manifest = templatefile("${path.module}/files/ecommerce-secret.yaml.tftpl", {
     namespace         = var.backend_namespace
     database_url      = var.database_url
+    mongodb_password  = var.mongodb_password
     secret_key        = var.secret_key
     postgres_password = var.postgres_password
-    mongodb_password  = var.mongodb_password
   })
 }
 
