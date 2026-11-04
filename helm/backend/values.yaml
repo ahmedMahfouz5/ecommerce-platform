@@ -15,7 +15,7 @@ image:
   # -- Container image repository (REQUIRED)
   repository: ahmedmahfouz0/backend
   # -- Image tag (REQUIRED — set at install/upgrade time, usually git SHA)
-  tag: "3a5c6a5f475e2bab39a494ff184d2c75510539bb"
+  tag: "a19654229b6e8e1ab85efe3d0154e9c5a45549a1"
   pullPolicy: IfNotPresent
 config:
   # -- S3 bucket name for product-image assets
@@ -108,7 +108,6 @@ config:
 env:
   - name: MONGODB_URL
     value: "mongodb://ecommerce:password@mongodb:27017/ecommerce?authSource=admin"
-
 envFrom: []
 #   - secretRef:
 #       name: extra-secret
