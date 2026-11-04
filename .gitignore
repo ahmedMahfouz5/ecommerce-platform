@@ -60,3 +60,4 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+terraform/environments/prod/terraform_debug.log
