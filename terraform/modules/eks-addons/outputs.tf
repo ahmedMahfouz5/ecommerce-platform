@@ -28,16 +28,6 @@ output "cert_manager_release" {
   value       = helm_release.cert_manager.name
 }
 
-output "argocd_release" {
-  description = "Name of the Argo CD Helm release"
-  value       = helm_release.argocd.name
-}
-
-output "argocd_url" {
-  description = "Public URL of Argo CD"
-  value       = "https://${local.argocd_host}"
-}
-
 output "backend_s3_role_arn" {
   description = "ARN of the IAM role for backend S3 asset bucket access"
   value       = aws_iam_role.backend_s3.arn

@@ -80,7 +80,7 @@ output "nat_public_ips" {
 
 output "argocd_url" {
   description = "Public URL of Argo CD"
-  value       = module.eks-addons.argocd_url
+  value       = module.argocd.argocd_url
 }
 
 output "asset_bucket_name" {

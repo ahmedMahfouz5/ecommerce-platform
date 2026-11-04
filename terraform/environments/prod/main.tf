@@ -140,10 +140,30 @@ module "eks-addons" {
   route53_zone_name       = var.route53_zone_name
   acm_certificate_arn     = aws_acm_certificate_validation.nlb.certificate_arn
   backend_s3_bucket_arn   = module.s3-assets.bucket_arn
-  backend_namespace       = "prod"
+  backend_namespace       = var.backend_namespace
   backend_service_account = "backend-prod"
 
   depends_on = [module.ebs, module.iam, module.eks]
+}
+
+# =============================================================================
+# Argo CD
+# Deployed after Kong and external-dns are ready so the IngressClass and
+# DNS records required by the Argo CD UI are available.
+# =============================================================================
+module "argocd" {
+  source = "../../modules/argocd"
+
+  route53_zone_name = var.route53_zone_name
+  argocd_subdomain  = var.argocd_subdomain
+  repo_url          = var.argocd_repo_url
+  target_revision   = var.argocd_target_revision
+  backend_namespace = var.backend_namespace
+  database_url      = var.database_url
+  secret_key        = var.secret_key
+  postgres_password = var.postgres_password
+
+  depends_on = [module.eks-addons]
 }
 
 # =============================================================================

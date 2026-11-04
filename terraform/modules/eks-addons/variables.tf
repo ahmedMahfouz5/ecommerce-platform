@@ -8,7 +8,6 @@ variable "vpc_id" {
   type        = string
 }
 
-
 variable "aws_region" {
   description = "AWS region"
   type        = string
@@ -39,12 +38,6 @@ variable "disable_gp2_default" {
   type        = bool
   default     = true
 }
-variable "argocd_subdomain" {
-  description = "Subdomain for Argo CD; final host is <argocd_subdomain>.<route53_zone_name>"
-  type        = string
-  default     = "argocd"
-}
-
 # =============================================================================
 # Backend S3 Asset Bucket Access (Pod Identity)
 # =============================================================================
@@ -65,47 +58,4 @@ variable "backend_service_account" {
   default     = "backend-prod"
 }
 
-# =============================================================================
-# Argo CD App-of-Apps bootstrap
-# =============================================================================
-variable "repo_url" {
-  description = "Git repository URL for the Argo CD child applications"
-  type        = string
-  default     = "https://github.com/ahmedMahfouz5/ecommerce-platform.git"
-}
 
-variable "target_revision" {
-  description = "Git branch/tag/revision for the Argo CD child applications"
-  type        = string
-  default     = "main"
-}
-
-# =============================================================================
-# kube-prometheus-stack (Prometheus + Grafana)
-#
-# The monitoring stack is managed by Argo CD (see files/apps.yaml.tftpl).
-# Grafana credentials are set in the inline Helm values of that Application
-# manifest.  Terraform does not deploy the monitoring chart directly.
-# =============================================================================
-
-# -- E-Commerce Secret --
-variable "database_url" {
-  description = "Database connection URL for the FastAPI backend (stored in ecommerce-secret)"
-  type        = string
-  sensitive   = true
-  default     = "postgresql+asyncpg://postgres:password@postgres:5432/ecommerce"
-}
-
-variable "secret_key" {
-  description = "Secret key used by FastAPI for JWT signing, etc."
-  type        = string
-  sensitive   = true
-  default     = "password"
-}
-
-variable "postgres_password" {
-  description = "PostgreSQL password shared between backend and postgres chart"
-  type        = string
-  sensitive   = true
-  default     = "password"
-}
