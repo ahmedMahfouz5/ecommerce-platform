@@ -139,7 +139,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: bitnami/mongodb
-  tag: "sha256-8468b4302cf5d7245ff651b77c48854988c33f37a4eb980a93e72fc8e8d8c30c" # Or check Docker Hub for the latest stable r-number for 8.0.8
+  tag: "8.0.8-debian-12-r3" # Or check Docker Hub for the latest stable r-number for 8.0.8
   digest: ""
   ## Specify a imagePullPolicy
   ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
