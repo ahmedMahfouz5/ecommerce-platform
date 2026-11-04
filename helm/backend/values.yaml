@@ -64,17 +64,12 @@ strategy:
 # the existing Secret (see secretKeys.databaseUrl).
 # ===========================================================================
 secrets:
-  # -- Create a Secret from chart values. If false, existingSecret must be provided.
   create: false
-  # -- Name of existing Secret to use (required when create is false)
   existingSecret: "ecommerce-secret"
-  # -- Key names inside the Secret (used in both modes)
   secretKeys:
     databaseUrl: "DATABASE_URL"
     secretKey: "SECRET_KEY"
-    mongodbUrl: "MONGODB_URL"
-  # -- Secret values (only used when secrets.create is true).
-  #    NEVER commit real values here — set them at deploy time.
+    mongodbUrl: "mongodb-passwords" # Map to an existing key if your chart uses it as a password suffix, or configure the full URL below
   db:
     host: ""
     port: "5432"
@@ -110,9 +105,9 @@ config:
 # ===========================================================================
 # Extra environment (passthrough lists)
 # ===========================================================================
-env: []
-#   - name: MY_VAR
-#     value: "my-value"
+env:
+  - name: MONGODB_URL
+    value: "mongodb://ecommerce:password@mongodb:27017/ecommerce?authSource=admin"
 
 envFrom: []
 #   - secretRef:
