@@ -143,34 +143,34 @@ resource "aws_eks_access_policy_association" "manager" {
 # =============================================================================
 # Terraform user (EKS access policies)
 # =============================================================================
-resource "aws_eks_access_entry" "terraform" {
-  cluster_name  = var.cluster_name
-  principal_arn = "arn:aws:iam::${var.account_id}:user/${var.terraform_user_name}"
-  type          = "STANDARD"
-}
+# resource "aws_eks_access_entry" "terraform" {
+#   cluster_name  = var.cluster_name
+#   principal_arn = "arn:aws:iam::${var.account_id}:user/${var.terraform_user_name}"
+#   type          = "STANDARD"
+# }
 
-locals {
-  terraform_eks_policies = toset([
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy",
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy",
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy",
-    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
-  ])
-}
+# locals {
+#   terraform_eks_policies = toset([
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy",
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy",
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy",
+#     "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
+#   ])
+# }
 
-resource "aws_eks_access_policy_association" "terraform" {
-  for_each = local.terraform_eks_policies
+# resource "aws_eks_access_policy_association" "terraform" {
+#   for_each = local.terraform_eks_policies
 
-  cluster_name  = var.cluster_name
-  principal_arn = aws_eks_access_entry.terraform.principal_arn
-  policy_arn    = each.value
+#   cluster_name  = var.cluster_name
+#   principal_arn = aws_eks_access_entry.terraform.principal_arn
+#   policy_arn    = each.value
 
-  access_scope {
-    type = "cluster"
-  }
+#   access_scope {
+#     type = "cluster"
+#   }
 
-  depends_on = [aws_eks_access_entry.terraform]
-}
+#   depends_on = [aws_eks_access_entry.terraform]
+# }
 
 # =============================================================================
 # GitHub Actions Terraform role (EKS access policies on an EXISTING role)
