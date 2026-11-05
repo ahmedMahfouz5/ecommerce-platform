@@ -27,7 +27,7 @@ function AppLayout() {
             className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground no-underline transition-opacity hover:opacity-85"
           >
             <ShoppingCart className="h-6 w-6" />
-            <span>E-Commerce</span>
+            <span>Ahmed Mahfouz</span>
           </Link>
 
           <nav className="flex items-center gap-1 sm:gap-2">
