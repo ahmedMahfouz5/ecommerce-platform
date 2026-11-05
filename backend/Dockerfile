@@ -49,6 +49,7 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
 COPY scripts ./scripts
+COPY seed_data ./seed_data
 
 # Create unprivileged user with numeric UID/GID for runAsNonRoot compliance
 RUN groupadd -r -g 1000 appgroup && useradd -r -M -g appgroup -u 1000 appuser
@@ -62,3 +63,4 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
      "--proxy-headers", "--forwarded-allow-ips", "*", \
      "--timeout-graceful-shutdown", "20"]
+
