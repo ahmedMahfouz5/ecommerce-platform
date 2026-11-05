@@ -1,54 +1,47 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Flame, Sparkles, Timer, TrendingUp } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Sparkles,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
 import { fetchProducts } from "../api/products";
 import type { Product } from "../types/product";
 import ProductCard from "../components/ProductCard";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/utils";
-
-interface FeaturedCategory {
-  name: string;
-  slug: string;
-  image: string;
-}
-
-const FEATURED_CATEGORIES: FeaturedCategory[] = [
-  { name: "Grocery", slug: "grocery", image: "/shopCategories/fruites&vagetables.png" },
-  { name: "Furniture", slug: "furniture", image: "/shopCategories/furnitures.png" },
-  { name: "Electronics", slug: "electronics", image: "/icons/laptop.png" },
-  { name: "Clothing", slug: "clothing", image: "/shopCategories/hoodies.jpg" },
-  { name: "Beauty", slug: "beauty", image: "/shopCategories/lipsticks.jpg" },
-  { name: "Health", slug: "health", image: "/shopCategories/health.jpg" },
-];
+import { CATEGORIES } from "../data/categories";
 
 const HERO_SLIDES = [
   {
     id: 1,
-    title: "Summer Fresh Deals",
-    subtitle: "Up to 40% off on grocery essentials & fresh produce",
+    title: "Everything You Need, Delivered",
+    subtitle:
+      "Fresh groceries, stylish clothing, the latest tech, and more — all in one place.",
     image: "/offersImages/offer1.png",
-    cta: "Shop Groceries",
-    category: "grocery",
+    cta: "Start Shopping",
+    link: "/products",
   },
   {
     id: 2,
     title: "Upgrade Your Tech",
-    subtitle: "Latest laptops, smartphones, and gadgets at unbeatable prices",
+    subtitle: "Laptops, smartphones, and gadgets at unbeatable prices.",
     image: "/offersImages/offer2.png",
     cta: "Shop Electronics",
-    category: "electronics",
+    link: "/products?category=electronics",
   },
   {
     id: 3,
     title: "Comfort Meets Style",
-    subtitle: "New furniture & clothing arrivals for every season",
+    subtitle: "New furniture and clothing arrivals for every season.",
     image: "/offersImages/offer3.png",
     cta: "Shop Now",
-    category: "furniture",
+    link: "/products?category=furniture",
   },
 ];
-
 
 function SectionHeader({
   title,
@@ -63,8 +56,8 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-4 flex items-center justify-between sm:mb-6">
-      <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-        {Icon && <Icon className="h-5 w-5 text-primary" />}
+      <h2 className="flex items-center gap-2 text-[26px] font-semibold tracking-tight text-foreground sm:text-[30px]">
+        {Icon && <Icon className="h-6 w-6 text-primary" />}
         {title}
       </h2>
       {actionLabel && (
@@ -76,11 +69,7 @@ function SectionHeader({
   );
 }
 
-function CountdownTimer({
-  targetHours = 6,
-}: {
-  targetHours?: number;
-}) {
+function CountdownTimer({ targetHours = 6 }: { targetHours?: number }) {
   const [timeLeft, setTimeLeft] = useState(targetHours * 3600);
 
   useEffect(() => {
@@ -123,14 +112,17 @@ function HeroSlider() {
 
   return (
     <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5">
-      <div className="absolute inset-0 flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
+      <div
+        className="absolute inset-0 flex transition-transform duration-700 ease-in-out"
+        style={{ transform: `translateX(-${current * 100}%)` }}
+      >
         {HERO_SLIDES.map((slide) => (
           <div
             key={slide.id}
             className="flex w-full flex-shrink-0 flex-col items-center gap-6 px-6 py-10 sm:flex-row sm:px-12 sm:py-16 lg:px-16"
           >
             <div className="flex-1 space-y-4 text-center sm:text-left">
-              <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+              <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[13px] font-semibold uppercase tracking-widest text-primary">
                 Limited Offer
               </span>
               <h1 className="text-3xl font-extrabold leading-tight text-foreground sm:text-4xl lg:text-5xl">
@@ -139,12 +131,7 @@ function HeroSlider() {
               <p className="text-base text-muted-foreground sm:text-lg">
                 {slide.subtitle}
               </p>
-              <Button
-                size="lg"
-                onClick={() =>
-                  navigate(`/?category=${encodeURIComponent(slide.category)}`)
-                }
-              >
+              <Button size="lg" onClick={() => navigate(slide.link)}>
                 {slide.cta}
               </Button>
             </div>
@@ -159,7 +146,6 @@ function HeroSlider() {
         ))}
       </div>
 
-      {/* Controls */}
       <button
         onClick={prev}
         className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur transition hover:bg-background sm:left-4 sm:h-10 sm:w-10"
@@ -175,7 +161,6 @@ function HeroSlider() {
         <ChevronRight className="h-5 w-5" />
       </button>
 
-      {/* Dots */}
       <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
         {HERO_SLIDES.map((_, idx) => (
           <button
@@ -198,9 +183,14 @@ function HeroSlider() {
 function FeaturedCategories({ onSelect }: { onSelect: (slug: string) => void }) {
   return (
     <section className="py-8">
-      <SectionHeader title="Featured Categories" icon={Sparkles} actionLabel="View all" onAction={() => onSelect("")} />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {FEATURED_CATEGORIES.map((cat) => (
+      <SectionHeader
+        title="Featured Categories"
+        icon={Sparkles}
+        actionLabel="View all"
+        onAction={() => onSelect("")}
+      />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+        {CATEGORIES.map((cat) => (
           <button
             key={cat.slug}
             onClick={() => onSelect(cat.slug)}
@@ -228,13 +218,11 @@ function ProductSection({
   icon: Icon,
   products,
   onSelect,
-  emptyMessage,
 }: {
   title: string;
   icon?: React.ElementType;
   products: Product[];
   onSelect: (id: string) => void;
-  emptyMessage: string;
 }) {
   if (products.length === 0) return null;
 
@@ -246,9 +234,6 @@ function ProductSection({
           <ProductCard key={product.id} product={product} onSelect={onSelect} />
         ))}
       </div>
-      {products.length === 0 && (
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
-      )}
     </section>
   );
 }
@@ -274,7 +259,11 @@ function DealsSection({
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} onSelect={onSelect} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       </div>
@@ -282,8 +271,7 @@ function DealsSection({
   );
 }
 
-export function HomePage() {
-  const navigate = useNavigate();
+function useHomeData() {
   const [loading, setLoading] = useState(true);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
@@ -297,21 +285,44 @@ export function HomePage() {
 
     setLoading(true);
     try {
-      const [allResponse, saleResponse] = await Promise.all([
-        fetchProducts(1, 12, undefined, undefined, controller.signal),
-        fetchProducts(1, 4, undefined, undefined, controller.signal),
-      ]);
-
-      const all = allResponse.items;
-      const sortedByRating = [...all].sort((a, b) => b.rating - a.rating);
-      const sortedByNewest = [...all].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      const response = await fetchProducts(
+        1,
+        50,
+        undefined,
+        undefined,
+        controller.signal
       );
-      const saleItems = all.filter((p) => p.on_sale).slice(0, 4);
+      const all = response.items;
 
-      setBestSellers(sortedByRating.slice(0, 4));
-      setNewArrivals(sortedByNewest.slice(0, 4));
-      setDeals(saleItems.length > 0 ? saleItems : saleResponse.items.slice(0, 4));
+      // On-sale items first, sorted by biggest discount
+      const saleItems = all
+        .filter((p) => p.on_sale && p.oldPrice != null && p.oldPrice > p.price)
+        .sort((a, b) => {
+          const aDiscount = (a.oldPrice! - a.price) / a.oldPrice!;
+          const bDiscount = (b.oldPrice! - b.price) / b.oldPrice!;
+          return bDiscount - aDiscount;
+        });
+
+      // Best sellers = highest rated, excluding items already in deals
+      const dealIds = new Set(saleItems.map((p) => p.id));
+      const bestSellersList = all
+        .filter((p) => !dealIds.has(p.id))
+        .sort((a, b) => b.rating - a.rating)
+        .slice(0, 4);
+
+      // New arrivals = most recently created, excluding items in deals or best sellers
+      const usedIds = new Set([...dealIds, ...bestSellersList.map((p) => p.id)]);
+      const newArrivalsList = all
+        .filter((p) => !usedIds.has(p.id))
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        .slice(0, 4);
+
+      setDeals(saleItems.slice(0, 4));
+      setBestSellers(bestSellersList);
+      setNewArrivals(newArrivalsList);
     } catch {
       // ignore - sections will just be hidden if data fails
     } finally {
@@ -324,10 +335,17 @@ export function HomePage() {
     return () => abortRef.current?.abort();
   }, [loadHomeData]);
 
+  return { loading, bestSellers, newArrivals, deals };
+}
+
+export function HomePage() {
+  const navigate = useNavigate();
+  const { loading, bestSellers, newArrivals, deals } = useHomeData();
+
   const handleSelectProduct = (id: string) => navigate(`/products/${id}`);
   const handleCategorySelect = (slug: string) => {
     if (slug) {
-      navigate(`/?category=${encodeURIComponent(slug)}`);
+      navigate(`/products?category=${encodeURIComponent(slug)}`);
     } else {
       navigate("/products");
     }
@@ -352,7 +370,6 @@ export function HomePage() {
             icon={TrendingUp}
             products={bestSellers}
             onSelect={handleSelectProduct}
-            emptyMessage="No best sellers yet."
           />
 
           <ProductSection
@@ -360,7 +377,6 @@ export function HomePage() {
             icon={Sparkles}
             products={newArrivals}
             onSelect={handleSelectProduct}
-            emptyMessage="No new arrivals yet."
           />
 
           <section className="flex flex-col items-center justify-between gap-4 rounded-2xl bg-muted/50 px-6 py-8 sm:flex-row sm:px-12">

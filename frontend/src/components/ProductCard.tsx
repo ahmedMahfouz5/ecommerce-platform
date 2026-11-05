@@ -1,18 +1,26 @@
 import type { Product } from "../types/product";
 import { cn } from "@/lib/utils";
 
-function formatPrice(price: number): string {
-  return `$${Number(price).toFixed(2)}`;
-}
-
 interface ProductCardProps {
   product: Product;
   onSelect: (id: string) => void;
 }
 
+function formatPrice(price: number): string {
+  return `$${Number(price).toFixed(2)}`;
+}
+
+function discountPercent(price: number, oldPrice: number | null | undefined): number | null {
+  if (oldPrice && oldPrice > price) {
+    return Math.round(((oldPrice - price) / oldPrice) * 100);
+  }
+  return null;
+}
+
 function ProductCard({ product, onSelect }: ProductCardProps) {
   const firstImage = product.image_download_url?.[0] ?? null;
   const firstCategory = product.categories[0] ?? product.shop_category;
+  const discount = discountPercent(product.price, product.oldPrice);
 
   return (
     <article
@@ -41,27 +49,41 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
             No Image
           </div>
         )}
+        {discount && (
+          <span className="absolute left-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground shadow-sm">
+            -{discount}%
+          </span>
+        )}
       </div>
-      <div className="space-y-1.5 p-4">
-        <span className="inline-block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="space-y-2 p-4">
+        <span className="inline-block text-[13px] font-semibold uppercase tracking-widest text-foreground/80">
           {firstCategory}
         </span>
-        <h3 className="text-base font-semibold leading-tight text-foreground">
+        <h3 className="text-[15px] font-semibold leading-snug text-foreground">
           {product.title}
         </h3>
-        <p className="text-lg font-bold text-green-600 dark:text-green-400">
-          {formatPrice(product.price)}
-        </p>
-        {product.on_sale && product.oldPrice != null && (
-          <p className="text-sm text-muted-foreground line-through">
-            {formatPrice(product.oldPrice)}
+        <div className="flex flex-wrap items-baseline gap-2">
+          <p className="text-lg font-extrabold text-green-700 dark:text-green-400">
+            {formatPrice(product.price)}
           </p>
-        )}
+          {product.on_sale && product.oldPrice != null && (
+            <>
+              <p className="text-[13px] text-foreground/70 line-through">
+                {formatPrice(product.oldPrice)}
+              </p>
+              {discount && (
+                <span className="text-[13px] font-semibold text-destructive">
+                  Save {formatPrice(product.oldPrice - product.price)}
+                </span>
+              )}
+            </>
+          )}
+        </div>
         <p
           className={cn(
-            "text-sm font-medium",
+            "text-[13px] font-medium",
             product.amount > 0
-              ? "text-muted-foreground"
+              ? "text-foreground/80"
               : "text-destructive"
           )}
         >

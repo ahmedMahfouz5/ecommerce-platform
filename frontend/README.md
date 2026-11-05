@@ -16,9 +16,10 @@ A **React + TypeScript + Vite** single-page application for the e-commerce platf
 8. [Routing](#routing)
 9. [API Client](#api-client)
 10. [Pages & Features](#pages--features)
-11. [Running the Application](#running-the-application)
-12. [Building for Production](#building-for-production)
-13. [Testing](#testing)
+11. [Design System](#design-system)
+12. [Running the Application](#running-the-application)
+13. [Building for Production](#building-for-production)
+14. [Testing](#testing)
 
 ---
 
@@ -112,12 +113,12 @@ Product images are served through a CloudFront CDN. The frontend uses the `image
 
 ## Header / Navigation
 
-The top-of-page header is available on every route and provides the main entry points for browsing, searching, and account access.
+The top-of-page header is available on every route and provides the main entry points for browsing, searching, and account access. An `AnnouncementBar` above the header shows free-shipping info and trust signals.
 
 | Element            | Description                                                                 |
 |--------------------|-----------------------------------------------------------------------------|
-| **Logo**           | Brand logo that links back to the product listing page (`/`).               |
-| **Category Menu**  | Main category navigation; allows customers to filter products by category. |
+| **Logo**           | Brand logo that links back to the home page (`/`). Uses the Playfair Display brand font. |
+| **Category Menu**  | Main category navigation; allows customers to filter products by category. Categories are defined in `src/data/categories.ts`. |
 | **Search Bar**     | Live/keyword search input for finding products by name or description.      |
 | **Cart Icon**      | Displays the current cart item count and links to the cart summary.         |
 | **Account / Login**| Shows login link when anonymous, or account dropdown when authenticated.    |
@@ -162,7 +163,7 @@ The top-of-page header is available on every route and provides the main entry p
 
 ### Public
 
-- **HomePage** — landing page with hero slider, featured categories, best sellers, new arrivals, and deals
+- **HomePage** — landing page with hero slider, featured categories, Hot Deals, Best Sellers, and New Arrivals. Sections are built from non-overlapping product subsets and hidden automatically when empty.
 - **ProductList** — browse products
 - **ProductDetail** — view product details
 - **LoginPage** — authenticate
@@ -220,6 +221,27 @@ npm run test
 ```
 
 Tests are written with Vitest and React Testing Library.
+
+---
+
+## Design System
+
+### Typography
+
+- **Body:** Inter (sans-serif)
+- **Brand / Logo:** Playfair Display (serif)
+- Headings and product names are intentionally sized so section titles (`~28–30 px`) clearly outrank product titles (`15 px`).
+- Uppercase labels (categories, footer headings, badges) use `tracking-widest` and a minimum size of `13 px`.
+
+### Contrast & Hierarchy
+
+- Footer and secondary text use `text-foreground/80` instead of low-contrast `text-muted-foreground` to improve accessibility.
+- Product prices are rendered in bold/large green text; discounted old prices are smaller with a strikethrough and a “Save $X” label.
+- Sale products receive a red `-XX%` badge on the product card image.
+
+### Shared Categories
+
+Categories are defined once in `src/data/categories.ts` and drive both the header navigation and the homepage featured-category tiles.
 
 ---
 

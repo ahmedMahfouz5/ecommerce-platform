@@ -14,8 +14,7 @@ import { useAuth } from "../auth/AuthContext";
 import { LoginLogoutButton } from "./LoginLogoutButton";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-
-const CATEGORIES = ["All", "Grocery", "Clothing", "Books", "Electronics"];
+import { CATEGORIES, type Category } from "../data/categories";
 
 export function Header() {
   const { isLoggedIn, isAdmin } = useAuth();
@@ -27,19 +26,15 @@ export function Header() {
     e.preventDefault();
     const query = searchQuery.trim();
     if (query) {
-      navigate(`/?q=${encodeURIComponent(query)}`);
+      navigate(`/products?q=${encodeURIComponent(query)}`);
     } else {
-      navigate("/");
+      navigate("/products");
     }
   };
 
-  const handleCategoryClick = (category: string) => {
+  const handleCategoryClick = (category: Category) => {
     setMobileMenuOpen(false);
-    if (category === "All") {
-      navigate("/");
-    } else {
-      navigate(`/?category=${encodeURIComponent(category.toLowerCase())}`);
-    }
+    navigate(`/products?category=${encodeURIComponent(category.slug)}`);
   };
 
   return (
@@ -50,10 +45,10 @@ export function Header() {
           {/* Logo */}
           <Link
             to="/"
-            className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight text-foreground no-underline transition-opacity hover:opacity-85"
+            className="flex shrink-0 items-center gap-2 text-2xl font-extrabold tracking-tight text-foreground no-underline transition-opacity hover:opacity-85"
           >
-            <img src="/logo.svg" alt="Ahmed Mahfouz" className="h-8 w-8" />
-            <span className="hidden sm:inline">Ahmed Mahfouz</span>
+            <img src="/logo.svg" alt="" className="h-8 w-8" />
+            <span className="font-brand hidden sm:inline">Ahmed Mahfouz</span>
           </Link>
 
           {/* Search bar - desktop */}
@@ -131,12 +126,12 @@ export function Header() {
         <div className="mt-3 hidden items-center gap-1 border-t border-border pt-2 sm:flex">
           {CATEGORIES.map((category) => (
             <Button
-              key={category}
+              key={category.slug}
               variant="ghost"
               size="sm"
               onClick={() => handleCategoryClick(category)}
             >
-              {category}
+              {category.name}
             </Button>
           ))}
         </div>
@@ -159,12 +154,12 @@ export function Header() {
             <div className="flex flex-wrap gap-1">
               {CATEGORIES.map((category) => (
                 <Button
-                  key={category}
+                  key={category.slug}
                   variant="outline"
                   size="sm"
                   onClick={() => handleCategoryClick(category)}
                 >
-                  {category}
+                  {category.name}
                 </Button>
               ))}
             </div>

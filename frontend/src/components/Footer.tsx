@@ -16,12 +16,12 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand & Contact */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Ahmed Mahfouz</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-brand text-2xl font-extrabold">Ahmed Mahfouz</h3>
+            <p className="text-[14px] leading-relaxed text-foreground/80">
               Quality products delivered to your doorstep. Shop with confidence
               and enjoy a seamless e-commerce experience.
             </p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-[14px] text-foreground/80">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 shrink-0" />
                 <a
@@ -49,10 +49,10 @@ export function Footer() {
 
           {/* Customer Service */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider">
+            <h4 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-foreground/90">
               Customer Service
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-[14px] font-medium text-foreground/80">
               <li>
                 <Link
                   to="/contact"
@@ -90,10 +90,10 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider">
+            <h4 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-foreground/90">
               Legal
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-[14px] font-medium text-foreground/80">
               <li>
                 <Link
                   to="/privacy"
@@ -123,7 +123,7 @@ export function Footer() {
 
           {/* Social */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider">
+            <h4 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-foreground/90">
               Follow Us
             </h4>
             <div className="flex gap-3">
@@ -164,14 +164,14 @@ export function Footer() {
                 <Globe className="h-4 w-4" />
               </a>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mt-4 text-[14px] leading-relaxed text-foreground/80">
               Subscribe to our newsletter for the latest deals and updates.
             </p>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-[14px] font-medium text-foreground/80 sm:flex-row">
           <p>&copy; {currentYear} Ahmed Mahfouz. All rights reserved.</p>
           <div className="flex gap-4">
             <Link to="/privacy" className="hover:text-foreground hover:underline">
