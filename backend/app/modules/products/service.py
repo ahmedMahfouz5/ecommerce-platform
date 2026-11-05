@@ -35,10 +35,13 @@ class ProductService:
         """Return a paginated list of products, optionally filtered."""
         repo = await self._get_repo()
         products, total = await repo.get_all(
-            page=page, page_size=page_size, category=category, q=q,
+            page=page,
+            page_size=page_size,
+            category=category,
+            q=q,
         )
         return ProductListResponse(
-            items=[ProductResponse.model_validate(p) for p in products],
+            items=[ProductResponse.model_validate(p.model_dump()) for p in products],
             total=total,
             page=page,
             page_size=page_size,
@@ -48,14 +51,15 @@ class ProductService:
     async def get_product(self, product_id: str) -> ProductResponse:
         """Return a single product by ID."""
         product = await self._get_product_or_404(product_id)
-        return ProductResponse.model_validate(product)
+        return ProductResponse.model_validate(product.model_dump())
 
     async def create_product(self, data: ProductCreate) -> ProductResponse:
         """Create a new product."""
         repo = await self._get_repo()
         product = Product(**data.model_dump())
         created = await repo.create(product)
-        return ProductResponse.model_validate(created)
+
+        return ProductResponse.model_validate(created.model_dump())
 
     async def update_product(
         self, product_id: str, data: ProductUpdate
@@ -65,7 +69,7 @@ class ProductService:
         update_data = data.model_dump(exclude_unset=True)
         if not update_data:
             product = await self._get_product_or_404(product_id)
-            return ProductResponse.model_validate(product)
+            return ProductResponse.model_validate(product.model_dump())
 
         repo = await self._get_repo()
         updated = await repo.update(product_id, update_data)
@@ -74,7 +78,7 @@ class ProductService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Product with id {product_id} not found",
             )
-        return ProductResponse.model_validate(updated)
+        return ProductResponse.model_validate(updated.model_dump())
 
     async def delete_product(self, product_id: str) -> None:
         """Delete a product by ID."""
