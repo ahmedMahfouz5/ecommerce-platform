@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../api/products";
 import type { Product } from "../types/product";
 import ProductCard from "./ProductCard";
@@ -11,13 +12,14 @@ interface ProductListProps {
 }
 
 function ProductList({ onSelectProduct }: ProductListProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [category, setCategory] = useState("");
-  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
 
   // Track the in-flight request so we can cancel it on new requests
   const abortRef = useRef<AbortController | null>(null);
@@ -64,13 +66,22 @@ function ProductList({ onSelectProduct }: ProductListProps) {
     return () => abortRef.current?.abort();
   }, [loadProducts]);
 
+  const updateSearchParams = (newCategory: string, newSearch: string) => {
+    const params = new URLSearchParams();
+    if (newCategory) params.set("category", newCategory);
+    if (newSearch.trim()) params.set("q", newSearch.trim());
+    setSearchParams(params, { replace: true });
+  };
+
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
+    updateSearchParams(cat, search);
     setPage(1);
   };
 
   const handleSearchChange = (q: string) => {
     setSearch(q);
+    updateSearchParams(category, q);
     setPage(1);
   };
 

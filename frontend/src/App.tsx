@@ -1,9 +1,12 @@
-import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
-import { ShoppingCart, Package, UserPlus } from "lucide-react";
+import { BrowserRouter, Routes, Route, useNavigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import ProductList from "./components/ProductList";
 import ProductDetail from "./components/ProductDetail";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
+import { AnnouncementBar } from "./components/AnnouncementBar";
+import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { AdminRegisterPage } from "./pages/AdminRegisterPage";
@@ -14,47 +17,18 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { ResendVerificationPage } from "./pages/ResendVerificationPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { LoginLogoutButton } from "./components/LoginLogoutButton";
-import { Button } from "./components/ui/button";
 
 function AppLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground no-underline transition-opacity hover:opacity-85"
-          >
-            <ShoppingCart className="h-6 w-6" />
-            <span>Ahmed Mahfouz</span>
-          </Link>
-
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
-                <Package className="mr-1.5 h-4 w-4" />
-                Products
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin">Admin</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/register">
-                <UserPlus className="mr-1.5 h-4 w-4" />
-                Register
-              </Link>
-            </Button>
-            <LoginLogoutButton />
-          </nav>
-        </div>
-      </header>
+      <AnnouncementBar />
+      <Header />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
         <Routes>
           {/* Public */}
-          <Route path="/" element={<ProductListRoute />} />
+          <Route path="/" element={<HomePageRoute />} />
+          <Route path="/products" element={<ProductListRoute />} />
           <Route path="/products/:productId" element={<ProductDetailRoute />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -98,8 +72,14 @@ function AppLayout() {
           />
         </Routes>
       </main>
+
+      <Footer />
     </div>
   );
+}
+
+function HomePageRoute() {
+  return <HomePage />;
 }
 
 function ProductListRoute() {

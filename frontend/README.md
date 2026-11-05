@@ -12,12 +12,13 @@ A **React + TypeScript + Vite** single-page application for the e-commerce platf
 4. [Available Scripts](#available-scripts)
 5. [Environment Variables](#environment-variables)
 6. [Authentication](#authentication)
-7. [Routing](#routing)
-8. [API Client](#api-client)
-9. [Pages & Features](#pages--features)
-10. [Running the Application](#running-the-application)
-11. [Building for Production](#building-for-production)
-12. [Testing](#testing)
+7. [Header / Navigation](#header--navigation)
+8. [Routing](#routing)
+9. [API Client](#api-client)
+10. [Pages & Features](#pages--features)
+11. [Running the Application](#running-the-application)
+12. [Building for Production](#building-for-production)
+13. [Testing](#testing)
 
 ---
 
@@ -109,11 +110,29 @@ Product images are served through a CloudFront CDN. The frontend uses the `image
 
 ---
 
+## Header / Navigation
+
+The top-of-page header is available on every route and provides the main entry points for browsing, searching, and account access.
+
+| Element            | Description                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| **Logo**           | Brand logo that links back to the product listing page (`/`).               |
+| **Category Menu**  | Main category navigation; allows customers to filter products by category. |
+| **Search Bar**     | Live/keyword search input for finding products by name or description.      |
+| **Cart Icon**      | Displays the current cart item count and links to the cart summary.         |
+| **Account / Login**| Shows login link when anonymous, or account dropdown when authenticated.    |
+
+- Authenticated admin users see additional navigation links (e.g., **Admin Dashboard**).
+- The header is responsive and collapses into a mobile menu on smaller viewports.
+
+---
+
 ## Routing
 
 | Route                       | Access      | Description                              |
 |-----------------------------|-------------|------------------------------------------|
-| `/`                         | Public      | Product listing                          |
+| `/`                         | Public      | Home / landing page                      |
+| `/products`                  | Public      | Product listing                          |
 | `/products/:productId`       | Public      | Product detail                           |
 | `/login`                    | Public      | Login page                               |
 | `/register`                 | Public      | Customer registration                    |
@@ -143,6 +162,7 @@ Product images are served through a CloudFront CDN. The frontend uses the `image
 
 ### Public
 
+- **HomePage** — landing page with hero slider, featured categories, best sellers, new arrivals, and deals
 - **ProductList** — browse products
 - **ProductDetail** — view product details
 - **LoginPage** — authenticate
